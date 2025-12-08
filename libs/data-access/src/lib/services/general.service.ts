@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { User, Category, Topic } from '../models/interfaces';
 
 @Injectable({
@@ -44,8 +44,42 @@ export class UserService {
   providedIn: 'root',
 })
 export class AuthService {
-  login(): Observable<boolean> {
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
+
+  constructor() {
+    // Check local storage for persisted user (optional, for now just mock)
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      this.currentUserSubject.next(JSON.parse(storedUser));
+    }
+  }
+
+  login(username: string): Observable<boolean> {
+    // Mock login
+    const user: User = {
+      id: 'u1',
+      username: username,
+      role: 'USER',
+      status: 'ACTIVE',
+      avatarUrl: `https://ui-avatars.com/api/?name=${username}&background=random`,
+    };
+    this.currentUserSubject.next(user);
+    localStorage.setItem('currentUser', JSON.stringify(user));
     return of(true);
+  }
+
+  logout() {
+    this.currentUserSubject.next(null);
+    localStorage.removeItem('currentUser');
+  }
+
+  get currentUserValue(): User | null {
+    return this.currentUserSubject.value;
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.currentUserSubject.value;
   }
 }
 

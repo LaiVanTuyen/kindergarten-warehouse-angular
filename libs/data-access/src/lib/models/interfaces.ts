@@ -20,6 +20,15 @@ export interface Topic {
   thumbnailUrl?: string;
 }
 
+export interface Comment {
+  id: string;
+  user: string;
+  avatarUrl?: string;
+  content: string;
+  date: Date;
+  rating: number;
+}
+
 export interface Resource {
   id: string;
   title: string;
@@ -30,6 +39,8 @@ export interface Resource {
   viewsCount: number;
   topicId: string;
   createdAt: Date;
+  rating?: number;
+  comments?: Comment[];
 }
 
 export interface Banner {

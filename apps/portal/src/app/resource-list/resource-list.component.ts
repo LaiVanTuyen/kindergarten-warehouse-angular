@@ -1,15 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '../pipes/translate.pipe';
 import {
   Resource,
   ResourceService,
   CategoryService,
 } from '@kindergarten-warehouse/data-access';
 import { combineLatest, BehaviorSubject, map, switchMap } from 'rxjs';
-import { ResourceDetailModalComponent } from '../resource-detail-modal/resource-detail-modal.component';
-import { BannerSliderComponent } from '../banner-slider/banner-slider.component';
-import { ActivatedRoute } from '@angular/router';
+
+
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-resource-list',
@@ -17,167 +18,16 @@ import { ActivatedRoute } from '@angular/router';
   imports: [
     CommonModule,
     FormsModule,
-    ResourceDetailModalComponent,
-    BannerSliderComponent,
+    TranslatePipe,
   ],
-  template: `
-    <div class="container mx-auto px-4 py-8 font-sans">
-      <!-- Banner Slider -->
-      <app-banner-slider></app-banner-slider>
-
-      <!-- Section Title -->
-      <div class="text-center mb-8">
-        <h2 class="text-2xl font-bold text-gray-800">Explore Resources</h2>
-      </div>
-
-      <!-- Category Pills (Horizontal Scroll) -->
-      <div class="flex flex-wrap justify-center gap-4 mb-10">
-        <!-- 'All' Pill -->
-        <button
-          (click)="onCategoryChange('')"
-          class="px-6 py-2 rounded-full font-medium transition-all shadow-sm border"
-          [ngClass]="
-            (selectedCategory$ | async) === ''
-              ? 'bg-gradient-to-r from-primary-pink to-primary-blue text-white border-transparent shadow-md'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-primary-pink hover:text-primary-pink'
-          "
-        >
-          All Categories
-        </button>
-
-        <!-- Categories -->
-        <button
-          *ngFor="let cat of categories$ | async"
-          (click)="onCategoryChange(cat.id)"
-          class="px-6 py-2 rounded-full font-medium transition-all shadow-sm border flex items-center gap-2"
-          [ngClass]="
-            (selectedCategory$ | async) === cat.id
-              ? 'bg-gradient-to-r from-primary-pink to-primary-blue text-white border-transparent shadow-md'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-primary-pink hover:text-primary-pink'
-          "
-        >
-          <span>{{ cat.icon }}</span>
-          <span>{{ cat.name }}</span>
-        </button>
-      </div>
-
-      <!-- Resource Grid -->
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-      >
-        <div
-          *ngFor="let resource of resources$ | async"
-          class="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col"
-        >
-          <!-- Thumbnail (Click to Preview) -->
-          <div
-            class="aspect-w-16 aspect-h-10 bg-gray-100 relative cursor-pointer overflow-hidden"
-            (click)="openPreview(resource)"
-            (keydown.enter)="openPreview(resource)"
-            tabindex="0"
-          >
-            <img
-              *ngIf="resource.thumbnailUrl"
-              [src]="resource.thumbnailUrl"
-              class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
-              alt="thumbnail"
-            />
-            <div
-              *ngIf="!resource.thumbnailUrl"
-              class="w-full h-48 flex items-center justify-center text-4xl bg-gray-50"
-            >
-              <span *ngIf="resource.type === 'PDF'">📄</span>
-              <span *ngIf="resource.type === 'VIDEO'">🎬</span>
-              <span *ngIf="resource.type === 'EXCEL'">📊</span>
-              <span *ngIf="resource.type === 'WORD'">📝</span>
-            </div>
-
-            <!-- Status Dot (Design Match) -->
-            <div class="absolute top-3 right-3">
-              <div class="w-3 h-3 rounded-full bg-white shadow-md"></div>
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="p-5 flex-1 flex flex-col">
-            <h3
-              class="font-bold text-gray-800 text-lg mb-1 line-clamp-1 cursor-pointer hover:text-primary-blue transition-colors"
-              (click)="openPreview(resource)"
-              (keydown.enter)="openPreview(resource)"
-              tabindex="0"
-            >
-              {{ resource.title }}
-            </h3>
-            <p class="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">
-              {{
-                resource.description ||
-                  'No description available for this resource.'
-              }}
-            </p>
-
-            <!-- Footer: Views & Download -->
-            <div
-              class="flex justify-between items-center mt-auto pt-4 border-t border-gray-50"
-            >
-              <div class="flex items-center text-gray-400 text-xs font-medium">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-                {{ resource.viewsCount }} views
-              </div>
-
-              <button
-                (click)="downloadResource($event, resource)"
-                class="px-4 py-1.5 rounded-full bg-gradient-to-r from-primary-pink to-primary-blue text-white text-xs font-bold shadow-sm hover:shadow-md hover:opacity-90 transition-all"
-              >
-                Download
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div
-        *ngIf="(resources$ | async)?.length === 0"
-        class="text-center py-20 text-gray-400"
-      >
-        <div class="text-6xl mb-4">🔍</div>
-        <p class="text-lg">No resources found matching your selection.</p>
-      </div>
-    </div>
-
-    <!-- Modal -->
-    <app-resource-detail-modal
-      [isOpen]="isModalOpen"
-      [resource]="selectedResource"
-      (closeModal)="closeModal()"
-    >
-    </app-resource-detail-modal>
-  `,
+  templateUrl: './resource-list.component.html',
   styles: [],
 })
 export class ResourceListComponent {
   private resourceService = inject(ResourceService);
   private categoryService = inject(CategoryService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   categories$ = this.categoryService.getCategories();
 
@@ -187,23 +37,119 @@ export class ResourceListComponent {
   );
 
   // Resources based on filters
-  resources$ = combineLatest([this.selectedCategory$, this.searchQuery$]).pipe(
-    switchMap(([categoryId, search]) =>
-      this.resourceService.getResources({ categoryId, search })
-    )
+  // Pagination State
+  currentPage$ = new BehaviorSubject<number>(1);
+  itemsPerPage = 8;
+  totalItems = 0;
+
+  sortOption$ = new BehaviorSubject<string>('newest'); // Default sort
+
+  // Filtered Resources (before pagination)
+  private filteredResources$ = combineLatest([
+    this.selectedCategory$,
+    this.searchQuery$,
+    this.sortOption$,
+  ]).pipe(
+    switchMap(([categoryId, search, sort]) => {
+      // Reset to page 1 when filters change
+      this.currentPage$.next(1);
+      return this.resourceService.getResources({ categoryId, search }).pipe(
+        map(resources => {
+          // 1. Filter by Category
+          let filtered = resources;
+          if (categoryId) {
+             // Note: The mock data uses 'topicId' but the interface has 'topicId'. 
+             // The categories component uses 'id' which maps to 'topicId' in resources?
+             // Let's assume categoryId maps to topicId for now based on previous context or just check both.
+             // Actually, looking at mock data, it has 'topicId'. 
+             // Let's assume for now we just filter if it matches.
+             filtered = filtered.filter(r => r.topicId === categoryId);
+          }
+
+          // 2. Filter by Search
+          if (search) {
+            const lowerSearch = search.toLowerCase();
+            filtered = filtered.filter(r => 
+              r.title.toLowerCase().includes(lowerSearch) || 
+              r.description?.toLowerCase().includes(lowerSearch)
+            );
+          }
+
+          // 3. Sort
+          return filtered.sort((a, b) => {
+            switch (sort) {
+              case 'name-asc':
+                return a.title.localeCompare(b.title);
+              case 'name-desc':
+                return b.title.localeCompare(a.title);
+              case 'rating-desc':
+                return (b.rating || 0) - (a.rating || 0);
+              case 'rating-asc':
+                return (a.rating || 0) - (b.rating || 0);
+              default: // 'newest' or others
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }
+          });
+        })
+      );
+    })
   );
 
-  isModalOpen = false;
-  selectedResource: Resource | null = null;
+  // Paginated Resources
+  resources$ = combineLatest([this.filteredResources$, this.currentPage$]).pipe(
+    map(([resources, page]) => {
+      this.totalItems = resources.length;
+      const startIndex = (page - 1) * this.itemsPerPage;
+      return resources.slice(startIndex, startIndex + this.itemsPerPage);
+    })
+  );
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  nextPage() {
+    if (this.currentPage$.value < this.totalPages) {
+      this.currentPage$.next(this.currentPage$.value + 1);
+      this.scrollToTop();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage$.value > 1) {
+      this.currentPage$.next(this.currentPage$.value - 1);
+      this.scrollToTop();
+    }
+  }
+
+  goToPage(page: number) {
+    this.currentPage$.next(page);
+    this.scrollToTop();
+  }
+
+  private scrollToTop() {
+    const element = document.getElementById('resources');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 
   onCategoryChange(catId: string) {
     this.selectedCategory$.next(catId);
   }
 
+  onSortChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.sortOption$.next(value);
+  }
+
   openPreview(resource: Resource) {
-    this.selectedResource = resource;
-    this.isModalOpen = true;
     this.resourceService.incrementViewCount(resource.id).subscribe();
+    this.router.navigate(['/resources', resource.id]);
   }
 
   downloadResource(event: Event, resource: Resource) {
@@ -211,10 +157,5 @@ export class ResourceListComponent {
     if (resource.url) {
       window.open(resource.url, '_blank');
     }
-  }
-
-  closeModal() {
-    this.isModalOpen = false;
-    this.selectedResource = null;
   }
 }

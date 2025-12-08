@@ -1,98 +1,13 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BannerService, Banner } from '@kindergarten-warehouse/data-access';
-import { Observable, Subscription, interval, switchMap } from 'rxjs';
+import { Observable, Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-banner-slider',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div
-      class="relative w-full h-[300px] md:h-[400px] overflow-hidden rounded-3xl shadow-lg mb-8 group"
-    >
-      <ng-container *ngIf="banners$ | async as banners">
-        <div
-          class="absolute inset-0 flex transition-transform duration-500 ease-out"
-          [style.transform]="'translateX(' + -currentSlide * 100 + '%)'"
-        >
-          <div
-            *ngFor="let banner of banners"
-            class="min-w-full h-full relative"
-          >
-            <img
-              [src]="banner.imageUrl"
-              class="w-full h-full object-cover"
-              alt="Banner"
-            />
-            <div
-              class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8"
-            >
-              <a
-                *ngIf="banner.link"
-                [href]="banner.link"
-                class="bg-white text-primary-pink font-bold py-2 px-6 rounded-full shadow-lg hover:scale-105 transition-transform"
-              >
-                Explore Now
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Navigation Dots -->
-        <div
-          class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2"
-        >
-          <button
-            *ngFor="let banner of banners; let i = index"
-            (click)="goToSlide(i)"
-            class="w-3 h-3 rounded-full transition-all"
-            [ngClass]="
-              i === currentSlide ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'
-            "
-          ></button>
-        </div>
-
-        <!-- Arrows -->
-        <button
-          (click)="prevSlide()"
-          class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <button
-          (click)="nextSlide()"
-          class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </ng-container>
-    </div>
-  `,
+  templateUrl: './banner-slider.component.html',
   styles: [],
 })
 export class BannerSliderComponent implements OnInit, OnDestroy {

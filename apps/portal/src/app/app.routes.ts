@@ -1,6 +1,34 @@
 import { Route } from '@angular/router';
-import { ResourceListComponent } from './resource-list/resource-list.component';
+
 
 export const appRoutes: Route[] = [
-  { path: '', component: ResourceListComponent },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./home/home.component').then((m) => m.HomeComponent),
+  },
+  {
+    path: 'resources/:id',
+    loadComponent: () =>
+      import('./resource-detail/resource-detail.component').then(
+        (m) => m.ResourceDetailComponent
+      ),
+  },
+  {
+    path: 'resources',
+    loadComponent: () =>
+      import('./resource-list/resource-list.component').then(
+        (m) => m.ResourceListComponent
+      ),
+  },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'about',
+    loadComponent: () =>
+      import('./about/about.component').then((m) => m.AboutComponent),
+  },
 ];

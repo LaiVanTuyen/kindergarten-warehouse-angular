@@ -1,0 +1,82 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans"
+>
+  <div class="max-w-xl w-full space-y-10 bg-white p-12 sm:p-16 rounded-[2.5rem] shadow-2xl">
+    <div class="text-center">
+      <div class="flex justify-center mb-8">
+        <span class="text-4xl font-black text-primary-pink tracking-tight"
+          >Kinder</span
+        >
+        <span class="text-4xl font-black text-primary-blue tracking-tight"
+          >World</span
+        >
+      </div>
+      <h2 class="mt-2 text-4xl font-extrabold text-gray-900">{{ 'login.welcome' | translate }}</h2>
+      <p class="mt-4 text-lg text-gray-600">
+        {{ 'login.subtitle' | translate }}
+      </p>
+    </div>
+    <form class="mt-10 space-y-8" (ngSubmit)="onSubmit()">
+      <div class="rounded-md shadow-sm -space-y-px">
+        <div class="mb-6">
+          <label for="email-address" class="sr-only">{{ 'login.email' | translate }}</label>
+          <input
+            id="email-address"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            [(ngModel)]="username"
+            class="appearance-none rounded-2xl relative block w-full px-6 py-4 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue focus:z-10 text-lg transition-all"
+            [placeholder]="'login.email' | translate"
+          />
+        </div>
+        <div>
+          <label for="password" class="sr-only">{{ 'login.password' | translate }}</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="appearance-none rounded-2xl relative block w-full px-6 py-4 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue focus:z-10 text-lg transition-all"
+            [placeholder]="'login.password' | translate"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            class="h-5 w-5 text-primary-blue focus:ring-primary-blue border-gray-300 rounded"
+          />
+          <label for="remember-me" class="ml-3 block text-base text-gray-900">
+            {{ 'login.remember' | translate }}
+          </label>
+        </div>
+
+        <div class="text-base">
+          <a
+            href="#"
+            class="font-medium text-primary-blue hover:text-blue-500 transition-colors"
+          >
+            {{ 'login.forgot' | translate }}
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          class="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-bold rounded-full text-white bg-gradient-to-r from-primary-pink to-primary-blue hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-blue transition-all transform hover:scale-[1.02] shadow-lg"
+        >
+          {{ 'login.signin' | translate }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

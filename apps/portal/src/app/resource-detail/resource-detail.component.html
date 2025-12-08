@@ -1,0 +1,231 @@
+<div class="container mx-auto px-4 py-12 font-sans">
+  <div *ngIf="resource$ | async as resource; else loading">
+    <!-- Back Button -->
+    <a
+      routerLink="/resources"
+      class="inline-flex items-center text-gray-500 hover:text-primary-blue mb-8 transition-colors font-medium"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-1"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        />
+      </svg>
+      {{ 'detail.back' | translate }}
+    </a>
+
+    <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2">
+        <!-- Preview Section -->
+        <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">
+          <!-- Video Player -->
+          <ng-container *ngIf="resource.type === 'VIDEO'">
+            <div *ngIf="isYouTube(resource.url); else directVideo" class="w-full h-full min-h-[300px]">
+              <iframe
+                [src]="getSafeVideoUrl(resource.url)"
+                class="w-full h-full rounded-xl shadow-md aspect-video"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <ng-template #directVideo>
+              <video
+                [src]="getSafeVideoUrl(resource.url)"
+                controls
+                class="w-full max-h-[500px] rounded-xl shadow-md"
+              ></video>
+            </ng-template>
+          </ng-container>
+
+          <!-- Document Viewer (PDF, WORD, EXCEL) -->
+          <ng-container *ngIf="['PDF', 'WORD', 'EXCEL'].includes(resource.type)">
+             <iframe
+                [src]="getSafeDocUrl(resource.url)"
+                class="w-full h-[500px] rounded-xl shadow-md bg-white"
+                frameborder="0"
+              ></iframe>
+          </ng-container>
+
+          <!-- Fallback / Thumbnail -->
+          <ng-container *ngIf="!['VIDEO', 'PDF', 'WORD', 'EXCEL'].includes(resource.type)">
+             <img
+              *ngIf="resource.thumbnailUrl"
+              [src]="resource.thumbnailUrl"
+              class="max-w-full max-h-[500px] rounded-xl shadow-md object-contain"
+              alt="Resource Preview"
+            />
+            <div
+              *ngIf="!resource.thumbnailUrl"
+              class="text-9xl text-gray-300"
+            >
+              <span>📦</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Details Section -->
+        <div class="p-8 lg:p-12 flex flex-col justify-center">
+          <div class="flex items-center gap-3 mb-4">
+            <span
+              class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-primary-blue"
+            >
+              {{ resource.type }}
+            </span>
+            <span class="text-gray-400 text-sm flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              {{ resource.viewsCount }} {{ 'list.views' | translate }}
+            </span>
+            <!-- Rating Stars -->
+            <div class="flex items-center text-yellow-400" *ngIf="resource.rating">
+              <span class="font-bold text-gray-700 mr-1">{{ resource.rating }}</span>
+              <svg *ngFor="let star of [1,2,3,4,5]" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" [class.text-gray-300]="star > resource.rating" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
+
+          <h1 class="text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-pink to-primary-blue mb-6">
+            {{ resource.title }}
+          </h1>
+
+          <p class="text-gray-600 text-lg leading-relaxed mb-8">
+            {{ resource.description || ('detail.noDescription' | translate) }}
+          </p>
+
+          <button
+            (click)="downloadResource(resource.url)"
+            class="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-primary-pink to-primary-blue text-white font-bold text-lg shadow-lg hover:shadow-xl hover:opacity-90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 mb-12"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            {{ 'detail.download' | translate }}
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Comments Section (Full Width) -->
+      <div class="p-8 lg:p-12 border-t border-gray-100">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">{{ 'detail.comments' | translate }} ({{ resource.comments?.length || 0 }})</h3>
+
+        <!-- Add Comment Form -->
+        <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+          <h4 class="font-bold text-gray-700 mb-4">{{ 'detail.leaveComment' | translate }}</h4>
+          
+          <div *ngIf="authService.currentUser$ | async as user; else loginPrompt">
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-600 mb-2">{{ 'detail.rating' | translate }}</label>
+              <div class="flex gap-2">
+                <button 
+                  *ngFor="let star of [1,2,3,4,5]" 
+                  (click)="newCommentRating = star"
+                  class="focus:outline-none transition-transform hover:scale-110"
+                  type="button"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" [class.text-yellow-400]="star <= newCommentRating" [class.text-gray-300]="star > newCommentRating" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="commentContent" class="block text-sm font-medium text-gray-600 mb-2">{{ 'detail.yourComment' | translate }}</label>
+              <textarea
+                id="commentContent"
+                [(ngModel)]="newCommentContent"
+                rows="3"
+                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-blue focus:border-transparent outline-none transition-all"
+                placeholder="Share your thoughts..."
+              ></textarea>
+            </div>
+
+            <button
+              (click)="submitComment(resource)"
+              [disabled]="!newCommentContent.trim()"
+              class="px-6 py-2 rounded-full bg-primary-blue text-white font-bold shadow-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {{ 'detail.post' | translate }}
+            </button>
+          </div>
+
+          <ng-template #loginPrompt>
+            <div class="text-center py-4">
+              <p class="text-gray-500 mb-3">{{ 'detail.loginToComment' | translate }}</p>
+              <a routerLink="/login" class="inline-block px-6 py-2 rounded-full border border-primary-blue text-primary-blue font-bold hover:bg-blue-50 transition-all">
+                {{ 'detail.loginBtn' | translate }}
+              </a>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="space-y-6" *ngIf="resource.comments && resource.comments.length > 0">
+          <div *ngFor="let comment of resource.comments" class="flex gap-4">
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-500">
+              {{ comment.user.charAt(0) }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold text-gray-800">{{ comment.user }}</span>
+                <span class="text-xs text-gray-400">{{ comment.date | date:'mediumDate' }}</span>
+              </div>
+              <div class="flex text-yellow-400 mb-1">
+                 <svg *ngFor="let star of [1,2,3,4,5]" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" [class.text-gray-300]="star > comment.rating" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+              <p class="text-gray-600 text-sm">{{ comment.content }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="text-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue mx-auto"></div>
+      <p class="mt-4 text-gray-500">{{ 'detail.loading' | translate }}</p>
+    </div>
+  </ng-template>
+</div>
