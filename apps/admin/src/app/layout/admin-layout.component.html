@@ -40,6 +40,13 @@
       >
         <span class="mr-3">👥</span> Users
       </a>
+      <a
+        routerLink="/profile"
+        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+      >
+        <span class="mr-3">⚙️</span> Profile
+      </a>
     </nav>
   </aside>
 
@@ -54,11 +61,12 @@
       </h2>
       <div class="flex items-center space-x-4">
         <span class="text-sm text-gray-500">Welcome, Admin</span>
-        <div
-          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold"
+        <a
+          routerLink="/profile"
+          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer"
         >
           A
-        </div>
+        </a>
       </div>
     </header>
 

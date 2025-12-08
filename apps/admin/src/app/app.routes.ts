@@ -17,6 +17,10 @@ export const appRoutes: Route[] = [
       { path: 'categories', component: CategoriesComponent },
       { path: 'resources', component: ResourcesComponent },
       { path: 'users', component: UsersComponent },
+      { 
+        path: 'profile', 
+        loadComponent: () => import('./profile/profile.component').then(m => m.ProfileComponent) 
+      },
     ],
   },
 ];
