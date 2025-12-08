@@ -1,0 +1,197 @@
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ResourceService } from '@kindergarten-warehouse/data-access';
+
+@Component({
+  selector: 'app-admin-resources',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Upload Area -->
+      <div class="lg:col-span-1">
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6"
+        >
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            Upload Resource
+          </h3>
+
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer mb-4"
+          >
+            <div class="text-4xl mb-2">☁️</div>
+            <p class="text-sm text-gray-600 font-medium">
+              Click to upload or drag & drop
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+              PDF, Word, Excel, Video (Max 50MB)
+            </p>
+          </div>
+
+          <form class="space-y-4">
+            <div>
+              <label
+                for="res-title"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Title</label
+              >
+              <input
+                id="res-title"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+                placeholder="e.g. Alphabet Song"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  for="res-category"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Category</label
+                >
+                <select
+                  id="res-category"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+                >
+                  <option>Language</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="res-topic"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Topic</label
+                >
+                <select
+                  id="res-topic"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+                >
+                  <option>Songs</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              class="w-full bg-admin-navy text-white font-bold py-3 rounded-md hover:opacity-90 transition-opacity"
+            >
+              Save Resource
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Resource List -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div
+            class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
+          >
+            <h3 class="text-lg font-semibold text-gray-800">
+              Resources Library
+            </h3>
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="Search..."
+                class="pl-8 pr-4 py-1.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:border-primary-blue"
+              />
+              <span class="absolute left-2.5 top-2 text-gray-400 text-xs"
+                >🔍</span
+              >
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                <tr>
+                  <th class="px-4 py-3">Resource</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Category</th>
+                  <th class="px-4 py-3 text-center">Views</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-700 text-sm">
+                <tr
+                  *ngFor="let res of resources$ | async"
+                  class="border-b border-gray-100 hover:bg-gray-50 group"
+                >
+                  <td class="px-4 py-4">
+                    <div class="flex items-center">
+                      <div
+                        class="h-10 w-10 bg-gray-100 rounded-md flex-shrink-0 mr-3 flex items-center justify-center text-lg"
+                      >
+                        {{ res.type === 'VIDEO' ? '🎬' : '📄' }}
+                      </div>
+                      <div>
+                        <div
+                          class="font-medium text-gray-900 group-hover:text-primary-blue"
+                        >
+                          {{ res.title }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          Added: 2024-03-20
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4">
+                    <span
+                      class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600"
+                      >{{ res.type }}</span
+                    >
+                  </td>
+                  <td class="px-4 py-4 text-gray-500">Language</td>
+                  <td class="px-4 py-4 text-center font-medium">
+                    {{ res.viewsCount }}
+                  </td>
+                  <td class="px-4 py-4 text-right">
+                    <button
+                      class="text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Mock -->
+          <div
+            class="px-6 py-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500"
+          >
+            <span>Showing 1-10 of 324</span>
+            <div class="flex space-x-1">
+              <button class="px-3 py-1 border rounded hover:bg-gray-50">
+                Prev
+              </button>
+              <button
+                class="px-3 py-1 border rounded bg-primary-pink text-white border-primary-pink"
+              >
+                1
+              </button>
+              <button class="px-3 py-1 border rounded hover:bg-gray-50">
+                2
+              </button>
+              <button class="px-3 py-1 border rounded hover:bg-gray-50">
+                3
+              </button>
+              <button class="px-3 py-1 border rounded hover:bg-gray-50">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [],
+})
+export class ResourcesComponent {
+  resourceService = inject(ResourceService);
+  resources$ = this.resourceService.getResources();
+}

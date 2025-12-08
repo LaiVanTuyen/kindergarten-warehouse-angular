@@ -1,0 +1,157 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Resource } from '@kindergarten-warehouse/data-access';
+
+@Component({
+  selector: 'app-resource-detail-modal',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div
+      *ngIf="isOpen"
+      class="fixed inset-0 z-[60] overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop -->
+      <div
+        class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+        (click)="close()"
+      ></div>
+
+      <!-- Panel -->
+      <div
+        class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+      >
+        <div
+          class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border-4 border-primary-blue/20"
+        >
+          <!-- Header -->
+          <div
+            class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100"
+          >
+            <div>
+              <h3 class="text-xl font-bold text-gray-900" id="modal-title">
+                {{ resource?.title }}
+              </h3>
+              <span class="text-sm text-gray-500 flex items-center mt-1">
+                <span class="mr-2">{{ resource?.type }}</span>
+                <span>• {{ resource?.viewsCount }} views</span>
+              </span>
+            </div>
+            <button
+              (click)="close()"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Content (Docs Viewer or Video) -->
+          <div class="px-6 py-6 h-[60vh] bg-black/5">
+            <ng-container *ngIf="resource">
+              <div
+                *ngIf="resource.type === 'VIDEO'"
+                class="w-full h-full rounded-xl overflow-hidden shadow-inner bg-black flex items-center justify-center"
+              >
+                <!-- Mock Video Player or Iframe -->
+                <iframe
+                  *ngIf="getSafeUrl(resource.url)"
+                  [src]="getSafeUrl(resource.url)"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allowfullscreen
+                ></iframe>
+                <div *ngIf="!getSafeUrl(resource.url)" class="text-white">
+                  Video URL invalid
+                </div>
+              </div>
+
+              <div
+                *ngIf="resource.type !== 'VIDEO'"
+                class="w-full h-full rounded-xl overflow-hidden shadow-inner bg-white"
+              >
+                <!-- Google Docs Viewer -->
+                <iframe
+                  [src]="getGoogleDocsUrl(resource.url)"
+                  class="w-full h-full"
+                  frameborder="0"
+                ></iframe>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Footer / Actions -->
+          <div
+            class="bg-gray-50 px-6 py-4 flex flex-row-reverse space-x-reverse space-x-3 border-t border-gray-100"
+          >
+            <button
+              type="button"
+              class="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-primary-pink to-primary-blue px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 sm:w-auto transition-all transform hover:scale-105"
+              (click)="download()"
+            >
+              Download Resource
+            </button>
+            <button
+              type="button"
+              class="mt-3 inline-flex w-full justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-all"
+              (click)="close()"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [],
+})
+export class ResourceDetailModalComponent {
+  @Input() isOpen = false;
+  @Input() resource: Resource | null = null;
+  @Output() closeModal = new EventEmitter<void>();
+
+  constructor(private sanitizer: DomSanitizer) {}
+
+  close() {
+    this.closeModal.emit();
+  }
+
+  download() {
+    if (this.resource?.url) {
+      window.open(this.resource.url, '_blank');
+    }
+  }
+
+  getSafeUrl(url: string): SafeResourceUrl {
+    // Basic YouTube embed handling for demo
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      return this.sanitizer.bypassSecurityTrustResourceUrl(
+        `https://www.youtube.com/embed/${videoId}`
+      );
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  getGoogleDocsUrl(url: string): SafeResourceUrl {
+    const googleDocsBase = 'https://docs.google.com/viewer?url=';
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `${googleDocsBase}${encodeURIComponent(url)}&embedded=true`
+    );
+  }
+}

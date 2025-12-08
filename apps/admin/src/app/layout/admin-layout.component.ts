@@ -1,0 +1,83 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-admin-layout',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  template: `
+    <div class="flex h-screen bg-gray-100">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-admin-navy text-white flex-shrink-0">
+        <div class="p-6">
+          <h1 class="text-2xl font-bold tracking-wider">K-Admin</h1>
+        </div>
+        <nav class="mt-6">
+          <a
+            routerLink="/dashboard"
+            routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+            class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <span class="mr-3">📊</span> Dashboard
+          </a>
+          <a
+            routerLink="/banners"
+            routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+            class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <span class="mr-3">🖼️</span> Banners
+          </a>
+          <a
+            routerLink="/categories"
+            routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+            class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <span class="mr-3">🏷️</span> Categories & Topics
+          </a>
+          <a
+            routerLink="/resources"
+            routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+            class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <span class="mr-3">📚</span> Resources
+          </a>
+          <a
+            routerLink="/users"
+            routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
+            class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <span class="mr-3">👥</span> Users
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Topbar -->
+        <header
+          class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10"
+        >
+          <h2 class="text-xl font-semibold text-gray-800">
+            Administrator Panel
+          </h2>
+          <div class="flex items-center space-x-4">
+            <span class="text-sm text-gray-500">Welcome, Admin</span>
+            <div
+              class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold"
+            >
+              A
+            </div>
+          </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+    </div>
+  `,
+  styles: [],
+})
+export class AdminLayoutComponent {}
