@@ -1,4 +1,4 @@
-export * from './lib/models/interfaces';
+export * from './lib/models';
 export * from './lib/services/resource.service';
 export * from './lib/services/banner.service';
 export * from './lib/services/general.service';

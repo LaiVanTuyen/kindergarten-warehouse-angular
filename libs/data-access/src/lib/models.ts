@@ -4,6 +4,7 @@ export interface Resource {
   thumbnail: string;
   uploader: string;
   date: string;
+  url?: string;
   status: 'pending' | 'approved' | 'rejected';
 }
 
@@ -30,4 +31,18 @@ export interface Stats {
   totalViews: number;
   totalUsers: number;
   pendingApprovals: number;
+}
+
+export interface Banner {
+  id: number;
+  image_url: string;
+  link: string;
+  is_active: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+  // Optional frontend fields
+  start_date?: string;
+  end_date?: string;
+  platform?: 'desktop' | 'mobile';
 }

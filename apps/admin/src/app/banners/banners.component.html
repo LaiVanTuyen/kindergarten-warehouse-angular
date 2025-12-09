@@ -1,78 +1,303 @@
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
-  <div
-    class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
-  >
-    <h3 class="text-lg font-semibold text-gray-800">Banner Management</h3>
-    <button
-      class="bg-admin-navy text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors text-sm"
-    >
-      + Add New Banner
+<div class="h-full flex flex-col">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between mb-6 bg-slate-800 p-6 rounded-xl text-white shadow-lg">
+    <div>
+      <h1 class="text-2xl font-bold">Banner Management</h1>
+      <p class="text-slate-300 mt-1 text-sm">Drag and drop to reorder • Manage visibility</p>
+    </div>
+    <button (click)="openCreateModal()"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-md active:transform active:scale-95">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Add Banner
     </button>
   </div>
 
-  <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr
-          class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider"
-        >
-          <th class="px-6 py-3 border-b border-gray-200">Order</th>
-          <th class="px-6 py-3 border-b border-gray-200">Preview</th>
-          <th class="px-6 py-3 border-b border-gray-200">Link</th>
-          <th class="px-6 py-3 border-b border-gray-200">Status</th>
-          <th class="px-6 py-3 border-b border-gray-200 text-right">
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody class="text-gray-700 text-sm">
-        <tr
-          *ngFor="let banner of banners$ | async"
-          class="hover:bg-gray-50 transition-colors"
-        >
-          <td class="px-6 py-4 border-b border-gray-200 font-medium">
-            {{ banner.order }}
-          </td>
-          <td class="px-6 py-4 border-b border-gray-200">
-            <img
-              [src]="banner.imageUrl"
-              class="h-12 w-24 object-cover rounded-md border border-gray-200"
-              alt="Banner"
-            />
-          </td>
-          <td
-            class="px-6 py-4 border-b border-gray-200 text-blue-500 truncate max-w-xs"
-          >
-            {{ banner.link || '-' }}
-          </td>
-          <td class="px-6 py-4 border-b border-gray-200">
-            <button
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
-              [ngClass]="banner.active ? 'bg-green-500' : 'bg-gray-200'"
-              role="switch"
-              [attr.aria-checked]="banner.active"
-            >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                [ngClass]="
-                  banner.active ? 'translate-x-5' : 'translate-x-0'
-                "
-              >
+  <!-- Sortable Banner List -->
+  <div class="flex-1 overflow-y-auto px-1 flex flex-col">
+    <div cdkDropList [cdkDropListData]="banners()" (cdkDropListDropped)="drop($event)"
+      class="banner-list space-y-3 pb-4 flex-1">
+
+      @for (banner of banners(); track banner.id) {
+      <div cdkDrag [cdkDragData]="banner"
+        class="banner-box group bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
+
+        <!-- Drag Placeholder -->
+        <div *cdkDragPlaceholder class="opacity-0"></div>
+
+        <!-- Drag Handle -->
+        <div class="cursor-move text-gray-300 hover:text-gray-600 transition-colors p-2" cdkDragHandle>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="12" r="1" />
+            <circle cx="9" cy="5" r="1" />
+            <circle cx="9" cy="19" r="1" />
+            <circle cx="15" cy="12" r="1" />
+            <circle cx="15" cy="5" r="1" />
+            <circle cx="15" cy="19" r="1" />
+          </svg>
+        </div>
+
+        <!-- Image Preview (16:9) -->
+        <div
+          class="relative w-32 aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group-hover:border-blue-200 transition-colors flex-shrink-0 cursor-zoom-in"
+          (click)="openPreview(banner.image_url, $event)">
+          <img [src]="banner.image_url" class="w-full h-full object-cover">
+
+          <!-- Platform Badge overlay -->
+          <div
+            class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-black/60 text-white backdrop-blur-sm">
+            {{ banner.platform || 'Desktop' }}
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-mono text-gray-400">#{{ banner.id }}</span>
+            <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Order: {{
+              banner.display_order }}</span>
+
+            <!-- Expiration Badge -->
+            <span *ngIf="isExpired(banner)"
+              class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Expired
+            </span>
+          </div>
+
+          <a *ngIf="banner.link" [href]="banner.link" target="_blank"
+            class="text-blue-600 font-medium hover:underline truncate block max-w-md">
+            {{ banner.link }}
+          </a>
+          <span *ngIf="!banner.link" class="text-gray-400 italic text-sm">No link provided</span>
+
+          <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+            <span class="flex items-center gap-1" *ngIf="banner.start_date">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {{ banner.start_date | date:'mediumDate' }} - {{ banner.end_date | date:'mediumDate' }}
+            </span>
+            <span *ngIf="!banner.start_date">Always visible</span>
+          </div>
+        </div>
+
+        <!-- Status Toggle -->
+        <div class="flex items-center gap-3 mr-4">
+          <button (click)="toggleStatus(banner, $event)" [class.bg-green-500]="banner.is_active"
+            [class.bg-gray-200]="!banner.is_active"
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            role="switch">
+            <span class="sr-only">Use setting</span>
+            <span [class.translate-x-5]="banner.is_active" [class.translate-x-0]="!banner.is_active"
+              class="pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out">
+              <span [class.opacity-0]="banner.is_active" [class.opacity-100]="!banner.is_active"
+                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity duration-200 ease-in-out"
+                aria-hidden="true">
+                <svg class="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 12 12">
+                  <path d="M4 8l2-2m0 0l2-2M6 6L4 4m2 2l2 2" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
               </span>
-            </button>
-          </td>
-          <td
-            class="px-6 py-4 border-b border-gray-200 text-right space-x-2"
-          >
-            <button class="text-blue-600 hover:text-blue-800 font-medium">
-              Edit
-            </button>
-            <button class="text-red-600 hover:text-red-800 font-medium">
-              Delete
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <span [class.opacity-100]="banner.is_active" [class.opacity-0]="!banner.is_active"
+                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity duration-200 ease-in-out"
+                aria-hidden="true">
+                <svg class="h-3 w-3 text-green-600" fill="currentColor" viewBox="0 0 12 12">
+                  <path
+                    d="M3.707 5.293a1 1 0 00-1.414 1.414l1.414-1.414zM5 8l-.707.707a1 1 0 001.414 0L5 8zm4.707-3.293a1 1 0 00-1.414-1.414l1.414 1.414zm-7.414 2l2 2 1.414-1.414-2-2-1.414 1.414zm3.414 2l4-4-1.414-1.414-4 4 1.414 1.414z">
+                  </path>
+                </svg>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-1 border-l border-gray-100 pl-4">
+          <button (click)="openEditModal(banner)"
+            class="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+          <button (click)="deleteBanner(banner)"
+            class="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Delete">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      } @empty {
+      <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center text-gray-500">
+        <div class="flex flex-col items-center">
+          <span class="text-4xl mb-3 opacity-50">🖼️</span>
+          <h3 class="font-medium text-lg text-gray-900">No banners yet</h3>
+          <p class="mb-6">Create a banner to start customizing your homepage.</p>
+          <button (click)="openCreateModal()" class="text-blue-600 font-medium hover:underline">Create your first
+            banner</button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Create/Edit Modal (Advanced) -->
+  <div *ngIf="isModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div (click)="closeModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+    <div
+      class="bg-white rounded-xl shadow-xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-gray-800">{{ isEditMode() ? 'Edit Banner' : 'Create Banner' }}</h3>
+        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600"><svg xmlns="http://www.w3.org/2000/svg"
+            width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg></button>
+      </div>
+
+      <form [formGroup]="bannerForm" (ngSubmit)="onSubmit()" class="p-6 overflow-y-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left Col: Image -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Image URL <span
+                  class="text-red-500">*</span></label>
+              <input type="text" formControlName="image_url" placeholder="https://..."
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <!-- Preview -->
+            <div
+              class="w-full aspect-video bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+              <img *ngIf="bannerForm.get('image_url')?.value" [src]="bannerForm.get('image_url')?.value"
+                class="w-full h-full object-cover">
+              <span *ngIf="!bannerForm.get('image_url')?.value" class="text-gray-400 text-sm">Image Preview</span>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+              <div class="flex gap-2">
+                <label class="flex-1 cursor-pointer">
+                  <input type="radio" formControlName="platform" value="desktop" class="sr-only peer">
+                  <div
+                    class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-50 transition-all">
+                    Desktop</div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                  <input type="radio" formControlName="platform" value="mobile" class="sr-only peer">
+                  <div
+                    class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-50 transition-all">
+                    Mobile</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Col: Details -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Target Link</label>
+              <input type="text" formControlName="link" placeholder="/path/to/resource"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="date" formControlName="start_date"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="date" formControlName="end_date"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+              <input type="number" formControlName="display_order"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
+              <div>
+                <div class="font-medium text-gray-900">Active Status</div>
+                <div class="text-xs text-gray-500">Visible on homepage</div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" formControlName="is_active" class="sr-only peer">
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-4 ring-transparent peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="closeModal()"
+          class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
+        <button (click)="onSubmit()" [disabled]="bannerForm.invalid"
+          class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Preview Modal -->
+  <div *ngIf="isPreviewModalOpen()"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+    (click)="closePreview()">
+    <img [src]="previewImageUrl()" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
+      (click)="$event.stopPropagation()">
+    <button class="absolute top-4 right-4 text-white/50 hover:text-white" (click)="closePreview()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Delete Modal (Reused) -->
+  <div *ngIf="isDeleteModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div (click)="closeDeleteModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+    <div
+      class="bg-white rounded-xl shadow-xl w-full max-w-md relative z-10 overflow-hidden transform transition-all scale-100">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Banner?</h3>
+        <p class="text-gray-500 mb-6">Are you sure you want to delete this banner?</p>
+        <div class="flex gap-3 justify-center">
+          <button (click)="closeDeleteModal()"
+            class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 w-full">Cancel</button>
+          <button (click)="confirmDelete()"
+            class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 w-full">Delete
+            Banner</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
