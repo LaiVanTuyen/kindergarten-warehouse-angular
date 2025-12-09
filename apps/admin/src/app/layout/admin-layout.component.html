@@ -1,70 +1,19 @@
 <div class="flex h-screen bg-gray-100">
   <!-- Sidebar -->
-  <aside class="w-64 bg-admin-navy text-white flex-shrink-0">
-    <div class="p-6">
-      <h1 class="text-2xl font-bold tracking-wider">K-Admin</h1>
-    </div>
-    <nav class="mt-6">
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">📊</span> Dashboard
-      </a>
-      <a
-        routerLink="/banners"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">🖼️</span> Banners
-      </a>
-      <a
-        routerLink="/categories"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">🏷️</span> Categories & Topics
-      </a>
-      <a
-        routerLink="/resources"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">📚</span> Resources
-      </a>
-      <a
-        routerLink="/users"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">👥</span> Users
-      </a>
-      <a
-        routerLink="/profile"
-        routerLinkActive="bg-white/10 border-l-4 border-primary-pink"
-        class="flex items-center px-6 py-3 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-      >
-        <span class="mr-3">⚙️</span> Profile
-      </a>
-    </nav>
-  </aside>
+  <!-- Sidebar -->
+  <app-sidebar class="h-full"></app-sidebar>
 
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Topbar -->
-    <header
-      class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10"
-    >
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
       <h2 class="text-xl font-semibold text-gray-800">
         Administrator Panel
       </h2>
       <div class="flex items-center space-x-4">
         <span class="text-sm text-gray-500">Welcome, Admin</span>
-        <a
-          routerLink="/profile"
-          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer"
-        >
+        <a routerLink="/profile"
+          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer">
           A
         </a>
       </div>

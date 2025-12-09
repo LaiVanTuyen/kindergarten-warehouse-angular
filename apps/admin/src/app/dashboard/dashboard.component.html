@@ -1,370 +1,267 @@
+<!-- Top Control Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+    <div class="flex items-center text-sm text-gray-500 mt-1">
+      <span>{{ dateFilter() === 'this_year' ? 'Current Period: This Year (12 Months)' : 'Current Period: Last 7 Days'
+        }}</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <select [value]="dateFilter()" (change)="setDateFilter($any($event.target).value)"
+        class="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium cursor-pointer shadow-sm text-sm">
+        <option value="this_year">📅 This Year</option>
+        <option value="last_7_days">🕓 Last 7 Days</option>
+      </select>
+      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards with Trends -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <!-- Stats Card: Total Views -->
-  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group">
-    <div class="relative z-10 flex items-center mb-4">
-      <div class="p-3 rounded-full bg-blue-100 text-primary-blue mr-4">
-        <span class="text-2xl">👀</span>
-      </div>
+  <!-- Card 1 -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex justify-between items-start mb-4">
       <div>
-        <p class="text-sm text-gray-500 font-medium">Total Views</p>
-        <p class="text-2xl font-bold text-gray-800">12,450</p>
+        <p class="text-sm font-medium text-gray-500">Total Resources</p>
+        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalResources }}</h3>
+      </div>
+      <div class="p-2 bg-blue-50 text-blue-500 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
       </div>
     </div>
-    <p class="relative z-10 text-xs text-green-500 font-bold mt-2">↑ 12% this week</p>
-    
-    <!-- Sparkline (Absolute Background) -->
-    <div class="absolute bottom-0 left-0 right-0 h-16 opacity-10 group-hover:opacity-20 transition-opacity">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <polyline
-          [attr.points]="getSparklinePath(viewsSparkline)"
-          fill="none"
-          stroke="#3B82F6"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-      </svg>
+    <div class="text-sm">
+      <span class="text-green-500 font-medium">↑ 12%</span>
+      <span class="text-gray-400 ml-1">vs last period</span>
     </div>
   </div>
 
-  <!-- Stats Card: Total Resources -->
-  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group">
-    <div class="relative z-10 flex items-center mb-4">
-      <div class="p-3 rounded-full bg-pink-100 text-primary-pink mr-4">
-        <span class="text-2xl">📚</span>
-      </div>
+  <!-- Card 2 -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex justify-between items-start mb-4">
       <div>
-        <p class="text-sm text-gray-500 font-medium">Total Resources</p>
-        <p class="text-2xl font-bold text-gray-800">328</p>
+        <p class="text-sm font-medium text-gray-500">Total Views</p>
+        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalViews }}</h3>
+      </div>
+      <div class="p-2 bg-pink-50 text-pink-500 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
       </div>
     </div>
-    <p class="relative z-10 text-xs text-green-500 font-bold mt-2">↑ 5 new today</p>
-
-    <!-- Sparkline (Absolute Background) -->
-    <div class="absolute bottom-0 left-0 right-0 h-16 opacity-10 group-hover:opacity-20 transition-opacity">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <polyline
-          [attr.points]="getSparklinePath(resourcesSparkline)"
-          fill="none"
-          stroke="#EC4899"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-      </svg>
+    <div class="text-sm">
+      <span class="text-green-500 font-medium">↑ 8%</span>
+      <span class="text-gray-400 ml-1">vs last period</span>
     </div>
   </div>
 
-  <!-- Stats Card: Active Users -->
-  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 relative overflow-hidden group">
-    <div class="relative z-10 flex items-center mb-4">
-      <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
-        <span class="text-2xl">👥</span>
-      </div>
+  <!-- Card 3 -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex justify-between items-start mb-4">
       <div>
-        <p class="text-sm text-gray-500 font-medium">Active Users</p>
-        <p class="text-2xl font-bold text-gray-800">1,205</p>
+        <p class="text-sm font-medium text-gray-500">Total Users</p>
+        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalUsers }}</h3>
+      </div>
+      <div class="p-2 bg-green-50 text-green-500 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
       </div>
     </div>
-    <p class="relative z-10 text-xs text-green-500 font-bold mt-2">↑ 8% this month</p>
+    <div class="text-sm">
+      <span class="text-green-500 font-medium">↑ 24%</span>
+      <span class="text-gray-400 ml-1">vs last period</span>
+    </div>
+  </div>
 
-    <!-- Sparkline (Absolute Background) -->
-    <div class="absolute bottom-0 left-0 right-0 h-16 opacity-10 group-hover:opacity-20 transition-opacity">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <polyline
-          [attr.points]="getSparklinePath(usersSparkline)"
-          fill="none"
-          stroke="#8B5CF6"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-      </svg>
+  <!-- Card 4 -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+        <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().pendingApprovals }}</h3>
+      </div>
+      <div class="p-2 bg-purple-50 text-purple-500 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </div>
+    </div>
+    <div class="text-sm">
+      <span class="text-gray-500 font-medium">Requires Action</span>
     </div>
   </div>
 </div>
 
-<!-- Weekly Growth Charts Section -->
+<!-- 12-Month Charts Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-  <!-- Weekly Views Growth -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-sm font-bold text-gray-500 mb-4">Weekly Views Growth</h3>
-    <div class="relative h-40 w-full">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <!-- Grid Lines -->
-        <line x1="0" y1="0" x2="100" y2="0" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="100" x2="100" y2="100" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        
-        <!-- Line -->
-        <polyline
-          [attr.points]="getWeeklyChartPath(weeklyViews)"
-          fill="none"
-          stroke="#3B82F6"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-        <!-- Points -->
-        <circle *ngFor="let point of weeklyViews; let i = index"
-          [attr.cx]="(i / (weeklyViews.length - 1)) * 100"
-          [attr.cy]="90 - ((point.value - 1200) / (1800 - 1200)) * 80" 
-          r="3"
-          fill="white"
-          stroke="#3B82F6"
-          stroke-width="2"
-          vector-effect="non-scaling-stroke"
-        >
-          <title>{{ point.week }}: {{ point.value }}</title>
-        </circle>
-      </svg>
-      <!-- X-Axis Labels -->
-      <div class="absolute bottom-0 left-0 right-0 flex justify-between translate-y-4">
-        <span *ngFor="let item of weeklyViews" class="text-[10px] text-gray-400">{{ item.week }}</span>
-      </div>
-    </div>
+
+  <!-- Resources Chart -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">New Resources</h3>
+    <div echarts [options]="resourceChartOption()" class="h-[250px] w-full"></div>
   </div>
 
-  <!-- Weekly Resources Growth -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-sm font-bold text-gray-500 mb-4">Weekly Resources Growth</h3>
-    <div class="relative h-40 w-full">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <!-- Grid Lines -->
-        <line x1="0" y1="0" x2="100" y2="0" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="100" x2="100" y2="100" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-
-        <!-- Line -->
-        <polyline
-          [attr.points]="getWeeklyChartPath(weeklyResources)"
-          fill="none"
-          stroke="#EC4899"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-         <!-- Points -->
-         <circle *ngFor="let point of weeklyResources; let i = index"
-          [attr.cx]="(i / (weeklyResources.length - 1)) * 100"
-          [attr.cy]="90 - ((point.value - 300) / (328 - 300)) * 80"
-          r="3"
-          fill="white"
-          stroke="#EC4899"
-          stroke-width="2"
-          vector-effect="non-scaling-stroke"
-        >
-          <title>{{ point.week }}: {{ point.value }}</title>
-        </circle>
-      </svg>
-      <!-- X-Axis Labels -->
-      <div class="absolute bottom-0 left-0 right-0 flex justify-between translate-y-4">
-        <span *ngFor="let item of weeklyResources" class="text-[10px] text-gray-400">{{ item.week }}</span>
-      </div>
-    </div>
+  <!-- Views Chart -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Total Views</h3>
+    <div echarts [options]="viewChartOption()" class="h-[250px] w-full"></div>
   </div>
 
-  <!-- Weekly Active Users Growth -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-sm font-bold text-gray-500 mb-4">Weekly Active Users Growth</h3>
-    <div class="relative h-40 w-full">
-      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <!-- Grid Lines -->
-        <line x1="0" y1="0" x2="100" y2="0" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-        <line x1="0" y1="100" x2="100" y2="100" stroke="#f3f4f6" stroke-width="1" vector-effect="non-scaling-stroke" />
-
-        <!-- Line -->
-        <polyline
-          [attr.points]="getWeeklyChartPath(weeklyUsers)"
-          fill="none"
-          stroke="#8B5CF6"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
-         <!-- Points -->
-         <circle *ngFor="let point of weeklyUsers; let i = index"
-          [attr.cx]="(i / (weeklyUsers.length - 1)) * 100"
-          [attr.cy]="90 - ((point.value - 800) / (1205 - 800)) * 80"
-          r="3"
-          fill="white"
-          stroke="#8B5CF6"
-          stroke-width="2"
-          vector-effect="non-scaling-stroke"
-        >
-          <title>{{ point.week }}: {{ point.value }}</title>
-        </circle>
-      </svg>
-      <!-- X-Axis Labels -->
-      <div class="absolute bottom-0 left-0 right-0 flex justify-between translate-y-4">
-        <span *ngFor="let item of weeklyUsers" class="text-[10px] text-gray-400">{{ item.week }}</span>
-      </div>
-    </div>
+  <!-- Users Chart -->
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">New Users</h3>
+    <div echarts [options]="userChartOption()" class="h-[250px] w-full"></div>
   </div>
+
 </div>
 
-<!-- Charts Section -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-  <!-- Bar Chart: Resources by Category -->
-  <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-6">Resources by Category</h3>
-    
-    <div class="flex items-end justify-between h-64 gap-2 sm:gap-4">
-      <div *ngFor="let item of chartData" class="flex flex-col items-center flex-1 group">
-        <div class="relative w-full flex justify-center items-end h-full bg-gray-50 rounded-t-lg overflow-hidden">
-           <!-- Tooltip -->
-           <div class="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 mb-2 whitespace-nowrap z-10">
-            {{ item.value }} Resources
-          </div>
-          
-          <!-- Bar -->
-          <div 
-            [class]="'w-full mx-1 sm:mx-2 rounded-t-lg transition-all duration-500 ease-out ' + item.color"
-            [style.height.%]="(item.value / getMaxValue()) * 100"
-          ></div>
-        </div>
-        <p class="mt-3 text-xs sm:text-sm font-medium text-gray-600 truncate w-full text-center">{{ item.label }}</p>
-      </div>
+<!-- Bottom Section: Recent Uploads & System Health -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+  <!-- Left: Recent Pending Resources (2/3 width) -->
+  <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-800">Recent Pending Resources</h3>
+      <a href="#" class="text-blue-500 text-sm font-medium hover:underline">View All</a>
     </div>
+
+    @if (pendingResources().length > 0) {
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wider">
+            <th class="py-3 font-medium">Resource</th>
+            <th class="py-3 font-medium">Uploader</th>
+            <th class="py-3 font-medium">Date</th>
+            <th class="py-3 font-medium text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          @for (resource of pendingResources(); track resource.id) {
+          <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+            <td class="py-4">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-lg">{{ resource.thumbnail
+                  }}</span>
+                <span class="font-medium text-gray-800">{{ resource.title }}</span>
+              </div>
+            </td>
+            <td class="py-4 text-gray-600">{{ resource.uploader }}</td>
+            <td class="py-4 text-gray-500">{{ resource.date }}</td>
+            <td class="py-4 text-right">
+              <div class="flex justify-end gap-2">
+                <button (click)="approveResource(resource.id)"
+                  class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors"
+                  title="Approve">
+                  ✓
+                </button>
+                <button (click)="rejectResource(resource.id)"
+                  class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                  title="Reject">
+                  ✕
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    } @else {
+    <div class="flex-1 flex flex-col items-center justify-center text-gray-400 py-10">
+      <p class="text-4xl mb-3 grayscale opacity-30">✅</p>
+      <p>No pending resources.</p>
+    </div>
+    }
   </div>
 
-  <!-- Quick Actions & System Status (Moved here for better layout) -->
+  <!-- Right: System Health (1/3 width) -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-    <div class="space-y-3">
-      <button class="w-full py-3 px-4 bg-blue-50 text-primary-blue rounded-lg font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
-        <span>➕</span> Add New Resource
-      </button>
-      <button class="w-full py-3 px-4 bg-pink-50 text-primary-pink rounded-lg font-medium hover:bg-pink-100 transition-colors flex items-center justify-center gap-2">
-        <span>📢</span> Create Banner
-      </button>
-      <button class="w-full py-3 px-4 bg-purple-50 text-purple-600 rounded-lg font-medium hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
-        <span>👤</span> Manage Users
-      </button>
-    </div>
+    <h3 class="text-lg font-bold text-gray-800 mb-6">System Health</h3>
 
-    <h3 class="text-lg font-bold text-gray-800 mt-8 mb-4">System Status</h3>
-    <div class="flex items-center justify-between py-2 border-b border-gray-50">
-      <span class="text-gray-600">Server</span>
-      <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full font-bold">Online</span>
-    </div>
-    <div class="flex items-center justify-between py-2 border-b border-gray-50">
-      <span class="text-gray-600">Database</span>
-      <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full font-bold">Connected</span>
-    </div>
-    <div class="flex items-center justify-between py-2">
-      <span class="text-gray-600">Storage</span>
-      <span class="text-sm font-bold text-gray-800">45% Used</span>
-    </div>
-  </div>
-
-  <!-- Line Chart: Views Growth -->
-  <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-6">Views Growth (Last 6 Months)</h3>
-    <div class="relative h-64 w-full">
-      <!-- Grid Lines -->
-      <div class="absolute inset-0 flex flex-col justify-between text-xs text-gray-400">
-        <div class="border-b border-gray-100 w-full h-0"></div>
-        <div class="border-b border-gray-100 w-full h-0"></div>
-        <div class="border-b border-gray-100 w-full h-0"></div>
-        <div class="border-b border-gray-100 w-full h-0"></div>
-        <div class="border-b border-gray-100 w-full h-0"></div>
-      </div>
-
-      <!-- SVG Line -->
-      <svg class="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <!-- Gradient Definition -->
-        <defs>
-          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:rgb(59, 130, 246);stop-opacity:0.2" />
-            <stop offset="100%" style="stop-color:rgb(59, 130, 246);stop-opacity:0" />
-          </linearGradient>
-        </defs>
-        
-        <!-- Area under line -->
-        <path
-          [attr.d]="'M0,100 ' + getLineChartPath() + ' 100,100 Z'"
-          fill="url(#lineGradient)"
-          class="transition-all duration-1000 ease-in-out"
-        />
-        
-        <!-- The Line -->
-        <polyline
-          [attr.points]="getLineChartPath()"
-          fill="none"
-          stroke="#3B82F6"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-          class="drop-shadow-md transition-all duration-1000 ease-in-out"
-        />
-
-        <!-- Points -->
-         <circle *ngFor="let point of lineChartData; let i = index"
-          [attr.cx]="(i / (lineChartData.length - 1)) * 100"
-          [attr.cy]="100 - (point.value / 3500) * 100"
-          r="1.5"
-          fill="white"
-          stroke="#3B82F6"
-          stroke-width="1"
-          vector-effect="non-scaling-stroke"
-          class="hover:r-2 transition-all cursor-pointer"
-        >
-          <title>{{ point.month }}: {{ point.value }}</title>
-        </circle>
-      </svg>
-      
-      <!-- X-Axis Labels -->
-      <div class="absolute bottom-0 left-0 right-0 flex justify-between translate-y-6">
-        <span *ngFor="let item of lineChartData" class="text-xs text-gray-500">{{ item.month }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- User Activity Chart (Grouped Bar) -->
-  <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-6">User Activity (New vs Active)</h3>
-    <div class="flex items-end justify-between h-64 gap-4">
-      <div *ngFor="let item of userActivityData" class="flex flex-col items-center flex-1 h-full justify-end">
-        <div class="flex gap-1 w-full justify-center items-end h-full">
-          <!-- New Users Bar -->
-          <div 
-            class="w-3 sm:w-6 bg-green-400 rounded-t-sm transition-all duration-500 ease-out hover:bg-green-500 relative group"
-            [style.height.%]="(item.new / getMaxActivityValue()) * 100"
-          >
-             <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-              {{ item.new }} New
-            </div>
+    <div class="space-y-6">
+      <!-- Server Status -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-gray-100 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gray-600">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
           </div>
-          <!-- Active Users Bar -->
-          <div 
-            class="w-3 sm:w-6 bg-purple-400 rounded-t-sm transition-all duration-500 ease-out hover:bg-purple-500 relative group"
-            [style.height.%]="(item.active / getMaxActivityValue()) * 100"
-          >
-            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-              {{ item.active }} Active
-            </div>
+          <div>
+            <p class="text-sm font-bold text-gray-800">Server Status</p>
+            <p class="text-xs text-gray-500">Uptime: 24 days</p>
           </div>
         </div>
-        <p class="mt-3 text-xs text-gray-500 font-medium">{{ item.day }}</p>
+        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">ONLINE</span>
       </div>
-    </div>
-    <div class="flex justify-center gap-6 mt-6">
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 bg-green-400 rounded-sm"></div>
-        <span class="text-sm text-gray-600">New Users</span>
+
+      <!-- Database -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-gray-100 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gray-600">
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-800">Database</p>
+            <p class="text-xs text-gray-500">MySQL 8.0</p>
+          </div>
+        </div>
+        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">CONNECTED</span>
       </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 bg-purple-400 rounded-sm"></div>
-        <span class="text-sm text-gray-600">Active Users</span>
+
+      <!-- Storage Usage -->
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <p class="text-sm font-medium text-gray-600">Storage Usage</p>
+          <span class="text-xs font-bold text-gray-800">45%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2">
+          <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-1">450GB / 1TB Used</p>
+      </div>
+
+      <!-- CPU Load -->
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <p class="text-sm font-medium text-gray-600">CPU Load</p>
+          <span class="text-xs font-bold text-gray-800">12%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2">
+          <div class="bg-purple-500 h-2 rounded-full" style="width: 12%"></div>
+        </div>
       </div>
     </div>
   </div>
