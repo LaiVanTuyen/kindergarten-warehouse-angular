@@ -6,24 +6,29 @@ export interface Resource {
   date: string;
   url?: string;
   status: 'pending' | 'approved' | 'rejected';
+  type: 'VIDEO' | 'DOCUMENT';
+  viewsCount: number;
 }
 
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
+  id: string;
+  username: string;
+  role: 'ADMIN' | 'TEACHER' | 'USER';
+  status: 'ACTIVE' | 'BLOCKED';
+  avatarUrl: string;
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
+  slug: string;
+  icon: string;
 }
 
 export interface Topic {
-  id: number;
-  name: string;
-  categoryId: number;
+  id: string;
+  title: string;
+  categoryId: string;
 }
 
 export interface Stats {

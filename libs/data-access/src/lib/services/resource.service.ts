@@ -14,6 +14,8 @@ export class ResourceService {
       date: '2023-10-25',
       thumbnail: '🅰️',
       status: 'pending',
+      type: 'VIDEO',
+      viewsCount: 120,
     },
     {
       id: 2,
@@ -22,6 +24,8 @@ export class ResourceService {
       date: '2023-10-24',
       thumbnail: '🔢',
       status: 'pending',
+      type: 'DOCUMENT',
+      viewsCount: 45,
     },
     {
       id: 3,
@@ -30,6 +34,8 @@ export class ResourceService {
       date: '2023-10-23',
       thumbnail: '🎨',
       status: 'approved',
+      type: 'VIDEO',
+      viewsCount: 300,
     },
     {
       id: 4,
@@ -38,6 +44,8 @@ export class ResourceService {
       date: '2023-10-22',
       thumbnail: '🧪',
       status: 'rejected',
+      type: 'DOCUMENT',
+      viewsCount: 20,
     },
     {
       id: 5,
@@ -46,10 +54,12 @@ export class ResourceService {
       date: '2023-10-21',
       thumbnail: '📖',
       status: 'approved',
+      type: 'VIDEO',
+      viewsCount: 150,
     },
   ];
 
-  constructor() {}
+
 
   getResources(): Observable<Resource[]> {
     return of(this.mockResources);

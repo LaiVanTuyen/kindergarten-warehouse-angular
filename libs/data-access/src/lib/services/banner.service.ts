@@ -27,7 +27,7 @@ export class BannerService {
     },
   ];
 
-  constructor() {}
+
 
   getBanners(): Observable<Banner[]> {
     return of(this.mockBanners);
@@ -69,5 +69,9 @@ export class BannerService {
     const initialLength = this.mockBanners.length;
     this.mockBanners = this.mockBanners.filter((b) => b.id !== id);
     return of(this.mockBanners.length < initialLength);
+  }
+  updateReorderedBanners(banners: Banner[]): Observable<boolean> {
+    this.mockBanners = banners;
+    return of(true);
   }
 }
