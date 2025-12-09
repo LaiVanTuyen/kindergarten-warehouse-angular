@@ -87,26 +87,110 @@ export class AuthService {
   providedIn: 'root',
 })
 export class CategoryService {
-  getCategories(): Observable<Category[]> {
-    return of([
-      { id: 'c1', name: 'Arts & Crafts', slug: 'arts-crafts', icon: '🎨' },
-      { id: 'c2', name: 'Story Time', slug: 'story-time', icon: '📚' },
-      { id: 'c3', name: 'Math Puzzles', slug: 'math-puzzles', icon: '🧩' },
-      { id: 'c4', name: 'Music & Dance', slug: 'music-dance', icon: '🎵' },
-    ]);
+  private mockCategories: Category[] = [
+    { id: 'c1', name: 'Arts & Crafts', slug: 'arts-crafts', icon: '🎨' },
+    { id: 'c2', name: 'Story Time', slug: 'story-time', icon: '📚' },
+    { id: 'c3', name: 'Math Puzzles', slug: 'math-puzzles', icon: '🧩' },
+    { id: 'c4', name: 'Music & Dance', slug: 'music-dance', icon: '🎵' },
+  ];
+
+  private mockTopics: Topic[] = [
+    { id: 't1', title: 'Alphabet', categoryId: 'c1' },
+    { id: 't2', title: 'Vocabulary', categoryId: 'c1' },
+    { id: 't3', title: 'Numbers', categoryId: 'c2' },
+    { id: 't4', title: 'Shapes', categoryId: 'c2' },
+  ];
+
+  // Categories CRUD
+  getCategories(page = 1, limit = 10, search?: string): Observable<{ data: Category[]; total: number }> {
+    let filtered = this.mockCategories;
+
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      filtered = filtered.filter(c => c.name.toLowerCase().includes(lowerSearch));
+    }
+
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginated = filtered.slice(start, end);
+    return of({
+      data: paginated,
+      total: filtered.length,
+    });
   }
 
-  getTopics(categoryId?: string): Observable<Topic[]> {
-    const topics: Topic[] = [
-      { id: 't1', title: 'Alphabet', categoryId: 'c1' },
-      { id: 't2', title: 'Vocabulary', categoryId: 'c1' },
-      { id: 't3', title: 'Numbers', categoryId: 'c2' },
-      { id: 't4', title: 'Shapes', categoryId: 'c2' },
-    ];
+  createCategory(category: Partial<Category>): Observable<Category> {
+    const newCategory: Category = {
+      id: `c${Date.now()}`,
+      name: category.name || '',
+      slug:
+        category.slug ||
+        category.name?.toLowerCase().replace(/\s+/g, '-') ||
+        '',
+      icon: category.icon || '📁',
+    };
+    this.mockCategories = [...this.mockCategories, newCategory];
+    return of(newCategory);
+  }
 
+  updateCategory(id: string, updates: Partial<Category>): Observable<Category> {
+    this.mockCategories = this.mockCategories.map((c) =>
+      c.id === id ? { ...c, ...updates } : c
+    );
+    const updated = this.mockCategories.find((c) => c.id === id)!;
+    return of(updated);
+  }
+
+  deleteCategory(id: string): Observable<boolean> {
+    this.mockCategories = this.mockCategories.filter((c) => c.id !== id);
+    // Also cleanup related topics
+    this.mockTopics = this.mockTopics.filter((t) => t.categoryId !== id);
+    return of(true);
+  }
+
+  // Topics CRUD
+  getTopics(categoryId?: string, page = 1, limit = 10, search?: string): Observable<{ data: Topic[]; total: number }> {
+    let filtered = this.mockTopics;
+    
     if (categoryId) {
-      return of(topics.filter((t) => t.categoryId === categoryId));
+      filtered = filtered.filter((t) => t.categoryId === categoryId);
     }
-    return of(topics);
+    
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      filtered = filtered.filter(t => t.title.toLowerCase().includes(lowerSearch));
+    }
+    
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginated = filtered.slice(start, end);
+    
+    return of({
+      data: paginated,
+      total: filtered.length,
+    });
+  }
+
+  createTopic(topic: Partial<Topic>): Observable<Topic> {
+    const newTopic: Topic = {
+      id: `t${Date.now()}`,
+      title: topic.title || '',
+      categoryId: topic.categoryId || '',
+    };
+    this.mockTopics = [...this.mockTopics, newTopic];
+    return of(newTopic);
+  }
+
+  updateTopic(id: string, updates: Partial<Topic>): Observable<Topic> {
+    this.mockTopics = this.mockTopics.map((t) =>
+      t.id === id ? { ...t, ...updates } : t
+    );
+    const updated = this.mockTopics.find((t) => t.id === id)!;
+    return of(updated);
+  }
+
+  deleteTopic(id: string): Observable<boolean> {
+    this.mockTopics = this.mockTopics.filter((t) => t.id !== id);
+    return of(true);
   }
 }
