@@ -7,7 +7,15 @@ import { switchMap } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../pipes/translate.pipe';
-import { AuthService, Comment } from '@kindergarten-warehouse/data-access';
+import {
+  AuthService,
+  Comment,
+  TranslationService,
+} from '@kindergarten-warehouse/data-access';
+import { registerLocaleData } from '@angular/common';
+import localeVi from '@angular/common/locales/vi';
+
+registerLocaleData(localeVi);
 
 @Component({
   selector: 'app-resource-detail',
@@ -21,6 +29,7 @@ export class ResourceDetailComponent {
   private resourceService = inject(ResourceService);
   private sanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
+  public translationService = inject(TranslationService);
 
   newCommentContent = '';
   newCommentRating = 5;
@@ -32,11 +41,13 @@ export class ResourceDetailComponent {
     })
   );
 
-  isYouTube(url: string): boolean {
+  isYouTube(url: string | undefined): boolean {
+    if (!url) return false;
     return url.includes('youtube.com') || url.includes('youtu.be');
   }
 
-  getSafeVideoUrl(url: string): SafeResourceUrl {
+  getSafeVideoUrl(url: string | undefined): SafeResourceUrl {
+    if (!url) return '';
     if (this.isYouTube(url)) {
       // Extract video ID and create embed URL
       let videoId = '';
@@ -52,14 +63,16 @@ export class ResourceDetailComponent {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
-  getSafeDocUrl(url: string): SafeResourceUrl {
+  getSafeDocUrl(url: string | undefined): SafeResourceUrl {
+    if (!url) return '';
     const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(
       url
     )}&embedded=true`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
   }
 
-  downloadResource(url: string) {
+  downloadResource(url: string | undefined) {
+    if (!url) return;
     window.open(url, '_blank');
   }
 
@@ -80,7 +93,7 @@ export class ResourceDetailComponent {
       content: this.newCommentContent,
       date: new Date(),
       rating: this.newCommentRating,
-      avatarUrl: user?.avatarUrl
+      avatarUrl: user?.avatarUrl,
     };
 
     // In a real app, call service to save comment.
@@ -89,7 +102,7 @@ export class ResourceDetailComponent {
       resource.comments = [];
     }
     resource.comments.unshift(newComment);
-    
+
     // Reset form
     this.newCommentContent = '';
     this.newCommentRating = 5;

@@ -9,17 +9,12 @@ import {
 } from '@kindergarten-warehouse/data-access';
 import { combineLatest, BehaviorSubject, map, switchMap } from 'rxjs';
 
-
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-resource-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    TranslatePipe,
-  ],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './resource-list.component.html',
   styles: [],
 })
@@ -53,25 +48,27 @@ export class ResourceListComponent {
     switchMap(([categoryId, search, sort]) => {
       // Reset to page 1 when filters change
       this.currentPage$.next(1);
-      return this.resourceService.getResources({ categoryId, search }).pipe(
-        map(resources => {
+      return this.resourceService.getResources(1, 1000).pipe(
+        map((res) => res.data),
+        map((resources) => {
           // 1. Filter by Category
           let filtered = resources;
           if (categoryId) {
-             // Note: The mock data uses 'topicId' but the interface has 'topicId'. 
-             // The categories component uses 'id' which maps to 'topicId' in resources?
-             // Let's assume categoryId maps to topicId for now based on previous context or just check both.
-             // Actually, looking at mock data, it has 'topicId'. 
-             // Let's assume for now we just filter if it matches.
-             filtered = filtered.filter(r => r.topicId === categoryId);
+            // Note: The mock data uses 'topicId' but the interface has 'topicId'.
+            // The categories component uses 'id' which maps to 'topicId' in resources?
+            // Let's assume categoryId maps to topicId for now based on previous context or just check both.
+            // Actually, looking at mock data, it has 'topicId'.
+            // Let's assume for now we just filter if it matches.
+            filtered = filtered.filter((r) => r.topicId === categoryId);
           }
 
           // 2. Filter by Search
           if (search) {
             const lowerSearch = search.toLowerCase();
-            filtered = filtered.filter(r => 
-              r.title.toLowerCase().includes(lowerSearch) || 
-              r.description?.toLowerCase().includes(lowerSearch)
+            filtered = filtered.filter(
+              (r) =>
+                r.title.toLowerCase().includes(lowerSearch) ||
+                r.description?.toLowerCase().includes(lowerSearch)
             );
           }
 
@@ -86,8 +83,12 @@ export class ResourceListComponent {
                 return (b.rating || 0) - (a.rating || 0);
               case 'rating-asc':
                 return (a.rating || 0) - (b.rating || 0);
-              default: // 'newest' or others
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+              default: {
+                // 'newest' or others
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+              }
             }
           });
         })

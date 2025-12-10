@@ -1,180 +1,456 @@
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Upload Area -->
-  <div class="lg:col-span-1">
-    <div
-      class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6"
-    >
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">
-        Upload Resource
-      </h3>
+<div class="h-full flex flex-col">
 
-      <div
-        class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer mb-4"
-      >
-        <div class="text-4xl mb-2">☁️</div>
-        <p class="text-sm text-gray-600 font-medium">
-          Click to upload or drag & drop
-        </p>
-        <p class="text-xs text-gray-400 mt-1">
-          PDF, Word, Excel, Video (Max 50MB)
-        </p>
-      </div>
+  <!-- Detached Dark Banner -->
+  <div
+    class="bg-slate-800 p-8 rounded-3xl text-white shadow-xl mb-6 flex justify-between items-center relative overflow-hidden">
+    <!-- Decorative -->
+    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
-      <form class="space-y-4">
-        <div>
-          <label
-            for="res-title"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Title</label
-          >
-          <input
-            id="res-title"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            placeholder="e.g. Alphabet Song"
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              for="res-category"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Category</label
-            >
-            <select
-              id="res-category"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            >
-              <option>Language</option>
-            </select>
-          </div>
-          <div>
-            <label
-              for="res-topic"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Topic</label
-            >
-            <select
-              id="res-topic"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            >
-              <option>Songs</option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          class="w-full bg-admin-navy text-white font-bold py-3 rounded-md hover:opacity-90 transition-opacity"
-        >
-          Save Resource
-        </button>
-      </form>
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">Resource Management</h1>
+      <p class="text-slate-400 mt-1.5 text-base">Curate, approve, and manage educational content.</p>
     </div>
   </div>
 
-  <!-- Resource List -->
-  <div class="lg:col-span-2">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div
-        class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
-      >
-        <h3 class="text-lg font-semibold text-gray-800">
-          Resources Library
-        </h3>
-        <div class="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            class="pl-8 pr-4 py-1.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:border-primary-blue"
-          />
-          <span class="absolute left-2.5 top-2 text-gray-400 text-xs"
-            >🔍</span
-          >
+  <!-- Toolbar Section -->
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+
+    <!-- Left: Tabs -->
+    <div class="flex space-x-1 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 w-full sm:w-auto">
+      <button (click)="setActiveTab('pending')" class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+        [ngClass]="activeTab() === 'pending' ? 'bg-slate-100 text-slate-800 ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        Pending Review
+      </button>
+      <button (click)="setActiveTab('list')" class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+        [ngClass]="activeTab() === 'list' ? 'bg-slate-100 text-slate-800 ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        All Repository
+      </button>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <!-- Search -->
+      <div class="relative w-full sm:w-72">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
         </div>
+        <input [formControl]="searchControl" type="text" placeholder="Search resources..."
+          class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm" />
+        <button *ngIf="searchControl.value" (click)="searchControl.setValue('')"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none focus:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
-            <tr>
-              <th class="px-4 py-3">Resource</th>
-              <th class="px-4 py-3">Type</th>
-              <th class="px-4 py-3">Category</th>
-              <th class="px-4 py-3 text-center">Views</th>
-              <th class="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="text-gray-700 text-sm">
-            <tr
-              *ngFor="let res of resources$ | async"
-              class="border-b border-gray-100 hover:bg-gray-50 group"
-            >
-              <td class="px-4 py-4">
-                <div class="flex items-center">
-                  <div
-                    class="h-10 w-10 bg-gray-100 rounded-md flex-shrink-0 mr-3 flex items-center justify-center text-lg"
-                  >
-                    {{ res.type === 'VIDEO' ? '🎬' : '📄' }}
-                  </div>
-                  <div>
-                    <div
-                      class="font-medium text-gray-900 group-hover:text-primary-blue"
-                    >
-                      {{ res.title }}
-                    </div>
-                    <div class="text-xs text-gray-500">
-                      Added: 2024-03-20
-                    </div>
+      <!-- New Resource Button -->
+      <button (click)="openUploadModal()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95">
+        <span class="text-lg leading-none">+</span> New Resource
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Card -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+    <div class="overflow-x-auto flex-1">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50/50 text-gray-500 text-xs uppercase font-bold sticky top-0 z-10 backdrop-blur-sm">
+          <tr class="border-b border-gray-100">
+            <th class="px-8 py-5 pl-8 w-1/3">Resource</th>
+            <th class="px-6 py-5">Status</th>
+            <th class="px-6 py-5">Category</th>
+            <th class="px-6 py-5">Type</th>
+            <th class="px-6 py-5 text-center">Views</th>
+            <th class="px-6 py-5 text-right pr-8">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
+          <tr *ngFor="let res of resources()" class="hover:bg-slate-50/80 transition-all group">
+            <!-- Resource Info -->
+            <td class="px-8 py-4 pl-8">
+              <div class="flex items-center">
+                <div
+                  class="h-12 w-12 bg-white rounded-xl flex-shrink-0 mr-4 flex items-center justify-center text-2xl shadow-sm border border-gray-100 group-hover:border-blue-200 group-hover:shadow-md transition-all">
+                  {{ res.thumbnail }}
+                </div>
+                <div>
+                  <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 text-[15px]">{{
+                    res.title }}</div>
+                  <div class="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
+                    <span class="bg-gray-100 px-1.5 rounded text-[10px]">{{ res.date | date:'MMM d' }}</span>
+                    <span class="text-gray-300">•</span>
+                    <span>{{ res.uploader }}</span>
                   </div>
                 </div>
-              </td>
-              <td class="px-4 py-4">
-                <span
-                  class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600"
-                  >{{ res.type }}</span
-                >
-              </td>
-              <td class="px-4 py-4 text-gray-500">Language</td>
-              <td class="px-4 py-4 text-center font-medium">
-                {{ res.viewsCount }}
-              </td>
-              <td class="px-4 py-4 text-right">
-                <button
-                  class="text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </td>
 
-      <!-- Pagination Mock -->
-      <div
-        class="px-6 py-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500"
-      >
-        <span>Showing 1-10 of 324</span>
-        <div class="flex space-x-1">
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            Prev
+            <!-- Status -->
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
+                [ngClass]="{
+                  'bg-amber-50 text-amber-700 border-amber-100': res.status === 'pending',
+                  'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'approved',
+                  'bg-rose-50 text-rose-700 border-rose-100': res.status === 'rejected'
+                }">
+                {{ res.status }}
+              </span>
+            </td>
+
+            <!-- Category -->
+            <td class="px-6 py-4">
+              <span
+                class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 group-hover:border-blue-200 transition-colors">{{
+                getCategoryName(res.topicId) }}</span>
+            </td>
+
+            <!-- Type -->
+            <td class="px-6 py-4">
+              <span class="text-xs font-bold text-gray-400 tracking-wide">{{ res.type }}</span>
+            </td>
+
+            <!-- Views -->
+            <td class="px-6 py-4 text-center font-bold text-gray-700">{{ res.viewsCount }}</td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4 text-right pr-8">
+              <div class="flex justify-end gap-2 text-gray-400">
+
+                <!-- PENDING TAB ACTIONS -->
+                <ng-container *ngIf="activeTab() === 'pending'">
+                  <!-- Preview -->
+                  <button (click)="openPreview(res)" title="Preview"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                  <!-- Approve -->
+                  <button (click)="approveResource(res.id)" title="Approve"
+                    class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </button>
+                  <!-- Reject -->
+                  <button (click)="rejectResource(res.id)" title="Reject"
+                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </ng-container>
+
+                <!-- REPOSITORY TAB ACTIONS -->
+                <ng-container *ngIf="activeTab() === 'list'">
+                  <!-- Preview -->
+                  <button (click)="openPreview(res)" title="Preview"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                  <!-- Edit -->
+                  <button (click)="editResource(res)" title="Edit"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  <!-- Delete -->
+                  <button (click)="confirmDelete(res.id)" title="Delete"
+                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
+                  </button>
+                </ng-container>
+
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="resources().length === 0">
+            <td colspan="6" class="py-20 text-center">
+              <div class="flex flex-col items-center justify-center text-gray-300">
+                <div class="text-6xl mb-4 opacity-50">📁</div>
+                <p class="text-lg font-medium text-gray-400">No resources found.</p>
+                <p class="text-sm mt-1 text-gray-400/70">Try adjusting your search or filters.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="px-6 py-4 border-t border-gray-100 mt-auto flex justify-between items-center text-sm text-gray-500 bg-gray-50/50">
+      <span>Showing {{ (currentPage() - 1) * pageSize() + 1 }}-{{ Math.min(currentPage() * pageSize(), totalResources())
+        }} of {{ totalResources() }}</span>
+      <div class="flex space-x-2">
+        <button [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)"
+          class="px-4 py-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-50 transition-colors shadow-sm bg-white font-medium">Previous</button>
+        <button class="px-4 py-2 border border-slate-800 rounded-xl bg-slate-800 text-white shadow-md font-bold">{{
+          currentPage() }}</button>
+        <button [disabled]="currentPage() * pageSize() >= totalResources()" (click)="onPageChange(currentPage() + 1)"
+          class="px-4 py-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-50 transition-colors shadow-sm bg-white font-medium">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD / EDIT MODAL -->
+<div *ngIf="isUploadModalOpen()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col border border-white/10 ring-1 ring-black/5">
+    <div
+      class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+      <div>
+        <h3 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Edit Resource' : 'Upload New
+          Resource' }}</h3>
+        <p class="text-xs text-gray-500 mt-1.5 font-medium">Fill in the details below.</p>
+      </div>
+      <button (click)="closeUploadModal()"
+        class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-8 pt-6">
+      <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-6">
+
+        <!-- File Upload Area (Hidden in Edit Mode) -->
+        <div *ngIf="!isEditMode()" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0"
+          class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+          <div
+            class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
+            ☁️</div>
+          <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Click to upload or drag & drop</p>
+          <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Max 50MB)</p>
+        </div>
+
+        <!-- Edit Mode Notice -->
+        <div *ngIf="isEditMode()" class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
+          <div class="text-blue-500 mt-0.5 text-lg">ℹ️</div>
+          <div>
+            <h4 class="text-sm font-bold text-blue-900">Restricted Edit Mode</h4>
+            <p class="text-sm text-blue-700 mt-1 font-medium">You are editing resource metadata. To change the file,
+              please delete and re-upload.</p>
+          </div>
+        </div>
+
+        <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,video/*" [disabled]="isEditMode()">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2 group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Title
+              <span class="text-rose-500">*</span></label>
+            <input type="text" formControlName="title" placeholder="e.g. The Alphabet Song"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
+          </div>
+
+          <div class="md:col-span-2 group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Description</label>
+            <textarea formControlName="description" rows="3" placeholder="Brief description of the content..."
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white resize-none text-gray-900 font-medium"></textarea>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Category
+              <span class="text-rose-500">*</span></label>
+            <select formControlName="categoryId"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="">Select Category</option>
+              <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Topic
+              <span class="text-rose-500">*</span></label>
+            <select formControlName="topicId"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="">Select Topic</option>
+              <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.title }}</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Resource
+              Type</label>
+            <select formControlName="type"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="VIDEO">Video</option>
+              <option value="DOCUMENT">Document</option>
+              <option value="PDF">PDF</option>
+              <option value="EXCEL">Excel</option>
+              <option value="WORD">Word</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-8 flex gap-4">
+          <button type="button" (click)="closeUploadModal()"
+            class="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-colors">
+            Cancel
           </button>
-          <button
-            class="px-3 py-1 border rounded bg-primary-pink text-white border-primary-pink"
-          >
-            1
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            2
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            3
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            Next
+          <button type="submit" [disabled]="uploadForm.invalid"
+            class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-200 active:scale-95 transition-all">
+            {{ isEditMode() ? 'Update Changes' : 'Upload Resource' }}
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div *ngIf="deleteModalOpen()"
+  class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5">
+    <div
+      class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-rose-50 mb-6 border-4 border-white shadow-lg">
+      <svg class="h-10 w-10 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">Delete Resource?</h3>
+    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2">Are you sure you want to delete this resource?<br /><span
+        class="text-rose-500 font-bold mt-1 block">This action cannot be undone.</span></p>
+    <div class="flex justify-center gap-3">
+      <button (click)="cancelDelete()"
+        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">Cancel</button>
+      <button (click)="deleteResource()"
+        class="flex-1 px-4 py-3.5 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all">Yes,
+        Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div *ngIf="previewResource()"
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl transition-opacity">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/80 backdrop-blur-md">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900 line-clamp-1 pr-4">{{ previewResource()?.title }}</h3>
+        <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">Preview Mode</p>
+      </div>
+      <button (click)="closePreview()"
+        class="text-gray-400 hover:text-gray-700 transition-colors p-2 hover:bg-gray-200 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-1 bg-neutral-950 relative flex items-center justify-center min-h-[500px]">
+
+      <!-- Spinner -->
+      <div *ngIf="isLoading()"
+        class="absolute inset-0 flex items-center justify-center z-10 bg-neutral-950/80 backdrop-blur-sm">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+
+      <!-- Viewer Switch -->
+      <ng-container [ngSwitch]="previewType">
+
+        <!-- VIDEO -->
+        <video *ngSwitchCase="'VIDEO'" controls class="max-h-[75vh] w-full bg-black shadow-2xl" (loadeddata)="onLoad()">
+          <source [src]="previewUrl" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+
+        <!-- AUDIO -->
+        <div *ngSwitchCase="'AUDIO'"
+          class="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-12">
+          <div class="text-6xl mb-6 opacity-80">🎵</div>
+          <audio controls class="w-full max-w-xl scale-110 shadow-xl rounded-full" (loadeddata)="onLoad()">
+            <source [src]="previewUrl" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+
+        <!-- IMAGE -->
+        <img *ngSwitchCase="'IMAGE'" [src]="previewUrl" alt="Preview"
+          class="max-h-[75vh] max-w-full object-contain shadow-2xl" (load)="onLoad()">
+
+        <!-- DOCUMENTS (Google Viewer) -->
+        <iframe *ngSwitchCase="'DOC'" [src]="previewUrl" class="w-full h-[75vh] border-0 bg-white"
+          (load)="onLoad()"></iframe>
+
+        <!-- UNSUPPORTED -->
+        <div *ngSwitchDefault class="text-center p-12 text-white/50">
+          <div class="text-8xl mb-6 opacity-30">📦</div>
+          <h4 class="text-2xl font-bold mb-3 text-white">Preview Not Available</h4>
+          <p class="text-gray-400 mb-8 max-w-md mx-auto">This file type/url format cannot be previewed directly in the
+            browser.</p>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">👤</span>
+        <span class="text-xs text-gray-500 font-bold">Uploaded by {{ previewResource()?.uploader }}</span>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="closePreview()"
+          class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm">
+          Close Preview
+        </button>
+        <a [href]="previewResource()?.url" target="_blank" download
+          class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Original
+        </a>
       </div>
     </div>
   </div>

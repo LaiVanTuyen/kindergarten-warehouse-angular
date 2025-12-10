@@ -1,41 +1,22 @@
-<header
-  class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 font-sans sticky top-0 z-50"
->
-  <div
-    class="container mx-auto px-4 py-3 flex items-center justify-between"
-  >
+<header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 font-sans sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
     <!-- Left Section: Logo + Nav -->
     <div class="flex items-center gap-12">
       <!-- Logo -->
-      <div
-        class="flex items-center cursor-pointer select-none transistion-transform hover:scale-105 active:scale-95"
-        routerLink="/"
-      >
-        <span class="text-2xl font-black text-primary-pink tracking-tight"
-          >Kinder</span
-        >
-        <span class="text-2xl font-black text-primary-blue tracking-tight"
-          >World</span
-        >
+      <div class="flex items-center cursor-pointer select-none transistion-transform hover:scale-105 active:scale-95"
+        routerLink="/">
+        <span class="text-2xl font-black text-primary-pink tracking-tight">Kinder</span>
+        <span class="text-2xl font-black text-primary-blue tracking-tight">World</span>
       </div>
 
       <!-- Navigation -->
-      <nav
-        class="hidden md:flex items-center gap-8 text-sm font-bold text-gray-500"
-      >
-        <a
-          routerLink="/"
-          class="text-gray-900 hover:text-primary-pink transition-colors"
-          >{{ 'header.home' | translate }}</a
-        >
-        <a
-          routerLink="/resources"
-          class="hover:text-primary-pink transition-colors"
-          >{{ 'header.resources' | translate }}</a
-        >
-        <a routerLink="/about" class="hover:text-primary-pink transition-colors"
-          >{{ 'header.about' | translate }}</a
-        >
+      <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-gray-500">
+        <a routerLink="/" routerLinkActive="text-primary-blue" [routerLinkActiveOptions]="{ exact: true }"
+          class="hover:text-primary-pink transition-colors">{{ 'header.home' | translate }}</a>
+        <a routerLink="/resources" routerLinkActive="text-primary-blue"
+          class="hover:text-primary-pink transition-colors">{{ 'header.resources' | translate }}</a>
+        <a routerLink="/about" routerLinkActive="text-primary-blue" class="hover:text-primary-pink transition-colors">{{
+          'header.about' | translate }}</a>
       </nav>
     </div>
 
@@ -43,57 +24,33 @@
     <div class="hidden md:flex items-center gap-4">
       <!-- Language Switcher -->
       <div class="flex items-center gap-2 mr-2">
-        <button 
-          (click)="setLang('en')" 
-          class="text-sm font-bold transition-colors"
+        <button (click)="setLang('en')" class="text-sm font-bold transition-colors"
           [class.text-primary-blue]="(translationService.currentLang$ | async) === 'en'"
-          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'en'"
-        >
+          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'en'">
           EN
         </button>
         <span class="text-gray-300">|</span>
-        <button 
-          (click)="setLang('vi')" 
-          class="text-sm font-bold transition-colors"
+        <button (click)="setLang('vi')" class="text-sm font-bold transition-colors"
           [class.text-primary-blue]="(translationService.currentLang$ | async) === 'vi'"
-          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'vi'"
-        >
+          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'vi'">
           VI
         </button>
       </div>
 
       <div class="w-64 relative group">
         <span
-          class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-primary-blue transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
+          class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-primary-blue transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </span>
-        <input
-          type="text"
-          #searchInput
-          (input)="onSearch(searchInput.value)"
-          [placeholder]="'list.search' | translate"
-          class="w-full pl-11 pr-4 py-2.5 rounded-full border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 transition-all text-sm font-medium text-gray-700 placeholder-gray-400"
-        />
+        <input type="text" #searchInput (input)="onSearch(searchInput.value)" [placeholder]="'list.search' | translate"
+          class="w-full pl-11 pr-4 py-2.5 rounded-full border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/10 transition-all text-sm font-medium text-gray-700 placeholder-gray-400" />
       </div>
-      
-      <a
-        routerLink="/login"
-        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary-pink to-primary-blue text-white text-sm font-bold shadow-md hover:shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-0.5"
-      >
+
+      <a routerLink="/login"
+        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary-pink to-primary-blue text-white text-sm font-bold shadow-md hover:shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-0.5">
         {{ 'header.login' | translate }}
       </a>
     </div>

@@ -19,8 +19,8 @@ export class HomeComponent {
 
   // Get latest 4 resources
   latestResources$ = this.resourceService
-    .getResources()
-    .pipe(map((resources) => resources.slice(0, 4)));
+    .getResources(1, 4)
+    .pipe(map((res) => res.data));
 
   downloadResource(event: Event, resource: any) {
     event.stopPropagation();

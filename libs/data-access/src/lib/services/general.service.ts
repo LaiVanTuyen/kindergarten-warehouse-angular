@@ -2,43 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { User, Category, Topic } from '../models';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class UserService {
-  getUsers(): Observable<User[]> {
-    return of([
-      {
-        id: '1',
-        username: 'admin_user',
-        role: 'ADMIN',
-        status: 'ACTIVE',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=random',
-      },
-      {
-        id: '2',
-        username: 'teacher_sarah',
-        role: 'TEACHER',
-        status: 'ACTIVE',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Sarah&background=random',
-      },
-      {
-        id: '3',
-        username: 'teacher_john',
-        role: 'TEACHER',
-        status: 'BLOCKED',
-        avatarUrl: 'https://ui-avatars.com/api/?name=John&background=random',
-      },
-      {
-        id: '4',
-        username: 'parent_mike',
-        role: 'USER',
-        status: 'ACTIVE',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Mike&background=random',
-      },
-    ]);
-  }
-}
+// UserService code moved to user.service.ts
 
 @Injectable({
   providedIn: 'root',
@@ -58,10 +22,13 @@ export class AuthService {
   login(username: string): Observable<boolean> {
     // Mock login
     const user: User = {
-      id: 'u1',
+      id: 1,
       username: username,
+      email: `${username}@mock.com`,
+      fullName: 'Mock User',
       role: 'USER',
-      status: 'ACTIVE',
+      isActive: true,
+      createdAt: new Date().toISOString(),
       avatarUrl: `https://ui-avatars.com/api/?name=${username}&background=random`,
     };
     this.currentUserSubject.next(user);
@@ -102,12 +69,18 @@ export class CategoryService {
   ];
 
   // Categories CRUD
-  getCategories(page = 1, limit = 10, search?: string): Observable<{ data: Category[]; total: number }> {
+  getCategories(
+    page = 1,
+    limit = 10,
+    search?: string
+  ): Observable<{ data: Category[]; total: number }> {
     let filtered = this.mockCategories;
 
     if (search) {
       const lowerSearch = search.toLowerCase();
-      filtered = filtered.filter(c => c.name.toLowerCase().includes(lowerSearch));
+      filtered = filtered.filter((c) =>
+        c.name.toLowerCase().includes(lowerSearch)
+      );
     }
 
     const start = (page - 1) * limit;
@@ -149,22 +122,29 @@ export class CategoryService {
   }
 
   // Topics CRUD
-  getTopics(categoryId?: string, page = 1, limit = 10, search?: string): Observable<{ data: Topic[]; total: number }> {
+  getTopics(
+    categoryId?: string,
+    page = 1,
+    limit = 10,
+    search?: string
+  ): Observable<{ data: Topic[]; total: number }> {
     let filtered = this.mockTopics;
-    
+
     if (categoryId) {
       filtered = filtered.filter((t) => t.categoryId === categoryId);
     }
-    
+
     if (search) {
       const lowerSearch = search.toLowerCase();
-      filtered = filtered.filter(t => t.title.toLowerCase().includes(lowerSearch));
+      filtered = filtered.filter((t) =>
+        t.title.toLowerCase().includes(lowerSearch)
+      );
     }
-    
+
     const start = (page - 1) * limit;
     const end = start + limit;
     const paginated = filtered.slice(start, end);
-    
+
     return of({
       data: paginated,
       total: filtered.length,

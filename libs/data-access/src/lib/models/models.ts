@@ -1,21 +1,39 @@
 export interface Resource {
-  id: number;
+  id: string;
   title: string;
   thumbnail: string;
   uploader: string;
   date: string;
   url?: string;
   status: 'pending' | 'approved' | 'rejected';
-  type: 'VIDEO' | 'DOCUMENT';
+  type: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD';
   viewsCount: number;
+  description?: string;
+  rating?: number;
+  topicId?: string;
+  createdAt?: string | Date;
+  comments?: Comment[];
 }
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
+  email: string;
+  password?: string;
+  fullName: string;
   role: 'ADMIN' | 'TEACHER' | 'USER';
-  status: 'ACTIVE' | 'BLOCKED';
-  avatarUrl: string;
+  isActive: boolean;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
+export interface Comment {
+  id: string;
+  user: string;
+  content: string;
+  date: Date;
+  rating: number;
+  avatarUrl?: string;
 }
 
 export interface Category {

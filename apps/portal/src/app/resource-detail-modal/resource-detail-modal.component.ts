@@ -27,7 +27,8 @@ export class ResourceDetailModalComponent {
     }
   }
 
-  getSafeUrl(url: string): SafeResourceUrl {
+  getSafeUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
     // Basic YouTube embed handling for demo
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
@@ -38,7 +39,8 @@ export class ResourceDetailModalComponent {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
-  getGoogleDocsUrl(url: string): SafeResourceUrl {
+  getGoogleDocsUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
     const googleDocsBase = 'https://docs.google.com/viewer?url=';
     return this.sanitizer.bypassSecurityTrustResourceUrl(
       `${googleDocsBase}${encodeURIComponent(url)}&embedded=true`

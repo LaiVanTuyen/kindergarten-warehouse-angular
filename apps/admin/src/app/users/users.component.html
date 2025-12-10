@@ -1,140 +1,387 @@
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+<div class="h-full flex flex-col">
+
+  <!-- Detached Dark Banner -->
   <div
-    class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
-  >
-    <h3 class="text-lg font-semibold text-gray-800">User Management</h3>
-    <div class="flex space-x-2">
-      <button
-        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-      >
-        + Create Teacher
+    class="bg-slate-800 p-8 rounded-3xl text-white shadow-xl mb-6 flex justify-between items-center relative overflow-hidden">
+    <!-- Decorative lighter circle for flair -->
+    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">User Management</h1>
+      <p class="text-slate-400 mt-1.5 text-base">Manage system access, roles, and teacher accounts.</p>
+    </div>
+  </div>
+
+  <!-- Toolbar Section -->
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+    <!-- Left: Filter -->
+    <div class="w-full sm:w-auto relative">
+      <button (click)="toggleRoleDropdown()"
+        class="w-full sm:w-56 px-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white text-gray-700 flex justify-between items-center shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95">
+        <span class="font-medium">{{ selectedRoleLabel() }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="text-gray-400 transition-transform duration-200" [class.rotate-180]="isRoleDropdownOpen()">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div *ngIf="isRoleDropdownOpen()"
+        class="absolute top-full left-0 mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="py-1">
+          <button (click)="selectRole('', 'All Roles')"
+            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="roleFilter.value === ''"
+              [class.bg-transparent]="roleFilter.value !== ''"></span>
+            All Roles
+          </button>
+          <button (click)="selectRole('ADMIN', 'Admin')"
+            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="roleFilter.value === 'ADMIN'"
+              [class.bg-transparent]="roleFilter.value !== 'ADMIN'"></span>
+            Admin
+          </button>
+          <button (click)="selectRole('TEACHER', 'Teacher')"
+            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="roleFilter.value === 'TEACHER'"
+              [class.bg-transparent]="roleFilter.value !== 'TEACHER'"></span>
+            Teacher
+          </button>
+          <button (click)="selectRole('USER', 'User')"
+            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="roleFilter.value === 'USER'"
+              [class.bg-transparent]="roleFilter.value !== 'USER'"></span>
+            User
+          </button>
+        </div>
+      </div>
+
+      <!-- Click Outside Backdrop (Invisible) -->
+      <div *ngIf="isRoleDropdownOpen()" (click)="toggleRoleDropdown()" class="fixed inset-0 z-40 cursor-default"></div>
+
+      <!-- Status Filter -->
+      <div class="relative mt-2 sm:mt-0">
+        <button (click)="toggleStatusDropdown()"
+          class="w-full sm:w-56 px-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white text-gray-700 flex justify-between items-center shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95">
+          <span class="font-medium">{{ selectedStatusLabel() }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-gray-400 transition-transform duration-200" [class.rotate-180]="isStatusDropdownOpen()">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div *ngIf="isStatusDropdownOpen()"
+          class="absolute top-full left-0 mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div class="py-1">
+            <button (click)="selectStatus('', 'All Status')"
+              class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="statusFilter.value === ''"
+                [class.bg-transparent]="statusFilter.value !== ''"></span>
+              All Status
+            </button>
+            <button (click)="selectStatus('ACTIVE', 'Active')"
+              class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="statusFilter.value === 'ACTIVE'"
+                [class.bg-transparent]="statusFilter.value !== 'ACTIVE'"></span>
+              Active
+            </button>
+            <button (click)="selectStatus('BLOCKED', 'Blocked')"
+              class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" [class.bg-blue-500]="statusFilter.value === 'BLOCKED'"
+                [class.bg-transparent]="statusFilter.value !== 'BLOCKED'"></span>
+              Blocked
+            </button>
+          </div>
+        </div>
+        <div *ngIf="isStatusDropdownOpen()" (click)="toggleStatusDropdown()" class="fixed inset-0 z-40 cursor-default">
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Search & Action -->
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <div class="relative w-full sm:w-72">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <input [formControl]="searchControl" type="text" placeholder="Search users..."
+          class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm" />
+        <button *ngIf="searchControl.value" (click)="searchControl.setValue('')"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none focus:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <button (click)="openCreateModal()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95">
+        <span class="text-lg leading-none">+</span> New Teacher
       </button>
     </div>
   </div>
 
-  <div class="overflow-x-auto">
-    <table class="w-full text-left">
-      <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
-        <tr>
-          <th class="px-6 py-3">User</th>
-          <th class="px-6 py-3">Role</th>
-          <th class="px-6 py-3">Status</th>
-          <th class="px-6 py-3">Joined Date</th>
-          <th class="px-6 py-3 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="text-gray-700 text-sm">
-        <!-- Mock Data Row 1 (Admin) -->
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="px-6 py-4">
-            <div class="flex items-center">
-              <div
-                class="h-8 w-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold mr-3"
-              >
-                A
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">Admin User</div>
-                <div class="text-xs text-gray-500">
-                  admin@kindergarten.com
+  <!-- Main Content Card -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+    <div class="overflow-x-auto flex-1">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50/50 text-gray-500 text-xs uppercase font-bold sticky top-0 z-10 backdrop-blur-sm">
+          <tr class="border-b border-gray-100">
+            <th class="px-8 py-5 pl-8">User Details</th>
+            <th class="px-6 py-5">Role</th>
+            <th class="px-6 py-5">Status</th>
+            <th class="px-6 py-5">Joined Date</th>
+            <th class="px-6 py-5 text-right pr-8">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
+          <tr *ngFor="let user of users()" class="hover:bg-slate-50/80 transition-all group">
+            <td class="px-8 py-4 pl-8">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <!-- Avatar Logic: Image or Initials -->
+                  <img *ngIf="user.avatarUrl; else initialsAvatar" [src]="user.avatarUrl" alt=""
+                    class="h-11 w-11 rounded-full border-2 border-white shadow-sm object-cover bg-gray-100" />
+                  <ng-template #initialsAvatar>
+                    <div
+                      class="h-11 w-11 rounded-full border-2 border-white shadow-sm bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                      {{ user.fullName.charAt(0).toUpperCase() }}
+                    </div>
+                  </ng-template>
+
+                  <!-- Status Dot -->
+                  <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white" [ngClass]="{
+                    'bg-emerald-500': user.isActive,
+                    'bg-slate-300': !user.isActive
+                  }"></div>
+                </div>
+                <div>
+                  <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-[15px]">{{
+                    user.fullName }}</div>
+                  <div class="text-xs text-gray-400 font-medium">{{ user.email || user.username }}</div>
                 </div>
               </div>
-            </div>
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700"
-              >ADMIN</span
-            >
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="flex items-center text-green-600 font-medium text-xs"
-            >
-              <span class="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-              Active
-            </span>
-          </td>
-          <td class="px-6 py-4 text-gray-500">Jan 10, 2024</td>
-          <td class="px-6 py-4 text-right">
-            <button class="text-gray-400 cursor-not-allowed">Edit</button>
-          </td>
-        </tr>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
+                [ngClass]="{
+                    'bg-rose-50 text-rose-700 border-rose-100': user.role === 'ADMIN',
+                    'bg-indigo-50 text-indigo-700 border-indigo-100': user.role === 'TEACHER',
+                    'bg-slate-50 text-slate-600 border-slate-100': user.role === 'USER'
+                  }">
+                {{ user.role }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md text-xs font-bold border" [ngClass]="{
+                   'bg-emerald-50 text-emerald-700 border-emerald-100': user.isActive,
+                   'bg-gray-50 text-gray-600 border-gray-100': !user.isActive
+                 }">
+                  {{ user.isActive ? 'ACTIVE' : 'BLOCKED' }}
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-gray-500">
+              {{ user.createdAt | date:'mediumDate' }}
+            </td>
+            <td class="px-6 py-4 text-right pr-8">
+              <div class="flex items-center justify-end gap-2" *ngIf="user.role !== 'ADMIN'">
+                <!-- Reset Password (Always Visible) -->
+                <button (click)="resetPassword(user)" title="Reset Password"
+                  class="text-yellow-500 hover:bg-yellow-50 rounded-full p-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-500/50">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                      d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4">
+                    </path>
+                  </svg>
+                </button>
 
-        <!-- Mock Data Row 2 (Teacher) -->
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="px-6 py-4">
-            <div class="flex items-center">
-              <div
-                class="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold mr-3"
-              >
-                S
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">Sarah Johnson</div>
-                <div class="text-xs text-gray-500">sarah.j@school.edu</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-700"
-              >TEACHER</span
-            >
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="flex items-center text-green-600 font-medium text-xs"
-            >
-              <span class="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-              Active
-            </span>
-          </td>
-          <td class="px-6 py-4 text-gray-500">Feb 14, 2024</td>
-          <td class="px-6 py-4 text-right space-x-2">
-            <button class="text-blue-600 hover:underline">Reset Pwd</button>
-            <button class="text-orange-600 hover:underline">Block</button>
-          </td>
-        </tr>
+                <!-- Status Actions (Boolean Logic) -->
+                <button *ngIf="user.isActive" (click)="confirmBlock(user)" title="Block User"
+                  class="text-red-500 hover:bg-red-50 rounded-full p-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </button>
 
-        <!-- Mock Data Row 3 (User / Parent) -->
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="px-6 py-4">
-            <div class="flex items-center">
-              <div
-                class="h-8 w-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-3"
-              >
-                M
+                <button *ngIf="!user.isActive" (click)="confirmBlock(user)" title="Unblock User"
+                  class="text-emerald-500 hover:bg-emerald-50 rounded-full p-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                </button>
               </div>
-              <div>
-                <div class="font-medium text-gray-900">Mike Smith</div>
-                <div class="text-xs text-gray-500">
-                  mike.smith@email.com
-                </div>
+            </td>
+          </tr>
+          <tr *ngIf="users().length === 0">
+            <td colspan="5" class="py-20 text-center">
+              <div class="flex flex-col items-center justify-center text-gray-300">
+                <div class="text-6xl mb-4 opacity-50">👥</div>
+                <p class="text-lg font-medium text-gray-400">No users found.</p>
+                <p class="text-sm mt-1 text-gray-400/70">Try adjusting your search or filters.</p>
               </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="px-6 py-4 border-t border-gray-100 mt-auto flex justify-between items-center text-sm text-gray-500 bg-gray-50/50">
+      <span>Showing {{ (currentPage() - 1) * pageSize() + 1 }}-{{ Math.min(currentPage() * pageSize(), totalUsers()) }}
+        of {{ totalUsers() }}</span>
+      <div class="flex space-x-2">
+        <button [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)"
+          class="px-4 py-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-50 transition-colors shadow-sm bg-white font-medium">Previous</button>
+        <button class="px-4 py-2 border border-slate-800 rounded-xl bg-slate-800 text-white shadow-md font-bold">{{
+          currentPage() }}</button>
+        <button [disabled]="currentPage() * pageSize() >= totalUsers()" (click)="onPageChange(currentPage() + 1)"
+          class="px-4 py-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-50 transition-colors shadow-sm bg-white font-medium">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Teacher Modal -->
+<div *ngIf="isCreateModalOpen()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md transition-opacity">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100 border border-white/20 ring-1 ring-black/5">
+    <div class="flex justify-between items-start mb-8">
+      <div>
+        <h3 class="text-2xl font-bold text-gray-900 tracking-tight">Create New Teacher</h3>
+        <p class="text-xs text-gray-500 mt-1.5 font-medium">Add a new instructor to the system.</p>
+      </div>
+      <button (click)="closeCreateModal()"
+        class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="createTeacherForm" (ngSubmit)="submitCreateUser()" class="space-y-6">
+      <div class="space-y-5">
+        <div class="group">
+          <label
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Full
+            Name</label>
+          <input type="text" formControlName="fullName"
+            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-gray-900 font-medium"
+            placeholder="e.g. Sarah Johnson" />
+          <p *ngIf="createTeacherForm.get('fullName')?.touched && createTeacherForm.get('fullName')?.invalid"
+            class="text-xs text-rose-500 mt-1.5 font-bold ml-1">Full Name is required</p>
+        </div>
+
+        <div class="group">
+          <label
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Email
+            Address</label>
+          <input type="email" formControlName="email"
+            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-gray-900 font-medium"
+            placeholder="e.g. sarah@school.com" />
+          <p *ngIf="createTeacherForm.get('email')?.touched && createTeacherForm.get('email')?.invalid"
+            class="text-xs text-rose-500 mt-1.5 font-bold ml-1">Valid email is required</p>
+        </div>
+
+        <div class="group">
+          <label
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Username</label>
+          <input type="text" formControlName="username"
+            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-gray-900 font-medium"
+            placeholder="e.g. teacher_sarah" />
+          <p *ngIf="createTeacherForm.get('username')?.touched && createTeacherForm.get('username')?.invalid"
+            class="text-xs text-rose-500 mt-1.5 font-bold ml-1">Username is required</p>
+        </div>
+
+        <div class="group">
+          <label
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Password</label>
+          <div class="flex gap-3">
+            <div class="relative flex-1">
+              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password"
+                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-gray-900 font-medium"
+                placeholder="Min 6 chars" />
+              <button type="button" (click)="showPassword.set(!showPassword())"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 hover:text-blue-600 uppercase tracking-wider">
+                {{ showPassword() ? 'Hide' : 'Show' }}
+              </button>
             </div>
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700"
-              >USER</span
-            >
-          </td>
-          <td class="px-6 py-4">
-            <span
-              class="flex items-center text-gray-500 font-medium text-xs"
-            >
-              <span class="h-2 w-2 rounded-full bg-gray-400 mr-1.5"></span>
-              Offline
-            </span>
-          </td>
-          <td class="px-6 py-4 text-gray-500">Mar 01, 2024</td>
-          <td class="px-6 py-4 text-right space-x-2">
-            <button class="text-blue-600 hover:underline">Details</button>
-            <button class="text-orange-600 hover:underline">Block</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <button type="button" (click)="generatePassword()"
+              class="px-5 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 text-xs font-bold border border-gray-200 transition-colors active:scale-95">
+              Generate
+            </button>
+          </div>
+          <p *ngIf="createTeacherForm.get('password')?.touched && createTeacherForm.get('password')?.invalid"
+            class="text-xs text-rose-500 mt-1.5 font-bold ml-1">Min 6 characters required</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4 mt-8 pt-2">
+        <button type="button" (click)="closeCreateModal()"
+          class="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="createTeacherForm.invalid"
+          class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-slate-200 hover:shadow-2xl active:scale-95">
+          Create Account
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Block Confirmation Modal -->
+<div *ngIf="isBlockModalOpen()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5">
+    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
+      [ngClass]="{
+        'bg-rose-50': userToBlock()?.isActive,
+        'bg-emerald-50': !userToBlock()?.isActive
+      }">
+      <span class="text-4xl">{{ userToBlock()?.isActive ? '🚫' : '✅' }}</span>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">
+      {{ userToBlock()?.isActive ? 'Block Access?' : 'Restoring Access' }}
+    </h3>
+    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-4">
+      Are you sure you want to {{ userToBlock()?.isActive ? 'block' : 'unblock' }} <strong>{{
+        userToBlock()?.username }}</strong>?<br />
+      <span class="text-xs opacity-75 font-medium mt-1 block">{{ userToBlock()?.isActive ? 'They will no
+        longer be able to log in.' : 'They will regain access to the platform.' }}</span>
+    </p>
+    <div class="flex justify-center gap-3">
+      <button (click)="closeBlockModal()"
+        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+      <button (click)="toggleBlockUser()"
+        class="flex-1 px-4 py-3.5 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95" [ngClass]="{
+          'bg-rose-600 hover:bg-rose-700 shadow-rose-200': userToBlock()?.isActive,
+          'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200': !userToBlock()?.isActive
+        }">
+        Confirm
+      </button>
+    </div>
   </div>
 </div>
