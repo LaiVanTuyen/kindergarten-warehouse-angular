@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   FormBuilder,
@@ -22,7 +23,7 @@ import { ToastService } from '../shared/toast/toast.service';
 @Component({
   selector: 'app-admin-resources',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './resources.component.html',
   styles: [],
 })

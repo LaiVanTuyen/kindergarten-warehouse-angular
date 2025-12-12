@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './categories.component.html',
   styles: [],
 })
@@ -35,13 +36,13 @@ export class CategoriesComponent {
   protected Math = Math;
 
   activeTab: 'categories' | 'topics' = 'categories';
-  
+
   // Pagination State
   pageSize = signal(10);
-  
+
   currentPageCategories = signal(1);
   totalCategories = signal(0);
-  
+
   currentPageTopics = signal(1);
   totalTopics = signal(0);
 
@@ -73,36 +74,35 @@ export class CategoriesComponent {
     });
 
     // Initialize from URL params
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       if (params['tab']) {
         this.activeTab = params['tab'] === 'topics' ? 'topics' : 'categories';
       }
-      
+
       const page = params['page'] ? parseInt(params['page'], 10) : 1;
       if (this.activeTab === 'categories') {
         this.currentPageCategories.set(page);
       } else {
         this.currentPageTopics.set(page);
       }
-      
+
       // Load data after params are processed
       this.loadData();
     });
 
     // Handle search changes
-    this.searchControl.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(() => {
-       // Reset to page 1 on search
-       if (this.activeTab === 'categories') {
-         this.currentPageCategories.set(1);
-       } else {
-         this.currentPageTopics.set(1);
-       }
-       this.updateUrl(); // Sync URL (page 1)
-       this.loadData();
-    });
+    this.searchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        // Reset to page 1 on search
+        if (this.activeTab === 'categories') {
+          this.currentPageCategories.set(1);
+        } else {
+          this.currentPageTopics.set(1);
+        }
+        this.updateUrl(); // Sync URL (page 1)
+        this.loadData();
+      });
   }
 
   loadData() {
@@ -112,22 +112,29 @@ export class CategoriesComponent {
 
   loadCategories() {
     const search = this.searchControl.value || '';
-    this.categoryService.getCategories(this.currentPageCategories(), this.pageSize(), search).subscribe((response) => {
-      this.categories.set(response.data);
-      this.totalCategories.set(response.total);
-    });
+    this.categoryService
+      .getCategories(this.currentPageCategories(), this.pageSize(), search)
+      .subscribe((response) => {
+        this.categories.set(response.data);
+        this.totalCategories.set(response.total);
+      });
   }
 
   loadTopics() {
     const search = this.searchControl.value || '';
-    this.categoryService.getTopics(undefined, this.currentPageTopics(), this.pageSize(), search).subscribe((response) => {
-      this.topics.set(response.data);
-      this.totalTopics.set(response.total);
-    });
+    this.categoryService
+      .getTopics(undefined, this.currentPageTopics(), this.pageSize(), search)
+      .subscribe((response) => {
+        this.topics.set(response.data);
+        this.totalTopics.set(response.total);
+      });
   }
 
   updateUrl() {
-    const page = this.activeTab === 'categories' ? this.currentPageCategories() : this.currentPageTopics();
+    const page =
+      this.activeTab === 'categories'
+        ? this.currentPageCategories()
+        : this.currentPageTopics();
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: this.activeTab, page: page },
@@ -157,8 +164,12 @@ export class CategoriesComponent {
     this.updateUrl();
     this.loadTopics();
   }
-  
-  getPageArray(total: number, size: number, current: number): (number | string)[] {
+
+  getPageArray(
+    total: number,
+    size: number,
+    current: number
+  ): (number | string)[] {
     const totalPages = Math.ceil(total / size);
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -166,11 +177,19 @@ export class CategoriesComponent {
 
     // Logic for ellipses: 1, 2, ..., 4, 5, 6, ..., 10
     if (current <= 4) {
-       return [1, 2, 3, 4, 5, '...', totalPages];
+      return [1, 2, 3, 4, 5, '...', totalPages];
     } else if (current >= totalPages - 3) {
-       return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      return [
+        1,
+        '...',
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
     } else {
-       return [1, '...', current - 1, current, current + 1, '...', totalPages];
+      return [1, '...', current - 1, current, current + 1, '...', totalPages];
     }
   }
 
@@ -232,13 +251,13 @@ export class CategoriesComponent {
     this.isEditMode.set(false);
     this.currentId = null;
     this.topicForm.reset();
-    
+
     // If viewing topics tab, maybe default? For now clean reset.
     if (this.categories().length > 0) {
-       // Auto-select first category for convenience
-       this.topicForm.patchValue({ categoryId: this.categories()[0].id });
+      // Auto-select first category for convenience
+      this.topicForm.patchValue({ categoryId: this.categories()[0].id });
     }
-    
+
     this.isTopicModalOpen.set(true);
   }
 
@@ -287,10 +306,12 @@ export class CategoriesComponent {
     if (!this.itemToDelete) return;
 
     if (this.itemToDelete.type === 'category') {
-      this.categoryService.deleteCategory(this.itemToDelete.id).subscribe(() => {
-        this.loadData();
-        this.closeModals();
-      });
+      this.categoryService
+        .deleteCategory(this.itemToDelete.id)
+        .subscribe(() => {
+          this.loadData();
+          this.closeModals();
+        });
     } else {
       this.categoryService.deleteTopic(this.itemToDelete.id).subscribe(() => {
         this.loadData();

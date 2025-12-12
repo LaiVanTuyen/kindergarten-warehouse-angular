@@ -1,182 +1,444 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
-  FormControl,
 } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { UserService, User } from '@kindergarten-warehouse/data-access';
 import { ToastService } from '../shared/toast/toast.service';
+
+// Mock Data for Demonstration
+const MOCK_USERS: any[] = [
+  {
+    id: '1',
+    fullName: 'Emily Davis',
+    email: 'emily.davis@kindergarten.com',
+    username: 'admin_emily',
+    role: 'ADMIN',
+    isActive: false,
+    isDeleted: true,
+    createdAt: '2023-01-15',
+    avatarUrl: 'https://i.pravatar.cc/150?u=1',
+  },
+  {
+    id: '2',
+    fullName: 'Michael Wilson',
+    email: 'michael.w@kindergarten.com',
+    username: 'teacher_mike',
+    role: 'TEACHER',
+    isActive: true,
+    isDeleted: false,
+    createdAt: '2023-03-22',
+    avatarUrl: 'https://i.pravatar.cc/150?u=2',
+  },
+  {
+    id: '3',
+    fullName: 'Sarah Johnson',
+    email: 'sarah.j@gmail.com',
+    username: 'parent_sarah',
+    role: 'USER',
+    isActive: false,
+    isDeleted: false,
+    createdAt: '2023-06-10',
+    avatarUrl: 'https://i.pravatar.cc/150?u=3',
+  },
+  {
+    id: '4',
+    fullName: 'Jessica Brown',
+    email: 'jess.brown@kindergarten.com',
+    username: 'teacher_jess',
+    role: 'TEACHER',
+    isActive: true,
+    isDeleted: false,
+    createdAt: '2023-07-05',
+    avatarUrl: 'https://i.pravatar.cc/150?u=4',
+  },
+  {
+    id: '5',
+    fullName: 'David Lee',
+    email: 'david.lee@yahoo.com',
+    username: 'parent_david',
+    role: 'USER',
+    isActive: true,
+    isDeleted: false,
+    createdAt: '2023-08-12',
+    avatarUrl: 'https://i.pravatar.cc/150?u=5',
+  },
+];
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './users.component.html',
   styles: [],
 })
 export class UsersComponent {
   private fb = inject(FormBuilder);
-  userService = inject(UserService);
   toastService = inject(ToastService);
 
-  // Data Signals
-  users = signal<User[]>([]);
-  totalUsers = signal(0);
+  // -- State Signals --
+  allUsers = signal<any[]>(MOCK_USERS);
+
+  // Selection for bulk actions
+  selectedUserIds = signal<Set<string>>(new Set());
+
+  // Pagination
   currentPage = signal(1);
   pageSize = signal(10);
-  protected readonly Math = Math;
 
-  // Filters
-  roleFilter = new FormControl<'ADMIN' | 'TEACHER' | 'USER' | ''>('');
-  selectedRoleLabel = signal('All Roles');
-  isRoleDropdownOpen = signal(false);
+  // Filter Signals
+  searchQuery = signal('');
+  roleFilter = signal<'ALL' | 'ADMIN' | 'TEACHER' | 'USER'>('ALL');
+  statusFilter = signal<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>('ALL');
 
-  statusFilter = new FormControl<'ACTIVE' | 'BLOCKED' | ''>('');
-  selectedStatusLabel = signal('All Status');
-  isStatusDropdownOpen = signal(false);
+  // Sorting
+  sortColumn = signal<'fullName' | 'createdAt'>('createdAt');
+  sortDirection = signal<'asc' | 'desc'>('desc');
 
-  searchControl = new FormControl('');
+  // Computed Users (Filtered & Sorted)
+  filteredUsers = computed(() => {
+    let users = this.allUsers();
 
-  // Create Teacher Modal
-  isCreateModalOpen = signal(false);
-  createTeacherForm: FormGroup;
-  showPassword = signal(false);
+    // 1. Filter by Search
+    const query = this.searchQuery().toLowerCase();
+    if (query) {
+      users = users.filter(
+        (u) =>
+          u.fullName.toLowerCase().includes(query) ||
+          u.email.toLowerCase().includes(query)
+      );
+    }
 
-  // Block User Modal
-  isBlockModalOpen = signal(false);
-  userToBlock = signal<User | null>(null);
+    // 2. Filter by Role
+    const role = this.roleFilter();
+    if (role !== 'ALL') {
+      users = users.filter((u) => u.role === role);
+    }
 
-  constructor() {
-    this.createTeacherForm = this.fb.group({
-      username: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      fullName: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      role: ['TEACHER'], // Default
+    // 3. Filter by Status
+    // 3. Filter by Status (and Soft Delete)
+    const status = this.statusFilter();
+
+    if (status === 'DELETED') {
+      // Show ONLY deleted users
+      users = users.filter((u) => u.isDeleted === true);
+    } else {
+      // Show ONLY non-deleted users
+      users = users.filter((u) => u.isDeleted !== true);
+
+      // Apply matching status if not ALL
+      if (status !== 'ALL') {
+        const isActive = status === 'ACTIVE';
+        users = users.filter((u) => u.isActive === isActive);
+      }
+    }
+
+    // 4. Sort
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+
+    users = [...users].sort((a, b) => {
+      const valA = a[col];
+      const valB = b[col];
+      if (valA < valB) return dir === 'asc' ? -1 : 1;
+      if (valA > valB) return dir === 'asc' ? 1 : -1;
+      return 0;
     });
 
-    // Load initial data
-    this.loadData();
+    return users;
+  });
 
-    // Listen to filters
-    this.roleFilter.valueChanges.subscribe(() => this.loadData());
-    this.statusFilter.valueChanges.subscribe(() => this.loadData());
-    this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.loadData());
+  // Derived Statistics
+  totalUsersCount = computed(() => this.filteredUsers().length);
+  totalPages = computed(() =>
+    Math.ceil(this.totalUsersCount() / this.pageSize())
+  );
+
+  paginatedUsers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredUsers().slice(start, end);
+  });
+
+  // Helper for UI
+  Math = Math;
+
+  // -- Modal State --
+  isUserModalOpen = signal(false);
+  isEditMode = signal(false);
+  userForm: FormGroup;
+  showPassword = signal(false);
+  currentUser = signal<any | null>(null);
+
+  constructor() {
+    this.userForm = this.fb.group({
+      id: [null],
+      fullName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      username: ['', Validators.required],
+      password: [''], // Optional in edit mode
+      role: ['USER', Validators.required],
+      isActive: [true],
+      isDeleted: [false],
+    });
   }
 
-  toggleRoleDropdown() {
-    this.isRoleDropdownOpen.update((v) => !v);
+  // -- Search & Filter Actions --
+  onSearch(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(val);
+    this.currentPage.set(1); // Reset page
   }
 
-  selectRole(role: 'ADMIN' | 'TEACHER' | 'USER' | '', label: string) {
-    this.roleFilter.setValue(role);
-    this.selectedRoleLabel.set(label);
-    this.isRoleDropdownOpen.set(false);
+  onFilterRole(role: string) {
+    this.roleFilter.set(role as any);
+    this.currentPage.set(1);
   }
 
-  toggleStatusDropdown() {
-    this.isStatusDropdownOpen.update((v) => !v);
+  onFilterStatus(status: string) {
+    this.statusFilter.set(status as any);
+    this.currentPage.set(1);
   }
 
-  selectStatus(status: 'ACTIVE' | 'BLOCKED' | '', label: string) {
-    this.statusFilter.setValue(status);
-    this.selectedStatusLabel.set(label);
-    this.isStatusDropdownOpen.set(false);
+  toggleSort(column: 'fullName' | 'createdAt') {
+    if (this.sortColumn() === column) {
+      this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortColumn.set(column);
+      this.sortDirection.set('desc');
+    }
   }
 
-  loadData() {
-    this.userService
-      .getUsers(this.currentPage(), this.pageSize(), {
-        role: (this.roleFilter.value as any) || undefined,
-        status: (this.statusFilter.value as any) || undefined,
-        search: this.searchControl.value || undefined,
-      })
-      .subscribe((res) => {
-        this.users.set(res.data);
-        this.totalUsers.set(res.total);
-      });
+  // -- Bulk Selection --
+  toggleSelectAll(event: any) {
+    const checked = event.target.checked;
+    if (checked) {
+      const ids = this.filteredUsers().map((u) => u.id);
+      this.selectedUserIds.set(new Set(ids));
+    } else {
+      this.selectedUserIds.set(new Set());
+    }
   }
 
-  onPageChange(page: number) {
-    this.currentPage.set(page);
-    this.loadData();
+  toggleSelectRow(id: string) {
+    this.selectedUserIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
   }
 
-  // Create Teacher Actions
-  openCreateModal() {
-    this.isCreateModalOpen.set(true);
-    this.createTeacherForm.reset({ role: 'TEACHER' });
-    this.generatePassword(); // Auto-generate default
+  isAllSelected() {
+    const visible = this.paginatedUsers();
+    if (visible.length === 0) return false;
+    const selected = this.selectedUserIds();
+    return visible.every((u) => selected.has(u.id));
   }
 
-  closeCreateModal() {
-    this.isCreateModalOpen.set(false);
+  isRowSelected(id: string) {
+    return this.selectedUserIds().has(id);
+  }
+
+  // -- Modal Actions --
+  openAddUserModal() {
+    this.isEditMode.set(false);
+    this.currentUser.set(null);
+    this.userForm.reset({
+      role: 'USER',
+      isActive: true,
+      isDeleted: false,
+    });
+    this.userForm
+      .get('password')
+      ?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.userForm.get('password')?.updateValueAndValidity();
+
+    this.isUserModalOpen.set(true);
+  }
+
+  onEditUser(user: any) {
+    this.isEditMode.set(true);
+    this.currentUser.set(user);
+    this.userForm.patchValue({
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      isActive: user.isActive,
+      isDeleted: user.isDeleted,
+      password: '',
+    });
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
+
+    this.isUserModalOpen.set(true);
+  }
+
+  closeUserModal() {
+    this.isUserModalOpen.set(false);
   }
 
   generatePassword() {
-    const defaultPwd = 'Teacher@' + Math.floor(100 + Math.random() * 900);
-    this.createTeacherForm.patchValue({ password: defaultPwd });
+    const pwd = 'User@' + Math.floor(1000 + Math.random() * 9000);
+    this.userForm.patchValue({ password: pwd });
   }
 
-  submitCreateUser() {
-    if (this.createTeacherForm.invalid) return;
+  submitUserForm() {
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
+      return;
+    }
 
-    this.userService.createUser(this.createTeacherForm.value).subscribe({
-      next: () => {
-        this.toastService.show('Teacher created successfully!', 'success');
-        this.loadData();
-        this.closeCreateModal();
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          this.toastService.show('Username already exists.', 'error');
-        } else {
-          this.toastService.show('Failed to create user.', 'error');
-        }
-      },
-    });
+    const formVal = this.userForm.value;
+
+    if (this.isEditMode()) {
+      this.allUsers.update((users) =>
+        users.map((u) =>
+          u.id === formVal.id ? { ...u, ...formVal, avatarUrl: u.avatarUrl } : u
+        )
+      );
+      this.toastService.show('User updated successfully', 'success');
+    } else {
+      const newUser = {
+        ...formVal,
+        id: Math.random().toString(36).substr(2, 9),
+        isDeleted: false,
+        createdAt: new Date().toISOString(),
+        avatarUrl: `https://i.pravatar.cc/150?u=${Math.random()}`,
+      };
+      this.allUsers.update((users) => [newUser, ...users]);
+      this.toastService.show('User created successfully', 'success');
+    }
+    this.closeUserModal();
   }
 
-  // Block/Unblock Actions
-  confirmBlock(user: User) {
+  // -- Block/Unblock Modal State --
+  isBlockModalOpen = signal(false);
+  userToBlock = signal<any | null>(null);
+
+  // -- Reset Password Modal State --
+  isResetModalOpen = signal(false);
+  userToReset = signal<any | null>(null);
+
+  // -- Row Actions (Open Modals) --
+  onToggleStatus(user: any) {
     this.userToBlock.set(user);
     this.isBlockModalOpen.set(true);
   }
 
+  onResetPassword(user: any) {
+    this.userToReset.set(user);
+    this.isResetModalOpen.set(true);
+  }
+
+  // -- Confirm Actions --
+  confirmBlockUser() {
+    const user = this.userToBlock();
+    if (!user) return;
+
+    const newStatus = !user.isActive;
+    this.allUsers.update((users) =>
+      users.map((u) => (u.id === user.id ? { ...u, isActive: newStatus } : u))
+    );
+
+    const msg = newStatus ? 'User activated' : 'User blocked';
+    this.toastService.show(msg, newStatus ? 'success' : 'error');
+
+    this.closeBlockModal();
+  }
+
+  confirmResetPassword() {
+    const user = this.userToReset();
+    if (!user) return;
+
+    // Mock API call
+    this.toastService.show(
+      `Password reset email sent to ${user.email}`,
+      'success'
+    );
+    this.closeResetModal();
+  }
+
+  // -- Close Modals --
   closeBlockModal() {
     this.isBlockModalOpen.set(false);
     this.userToBlock.set(null);
   }
 
-  toggleBlockUser() {
-    const user = this.userToBlock();
-    if (!user) return;
-
-    // Toggle logic: If currently active (isActive=true), we block (isActive=false).
-    const newActiveState = !user.isActive;
-
-    this.userService.updateUserStatus(user.id, newActiveState).subscribe(() => {
-      const msg = newActiveState
-        ? 'User unblocked successfully'
-        : 'User blocked successfully';
-
-      this.toastService.show(msg, 'success');
-      this.loadData();
-      this.closeBlockModal();
-    });
+  closeResetModal() {
+    this.isResetModalOpen.set(false);
+    this.userToReset.set(null);
   }
 
-  resetPassword(user: User) {
-    // TODO: Implement actual reset password logic
-    this.toastService.show(
-      `Password reset for ${user.username} (Mock Action)`,
-      'success'
-    );
+  // -- Delete Modal State --
+  isDeleteModalOpen = signal(false);
+  userToDelete = signal<any | null>(null);
+
+  onDeleteUser(user: any) {
+    this.userToDelete.set(user);
+    this.isDeleteModalOpen.set(true);
+  }
+
+  confirmDeleteUser() {
+    const user = this.userToDelete();
+    if (user) {
+      // Soft Delete with anti-collision suffix
+      // NOTE: In a real app, this logic belongs in the Backend to handle Unique Constraints.
+      // We are simulating it here for the mock.
+      const timestamp = new Date().getTime();
+      this.allUsers.update((users) =>
+        users.map((u) =>
+          u.id === user.id
+            ? {
+                ...u,
+                isDeleted: true,
+                email: `${u.email}_deleted_${timestamp}`,
+                username: `${u.username}_deleted_${timestamp}`,
+              }
+            : u
+        )
+      );
+      this.toastService.show('User moved to bin', 'success');
+      this.closeDeleteModal();
+    }
+  }
+
+  closeDeleteModal() {
+    this.isDeleteModalOpen.set(false);
+    this.userToDelete.set(null);
+  }
+
+  // -- Restore Modal State --
+  isRestoreModalOpen = signal(false);
+  userToRestore = signal<any | null>(null);
+
+  onRestoreUser(user: any) {
+    this.userToRestore.set(user);
+    this.isRestoreModalOpen.set(true);
+  }
+
+  confirmRestoreUser() {
+    const user = this.userToRestore();
+    if (user) {
+      this.allUsers.update((users) =>
+        users.map((u) => (u.id === user.id ? { ...u, isDeleted: false } : u))
+      );
+      this.toastService.show('User restored successfully', 'success');
+      this.closeRestoreModal();
+    }
+  }
+
+  closeRestoreModal() {
+    this.isRestoreModalOpen.set(false);
+    this.userToRestore.set(null);
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
   }
 }

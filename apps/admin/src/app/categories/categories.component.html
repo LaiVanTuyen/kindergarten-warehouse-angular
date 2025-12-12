@@ -118,44 +118,10 @@
         </tbody>
       </table>
     </div>
-    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-      <span class="text-sm text-gray-500">
-        Showing {{ (currentPageCategories() - 1) * pageSize() + 1 }}-{{ Math.min(currentPageCategories() * pageSize(),
-        totalCategories()) }} of {{ totalCategories() }} categories
-      </span>
-      <div class="flex items-center gap-1">
-        <!-- Previous -->
-        <button [disabled]="currentPageCategories() === 1" (click)="onCategoryPageChange(currentPageCategories() - 1)"
-          class="p-2 text-sm border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-
-        <!-- Pages -->
-        <ng-container *ngFor="let page of getPageArray(totalCategories(), pageSize(), currentPageCategories())">
-          <button *ngIf="page !== '...'" (click)="onCategoryPageChange(+page)"
-            class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors"
-            [class.bg-blue-600]="page === currentPageCategories()" [class.text-white]="page === currentPageCategories()"
-            [class.text-gray-600]="page !== currentPageCategories()"
-            [class.hover:bg-blue-50]="page !== currentPageCategories()">
-            {{ page }}
-          </button>
-          <span *ngIf="page === '...'" class="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
-        </ng-container>
-
-        <!-- Next -->
-        <button [disabled]="currentPageCategories() * pageSize() >= totalCategories()"
-          (click)="onCategoryPageChange(currentPageCategories() + 1)"
-          class="p-2 text-sm border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <!-- Pagination -->
+    <app-pagination [currentPage]="currentPageCategories()" [totalItems]="totalCategories()" [pageSize]="pageSize()"
+      itemName="categories" (pageChange)="onCategoryPageChange($event)">
+    </app-pagination>
 
   </div>
 
@@ -221,44 +187,10 @@
         </tbody>
       </table>
     </div>
-    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-      <span class="text-sm text-gray-500">
-        Showing {{ (currentPageTopics() - 1) * pageSize() + 1 }}-{{ Math.min(currentPageTopics() * pageSize(),
-        totalTopics()) }} of {{ totalTopics() }} topics
-      </span>
-      <div class="flex items-center gap-1">
-        <!-- Previous -->
-        <button [disabled]="currentPageTopics() === 1" (click)="onTopicPageChange(currentPageTopics() - 1)"
-          class="p-2 text-sm border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-
-        <!-- Pages -->
-        <ng-container *ngFor="let page of getPageArray(totalTopics(), pageSize(), currentPageTopics())">
-          <button *ngIf="page !== '...'" (click)="onTopicPageChange(+page)"
-            class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors"
-            [class.bg-blue-600]="page === currentPageTopics()" [class.text-white]="page === currentPageTopics()"
-            [class.text-gray-600]="page !== currentPageTopics()"
-            [class.hover:bg-blue-50]="page !== currentPageTopics()">
-            {{ page }}
-          </button>
-          <span *ngIf="page === '...'" class="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
-        </ng-container>
-
-        <!-- Next -->
-        <button [disabled]="currentPageTopics() * pageSize() >= totalTopics()"
-          (click)="onTopicPageChange(currentPageTopics() + 1)"
-          class="p-2 text-sm border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <!-- Pagination -->
+    <app-pagination [currentPage]="currentPageTopics()" [totalItems]="totalTopics()" [pageSize]="pageSize()"
+      itemName="topics" (pageChange)="onTopicPageChange($event)">
+    </app-pagination>
   </div>
 
 
