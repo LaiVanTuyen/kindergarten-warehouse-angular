@@ -91,7 +91,7 @@ export class ResourceService {
     page = 1,
     limit = 10,
     filters?: {
-      categoryId?: string;
+      topicId?: string;
       search?: string;
       status?: 'pending' | 'approved' | 'rejected';
       type?: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD';
@@ -99,8 +99,8 @@ export class ResourceService {
   ): Observable<{ data: Resource[]; total: number }> {
     let filtered = this.mockResources;
 
-    if (filters?.categoryId) {
-      filtered = filtered.filter((r) => r.topicId === filters.categoryId);
+    if (filters?.topicId) {
+      filtered = filtered.filter((r) => r.topicId === filters.topicId);
     }
 
     if (filters?.search) {

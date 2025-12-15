@@ -48,6 +48,7 @@ export class ResourcesComponent {
   // Preview State
   previewResource = signal<Resource | null>(null);
   isLoading = signal(false);
+  isTableLoading = signal(false);
   previewUrl: SafeResourceUrl | null = null;
   previewType: 'VIDEO' | 'AUDIO' | 'IMAGE' | 'DOC' | 'UNSUPPORTED' =
     'UNSUPPORTED';
@@ -57,6 +58,8 @@ export class ResourcesComponent {
   currentPage = signal(1);
   searchControl = new FormControl('');
   typeFilter = new FormControl('');
+  categoryFilter = new FormControl('');
+  topicFilter = new FormControl('');
 
   // Forms
   uploadForm: FormGroup;
@@ -89,6 +92,22 @@ export class ResourcesComponent {
       this.loadData();
     });
 
+    this.categoryFilter.valueChanges.subscribe((catId) => {
+      this.topicFilter.setValue('');
+      if (catId) {
+        this.filteredTopics.set(
+          this.topics().filter((t) => t.categoryId === catId)
+        );
+      } else {
+        this.filteredTopics.set(this.topics());
+      }
+    });
+
+    this.topicFilter.valueChanges.subscribe(() => {
+      this.currentPage.set(1);
+      this.loadData();
+    });
+
     this.uploadForm.get('categoryId')?.valueChanges.subscribe((catId) => {
       this.filteredTopics.set(
         this.topics().filter((t) => t.categoryId === catId)
@@ -109,15 +128,19 @@ export class ResourcesComponent {
       status = 'pending';
     }
 
+    this.isTableLoading.set(true);
+
     this.resourceService
       .getResources(this.currentPage(), this.pageSize(), {
         search: this.searchControl.value || undefined,
         status: status,
         type: (this.typeFilter.value as any) || undefined,
+        topicId: (this.topicFilter.value as any) || undefined,
       })
       .subscribe((res) => {
         this.resources.set(res.data);
         this.totalResources.set(res.total);
+        this.isTableLoading.set(false);
       });
   }
 
@@ -125,13 +148,25 @@ export class ResourcesComponent {
     this.categoryService
       .getCategories(1, 100)
       .subscribe((res) => this.categories.set(res.data));
-    this.categoryService
-      .getTopics(undefined, 1, 100)
-      .subscribe((res) => this.topics.set(res.data));
+    this.categoryService.getTopics(undefined, 1, 100).subscribe((res) => {
+      this.topics.set(res.data);
+      this.filteredTopics.set(res.data);
+    });
   }
 
   onPageChange(page: number) {
     this.currentPage.set(page);
+    this.loadData();
+  }
+
+  resetFilters() {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.categoryFilter.setValue('', { emitEvent: false });
+    this.topicFilter.setValue('', { emitEvent: false });
+    this.typeFilter.setValue('', { emitEvent: false });
+
+    this.filteredTopics.set(this.topics());
+    this.currentPage.set(1);
     this.loadData();
   }
 
