@@ -15,11 +15,19 @@ import {
   Category,
   Topic,
 } from '@kindergarten-warehouse/data-access';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PaginationComponent,
+    BreadcrumbComponent,
+    EmptyStateComponent,
+  ],
   templateUrl: './categories.component.html',
   styles: [],
 })
@@ -35,16 +43,13 @@ export class CategoriesComponent {
 
   protected Math = Math;
 
-  activeTab: 'categories' | 'topics' = 'categories';
+  // Tree View State
+  expandedCategoryIds = signal<Set<string>>(new Set());
 
   // Pagination State
   pageSize = signal(10);
-
   currentPageCategories = signal(1);
   totalCategories = signal(0);
-
-  currentPageTopics = signal(1);
-  totalTopics = signal(0);
 
   // Forms
   categoryForm: FormGroup;
@@ -73,34 +78,14 @@ export class CategoriesComponent {
       categoryId: ['', Validators.required],
     });
 
-    // Initialize from URL params
-    this.route.queryParams.subscribe((params) => {
-      if (params['tab']) {
-        this.activeTab = params['tab'] === 'topics' ? 'topics' : 'categories';
-      }
-
-      const page = params['page'] ? parseInt(params['page'], 10) : 1;
-      if (this.activeTab === 'categories') {
-        this.currentPageCategories.set(page);
-      } else {
-        this.currentPageTopics.set(page);
-      }
-
-      // Load data after params are processed
-      this.loadData();
-    });
+    // Initialize (Start at page 1)
+    this.loadData();
 
     // Handle search changes
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => {
-        // Reset to page 1 on search
-        if (this.activeTab === 'categories') {
-          this.currentPageCategories.set(1);
-        } else {
-          this.currentPageTopics.set(1);
-        }
-        this.updateUrl(); // Sync URL (page 1)
+        this.currentPageCategories.set(1);
         this.loadData();
       });
   }
@@ -121,48 +106,35 @@ export class CategoriesComponent {
   }
 
   loadTopics() {
-    const search = this.searchControl.value || '';
+    // Load ALL topics (or a large page) to populate the tree view
+    // In a real app, we would fetch topics per category on expand, or use a specific endpoint
+    // For this mock, we'll fetch a large page of topics
     this.categoryService
-      .getTopics(undefined, this.currentPageTopics(), this.pageSize(), search)
+      .getTopics(undefined, 1, 1000, '')
       .subscribe((response) => {
         this.topics.set(response.data);
-        this.totalTopics.set(response.total);
       });
   }
 
-  updateUrl() {
-    const page =
-      this.activeTab === 'categories'
-        ? this.currentPageCategories()
-        : this.currentPageTopics();
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: this.activeTab, page: page },
-      queryParamsHandling: 'merge',
+  toggleExpand(categoryId: string) {
+    this.expandedCategoryIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
     });
   }
 
-  onTabChange(tab: 'categories' | 'topics') {
-    this.activeTab = tab;
-    // Reset to page 1 for the new tab unless we want persistence per tab, usually sticking to page 1 on tab switch is safer
-    if (tab === 'categories') {
-      this.currentPageCategories.set(1);
-    } else {
-      this.currentPageTopics.set(1);
-    }
-    this.updateUrl();
+  getTopicsForCategory(categoryId: string): Topic[] {
+    return this.topics().filter((t) => t.categoryId === categoryId);
   }
 
   onCategoryPageChange(page: number) {
     this.currentPageCategories.set(page);
-    this.updateUrl();
     this.loadCategories();
-  }
-
-  onTopicPageChange(page: number) {
-    this.currentPageTopics.set(page);
-    this.updateUrl();
-    this.loadTopics();
   }
 
   getPageArray(

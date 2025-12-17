@@ -124,6 +124,28 @@
                         class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Users</span>
                 </a>
             </li>
+
+            <!-- Audit Logs -->
+            <li>
+                <a routerLink="/audit-logs" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Audit Logs">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6" />
+                            <path d="M16 13H8" />
+                            <path d="M16 17H8" />
+                            <path d="M10 9H8" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Audit
+                        Logs</span>
+                </a>
+            </li>
         </ul>
     </nav>
 

@@ -92,15 +92,16 @@ export class DashboardComponent {
     if (filter === 'last_7_days') {
       // 7-Day Mock Data (Mon - Sun)
       xAxisData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      resourceData = [2, 4, 1, 3, 5, 2, 4];
-      viewData = [120, 132, 101, 134, 90, 230, 210];
-      userData = [1, 0, 1, 2, 1, 3, 2];
+      // Randomize data to make graphs distinct
+      resourceData = [5, 8, 3, 12, 6, 9, 7];
+      viewData = [150, 230, 220, 180, 260, 310, 290];
+      userData = [2, 1, 4, 3, 5, 4, 6];
 
       // Update Stats for Week
-      this.stats.update((s) => ({
-        totalResources: 21,
-        totalViews: 1017,
-        totalUsers: 10,
+      this.stats.update(() => ({
+        totalResources: 50,
+        totalViews: 1640,
+        totalUsers: 25,
         pendingApprovals: 8,
       }));
     } else {
@@ -119,20 +120,24 @@ export class DashboardComponent {
         'Nov',
         'Dec',
       ];
-      resourceData = [10, 12, 18, 25, 30, 42, 45, 50, 55, 62, 68, 75];
+      // Distinct patterns for each chart
+      resourceData = [15, 20, 25, 18, 22, 30, 35, 28, 40, 45, 50, 55]; // Steady growth with dips
       viewData = [
-        500, 650, 800, 1200, 1500, 2100, 2400, 2800, 3200, 3800, 4200, 5000,
-      ];
-      userData = [2, 3, 5, 8, 11, 14, 16, 20, 25, 30, 35, 45];
+        800, 1200, 1100, 1600, 2200, 2000, 3500, 3100, 4000, 4500, 5200, 5800,
+      ]; // Volatile growth
+      userData = [5, 8, 12, 15, 18, 22, 28, 32, 38, 45, 50, 60]; // Linear growth
 
       // Update Stats for Year
-      this.stats.update((s) => ({
+      this.stats.update(() => ({
         totalResources: 215,
-        totalViews: 1428,
-        totalUsers: 45,
+        totalViews: 35000,
+        totalUsers: 325,
         pendingApprovals: 8,
       }));
     }
+
+    // Mock System Health Updates (Simulate live data)
+    this.updateSystemHealth();
 
     // Generate Chart Options
     this.resourceChartOption.set(
@@ -162,6 +167,27 @@ export class DashboardComponent {
         'rgba(34, 197, 94'
       )
     ); // Green
+  }
+
+  // System Health Signals
+  systemHealth = signal({
+    cpuUsage: 45,
+    ramUsage: 62,
+    serverUptime: '24 days',
+    dbStatus: 'CONNECTED',
+    serverStatus: 'ONLINE',
+  });
+
+  updateSystemHealth() {
+    // Simulate slight variations
+    const cpu = Math.floor(Math.random() * (60 - 30 + 1)) + 30; // 30-60%
+    const ram = Math.floor(Math.random() * (80 - 50 + 1)) + 50; // 50-80%
+
+    this.systemHealth.update((s) => ({
+      ...s,
+      cpuUsage: cpu,
+      ramUsage: ram,
+    }));
   }
 
   // Helper to generate consistent ECharts config

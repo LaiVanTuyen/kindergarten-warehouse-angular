@@ -1,6 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
+import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   FormBuilder,
@@ -9,7 +12,7 @@ import {
   Validators,
   FormControl,
 } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, delay } from 'rxjs/operators';
 import {
   ResourceService,
   CategoryService,
@@ -23,7 +26,14 @@ import { ToastService } from '../shared/toast/toast.service';
 @Component({
   selector: 'app-admin-resources',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PaginationComponent,
+    SkeletonTableComponent,
+    BreadcrumbComponent,
+    EmptyStateComponent,
+  ],
   templateUrl: './resources.component.html',
   styles: [],
 })
@@ -38,6 +48,28 @@ export class ResourcesComponent {
   // Data Signals
   resources = signal<Resource[]>([]);
   totalResources = signal(0);
+  selectedIds = signal<Set<string>>(new Set());
+
+  // Bulk Actions
+  toggleSelection(id: string) {
+    this.selectedIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  }
+
+  toggleAll(checked: boolean) {
+    if (checked) {
+      this.selectedIds.set(new Set(this.resources().map((r) => r.id)));
+    } else {
+      this.selectedIds.set(new Set());
+    }
+  }
 
   // UI State
   activeTab = signal<'pending' | 'list'>('pending');
@@ -52,6 +84,54 @@ export class ResourcesComponent {
   previewUrl: SafeResourceUrl | null = null;
   previewType: 'VIDEO' | 'AUDIO' | 'IMAGE' | 'DOC' | 'UNSUPPORTED' =
     'UNSUPPORTED';
+
+  // GENERIC CONFIRMATION MODAL STATE
+  isConfirmModalOpen = signal(false);
+  confirmConfig = signal<{
+    title: string;
+    message: string;
+    action: 'APPROVE' | 'REJECT' | 'DELETE' | 'BULK_APPROVE' | 'BULK_DELETE';
+    data?: any;
+  } | null>(null);
+
+  openConfirmModal(
+    title: string,
+    message: string,
+    action: 'APPROVE' | 'REJECT' | 'DELETE' | 'BULK_APPROVE' | 'BULK_DELETE',
+    data: any = null
+  ) {
+    this.confirmConfig.set({ title, message, action, data });
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmConfig.set(null);
+  }
+
+  onConfirmAction() {
+    const config = this.confirmConfig();
+    if (!config) return;
+
+    switch (config.action) {
+      case 'APPROVE':
+        this.executeApprove(config.data);
+        break;
+      case 'REJECT':
+        this.executeReject(config.data);
+        break;
+      case 'DELETE':
+        this.executeDeleteSingle(config.data);
+        break;
+      case 'BULK_APPROVE':
+        this.executeBulkApprove();
+        break;
+      case 'BULK_DELETE':
+        this.executeBulkDelete();
+        break;
+    }
+    this.closeConfirmModal();
+  }
 
   // Filtering & Pagination
   pageSize = signal(10);
@@ -137,9 +217,11 @@ export class ResourcesComponent {
         type: (this.typeFilter.value as any) || undefined,
         topicId: (this.topicFilter.value as any) || undefined,
       })
+      .pipe(delay(500))
       .subscribe((res) => {
         this.resources.set(res.data);
         this.totalResources.set(res.total);
+        this.selectedIds.set(new Set()); // Clear selection on load
         this.isTableLoading.set(false);
       });
   }
@@ -187,6 +269,15 @@ export class ResourcesComponent {
   }
 
   approveResource(id: string) {
+    this.openConfirmModal(
+      'Approve Resource?',
+      'Are you sure you want to APPROVE this resource? It will become visible to all users.',
+      'APPROVE',
+      id
+    );
+  }
+
+  executeApprove(id: string) {
     this.resourceService.approveResource(id).subscribe(() => {
       this.toastService.show('Resource approved successfully', 'success');
       this.loadData();
@@ -194,37 +285,92 @@ export class ResourcesComponent {
   }
 
   rejectResource(id: string) {
+    this.openConfirmModal(
+      'Reject Resource?',
+      'Are you sure you want to REJECT this resource? It will be marked as rejected.',
+      'REJECT',
+      id
+    );
+  }
+
+  executeReject(id: string) {
     this.resourceService.rejectResource(id).subscribe(() => {
       this.toastService.show('Resource rejected', 'info');
       this.loadData();
     });
   }
 
-  deleteModalOpen = signal(false);
-  resourceToDelete = signal<string | null>(null);
-
+  // Refactoring usage:
   confirmDelete(id: string) {
-    this.resourceToDelete.set(id);
-    this.deleteModalOpen.set(true);
+    this.openConfirmModal(
+      'Delete Resource?',
+      'Are you sure you want to delete this resource? This action cannot be undone.',
+      'DELETE',
+      id
+    );
   }
 
-  cancelDelete() {
-    this.deleteModalOpen.set(false);
-    this.resourceToDelete.set(null);
+  executeDeleteSingle(id: string) {
+    this.resourceService.deleteResource(id).subscribe(() => {
+      if (this.currentResourceId === id) {
+        this.cancelEdit();
+      }
+      this.toastService.show('Resource deleted successfully', 'success');
+      this.loadData();
+    });
   }
 
-  deleteResource() {
-    const id = this.resourceToDelete();
-    if (id) {
-      this.resourceService.deleteResource(id).subscribe(() => {
-        if (this.currentResourceId === id) {
-          this.cancelEdit();
+  // BULK ACTIONS
+  approveSelected() {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+
+    this.openConfirmModal(
+      'Approve Selected?',
+      `Are you sure you want to approve ${ids.length} selected resources?`,
+      'BULK_APPROVE'
+    );
+  }
+
+  executeBulkApprove() {
+    const ids = Array.from(this.selectedIds());
+    let count = 0;
+    ids.forEach((id) => {
+      this.resourceService.approveResource(id).subscribe(() => {
+        count++;
+        if (count === ids.length) {
+          this.toastService.show('Selected resources approved', 'success');
+          this.selectedIds.set(new Set());
+          this.loadData();
         }
-        this.toastService.show('Resource deleted successfully', 'success');
-        this.loadData();
-        this.cancelDelete();
       });
-    }
+    });
+  }
+
+  deleteSelected() {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+
+    this.openConfirmModal(
+      'Delete Selected?',
+      `Are you sure you want to delete ${ids.length} selected resources? This cannot be undone.`,
+      'BULK_DELETE'
+    );
+  }
+
+  executeBulkDelete() {
+    const ids = Array.from(this.selectedIds());
+    let count = 0;
+    ids.forEach((id) => {
+      this.resourceService.deleteResource(id).subscribe(() => {
+        count++;
+        if (count === ids.length) {
+          this.toastService.show('Selected resources deleted', 'success');
+          this.selectedIds.set(new Set());
+          this.loadData();
+        }
+      });
+    });
   }
 
   editResource(resource: Resource) {
@@ -373,5 +519,11 @@ export class ResourcesComponent {
     if (!topicId) return '';
     const topic = this.topics().find((t) => t.id === topicId);
     return topic ? topic.categoryId : '';
+  }
+
+  getTopicTitle(topicId?: string): string {
+    if (!topicId) return 'General';
+    const topic = this.topics().find((t) => t.id === topicId);
+    return topic ? topic.title : 'General';
   }
 }

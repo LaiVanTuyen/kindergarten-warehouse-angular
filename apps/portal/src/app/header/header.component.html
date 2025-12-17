@@ -23,17 +23,17 @@
     <!-- Right Section: Search & Login -->
     <div class="hidden md:flex items-center gap-4">
       <!-- Language Switcher -->
-      <div class="flex items-center gap-2 mr-2">
-        <button (click)="setLang('en')" class="text-sm font-bold transition-colors"
-          [class.text-primary-blue]="(translationService.currentLang$ | async) === 'en'"
-          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'en'">
+      <div class="flex items-center space-x-2 bg-gray-50 rounded-lg p-1"
+        *ngIf="translationService.currentLang$ | async as currentLang">
+        <button (click)="setLang('en')" [class.bg-white]="currentLang === 'en'" [class.shadow-sm]="currentLang === 'en'"
+          [class.text-primary-blue]="currentLang === 'en'" [class.text-gray-400]="currentLang !== 'en'"
+          class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200">
           EN
         </button>
-        <span class="text-gray-300">|</span>
-        <button (click)="setLang('vi')" class="text-sm font-bold transition-colors"
-          [class.text-primary-blue]="(translationService.currentLang$ | async) === 'vi'"
-          [class.text-gray-400]="(translationService.currentLang$ | async) !== 'vi'">
-          VI
+        <button (click)="setLang('vi')" [class.bg-white]="currentLang === 'vi'" [class.shadow-sm]="currentLang === 'vi'"
+          [class.text-primary-blue]="currentLang === 'vi'" [class.text-gray-400]="currentLang !== 'vi'"
+          class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200">
+          VN
         </button>
       </div>
 

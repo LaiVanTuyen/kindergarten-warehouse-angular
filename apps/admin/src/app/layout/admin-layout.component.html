@@ -1,16 +1,40 @@
 <div class="flex h-screen bg-gray-100">
+
+  <!-- Mobile Sidebar Overlay -->
+  <div *ngIf="isSidebarOpen()" (click)="isSidebarOpen.set(false)"
+    class="fixed inset-0 bg-gray-900/50 z-20 lg:hidden backdrop-blur-sm transition-opacity">
+  </div>
+
   <!-- Sidebar -->
-  <app-sidebar class="h-full"></app-sidebar>
+  <aside
+    class="fixed inset-y-0 left-0 z-30 w-64 bg-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none"
+    [ngClass]="isSidebarOpen() ? 'translate-x-0' : '-translate-x-full'">
+    <app-sidebar class="h-full"></app-sidebar>
+  </aside>
 
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
+  <div class="flex-1 flex flex-col overflow-hidden w-full">
     <!-- Topbar -->
-    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10 relative">
-      <h2 class="text-xl font-semibold text-gray-800">
-        Administrator Panel
-      </h2>
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 z-10 relative">
+
+      <div class="flex items-center gap-3">
+        <!-- Mobile Toggle Button -->
+        <button (click)="toggleSidebar()" class="p-2 -ml-2 mr-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <h2 class="text-lg lg:text-xl font-semibold text-gray-800 truncate">
+          Administrator Panel
+        </h2>
+      </div>
+
       <div class="flex items-center space-x-4 relative">
-        <span class="text-sm text-gray-500">Welcome, Admin</span>
+        <span class="text-sm text-gray-500 hidden sm:block">Welcome, Admin</span>
 
         <!-- Avatar Button -->
         <button (click)="toggleProfile()"
@@ -54,7 +78,7 @@
     </header>
 
     <!-- Content Area -->
-    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 lg:p-6">
       <router-outlet></router-outlet>
     </main>
   </div>

@@ -215,10 +215,11 @@
           </div>
           <div>
             <p class="text-sm font-bold text-gray-800">Server Status</p>
-            <p class="text-xs text-gray-500">Uptime: 24 days</p>
+            <p class="text-xs text-gray-500">Uptime: {{ systemHealth().serverUptime }}</p>
           </div>
         </div>
-        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">ONLINE</span>
+        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{{
+          systemHealth().serverStatus }}</span>
       </div>
 
       <!-- Database -->
@@ -238,29 +239,32 @@
             <p class="text-xs text-gray-500">MySQL 8.0</p>
           </div>
         </div>
-        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">CONNECTED</span>
+        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{{
+          systemHealth().dbStatus }}</span>
       </div>
 
-      <!-- Storage Usage -->
+      <!-- RAM Usage -->
       <div>
         <div class="flex justify-between items-center mb-2">
-          <p class="text-sm font-medium text-gray-600">Storage Usage</p>
-          <span class="text-xs font-bold text-gray-800">45%</span>
+          <p class="text-sm font-medium text-gray-600">RAM Usage (Java)</p>
+          <span class="text-xs font-bold text-gray-800">{{ systemHealth().ramUsage }}%</span>
         </div>
         <div class="w-full bg-gray-100 rounded-full h-2">
-          <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+          <div class="bg-blue-500 h-2 rounded-full transition-all duration-500"
+            [style.width.%]="systemHealth().ramUsage"></div>
         </div>
-        <p class="text-xs text-gray-400 mt-1">450GB / 1TB Used</p>
+        <p class="text-xs text-gray-400 mt-1">Allocated 1024MB</p>
       </div>
 
       <!-- CPU Load -->
       <div>
         <div class="flex justify-between items-center mb-2">
           <p class="text-sm font-medium text-gray-600">CPU Load</p>
-          <span class="text-xs font-bold text-gray-800">12%</span>
+          <span class="text-xs font-bold text-gray-800">{{ systemHealth().cpuUsage }}%</span>
         </div>
         <div class="w-full bg-gray-100 rounded-full h-2">
-          <div class="bg-purple-500 h-2 rounded-full" style="width: 12%"></div>
+          <div class="bg-purple-500 h-2 rounded-full transition-all duration-500"
+            [style.width.%]="systemHealth().cpuUsage"></div>
         </div>
       </div>
     </div>

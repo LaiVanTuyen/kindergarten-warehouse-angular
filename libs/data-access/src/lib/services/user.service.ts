@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { User } from '../models';
+import { User } from '../models/models';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +16,7 @@ export class UserService {
       isActive: true,
       avatarUrl: '',
       createdAt: '2023-10-24T10:00:00Z',
+      lastLogin: '2023-12-01T08:30:00Z',
     },
     {
       id: 2,
@@ -27,6 +28,7 @@ export class UserService {
       avatarUrl:
         'https://ui-avatars.com/api/?name=Sarah+Johnson&background=random',
       createdAt: '2023-10-25T11:30:00Z',
+      lastLogin: '2023-11-28T14:45:00Z',
     },
     {
       id: 3,
@@ -37,6 +39,7 @@ export class UserService {
       isActive: false,
       avatarUrl: '',
       createdAt: '2023-10-20T09:15:00Z',
+      lastLogin: '2023-10-21T10:00:00Z',
     },
     {
       id: 4,
@@ -48,6 +51,7 @@ export class UserService {
       avatarUrl:
         'https://ui-avatars.com/api/?name=Mike+Davis&background=random',
       createdAt: '2023-10-22T14:20:00Z',
+      lastLogin: '2023-12-02T09:15:00Z',
     },
   ];
 
@@ -109,6 +113,7 @@ export class UserService {
         user.avatarUrl ||
         `https://ui-avatars.com/api/?name=${user.fullName}&background=random`,
       createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
     };
 
     this.mockUsers = [newUser, ...this.mockUsers];

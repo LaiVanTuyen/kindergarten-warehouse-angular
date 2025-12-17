@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Resource } from '../models';
+import { Resource } from '../models/models';
 import { AuthService } from './general.service';
 import { inject } from '@angular/core';
 
@@ -24,6 +24,7 @@ export class ResourceService {
       createdAt: '2023-10-25T10:00:00Z',
       topicId: 't1',
       url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      fileSize: '500 MB',
     },
     {
       id: '2',
@@ -39,6 +40,7 @@ export class ResourceService {
       createdAt: '2023-10-24T12:00:00Z',
       topicId: 't3',
       url: 'https://www.w3schools.com/w3css/img_lights.jpg',
+      fileSize: '2.4 MB',
     },
     {
       id: '3',
@@ -54,6 +56,7 @@ export class ResourceService {
       createdAt: '2023-10-23T09:00:00Z',
       topicId: 't4',
       url: 'https://www.w3schools.com/html/horse.mp3',
+      fileSize: '4.1 MB',
     },
     {
       id: '4',
@@ -69,6 +72,7 @@ export class ResourceService {
       createdAt: '2023-10-22T14:00:00Z',
       topicId: 't2',
       url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+      fileSize: '150 KB',
     },
     {
       id: '5',
@@ -84,6 +88,7 @@ export class ResourceService {
       createdAt: '2023-10-21T20:00:00Z',
       topicId: 't2',
       url: 'https://example.com/file.zip',
+      fileSize: '45 MB',
     },
   ];
 
@@ -160,6 +165,7 @@ export class ResourceService {
       createdAt: new Date().toISOString(),
       topicId: resource.topicId,
       url: resource.url,
+      fileSize: '0 MB', // Default for uploads
       ...resource,
     };
     this.mockResources = [newResource, ...this.mockResources];

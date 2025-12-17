@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Banner } from '../models';
+import { Banner } from '../models/models';
 
 @Injectable({
   providedIn: 'root',
@@ -26,8 +26,6 @@ export class BannerService {
       updated_at: '2023-11-05T14:30:00Z',
     },
   ];
-
-
 
   getBanners(): Observable<Banner[]> {
     return of(this.mockBanners);

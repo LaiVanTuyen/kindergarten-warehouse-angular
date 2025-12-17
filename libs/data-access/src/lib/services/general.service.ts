@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { User, Category, Topic } from '../models';
+import { User, Category, Topic } from '../models/models';
 
 // UserService code moved to user.service.ts
 

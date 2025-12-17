@@ -1,70 +1,147 @@
 <div class="h-full flex flex-col">
 
   <!-- Detached Dark Banner (Hero) -->
-  <div class="bg-slate-800 p-8 rounded-3xl text-white shadow-xl mb-6 relative overflow-hidden">
+  <div
+    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 relative overflow-hidden flex justify-between items-center">
     <!-- Decorative lighter circle for flair -->
     <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
-    <h1 class="text-3xl font-bold tracking-tight">User Management</h1>
-    <p class="text-slate-400 mt-1.5 text-base">Manage system access, roles, and user accounts.</p>
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col gap-1">
+        <app-breadcrumb></app-breadcrumb>
+        <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+        <p class="text-slate-400 mt-1 text-sm">Manage system access, roles, and user accounts.</p>
+      </div>
+    </div>
   </div>
 
-  <!-- Action Toolbar -->
-  <div class="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
-    <!-- Left: Filters -->
-    <div class="flex gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
-      <!-- Role Filter -->
-      <select [value]="roleFilter()" (change)="onFilterRole($any($event.target).value)"
-        class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
-        <option value="ALL">All Roles</option>
-        <option value="ADMIN">Admin</option>
-        <option value="TEACHER">Teacher</option>
-        <option value="USER">User</option>
-      </select>
-
-      <!-- Status Filter -->
-      <select [value]="statusFilter()" (change)="onFilterStatus($any($event.target).value)"
-        class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
-        <option value="ALL">All Status</option>
-        <option value="ACTIVE">Active</option>
-        <option value="BLOCKED">Blocked</option>
-        <option value="DELETED">Deleted (Bin)</option>
-      </select>
+  <!-- Bulk Actions Toolbar -->
+  <div *ngIf="selectedIds().size > 0"
+    class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 flex justify-between items-center shadow-sm animate-fade-in-down">
+    <div class="flex items-center gap-3">
+      <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+        {{ selectedIds().size }}
+      </div>
+      <span class="font-bold text-blue-900">users selected</span>
     </div>
+    <div class="flex gap-3">
+      <button (click)="bulkBlock()"
+        class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+        </svg>
+        Block Selected
+      </button>
+      <button (click)="bulkDelete()"
+        class="bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Delete Selected
+      </button>
+    </div>
+  </div>
 
-    <!-- Right: Search + Add Button -->
-    <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-      <!-- Search Input -->
-      <div class="relative w-full sm:w-64">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  <!-- Toolbar Section: Filters, Search & Actions -->
+  <div class="flex flex-col xl:flex-row justify-between items-center gap-4 mb-4">
+
+    <!-- Left: Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+      <!-- Role Filter -->
+      <div class="relative w-full sm:w-56">
+        <select [formControl]="roleControl"
+          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+          <option value="ALL">All Roles</option>
+          <option value="ADMIN">Admin</option>
+          <option value="TEACHER">Teacher</option>
+          <option value="USER">User</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-        <input type="text" [value]="searchQuery()" (input)="onSearch($event)"
-          class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-          placeholder="Search items..." />
+      </div>
+
+      <!-- Status Filter -->
+      <div class="relative w-full sm:w-56">
+        <select [formControl]="statusControl"
+          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="BLOCKED">Blocked</option>
+          <option value="DELETED">Deleted (Bin)</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reset/Refresh Button -->
+      <button (click)="resetFilters()" title="Reset Filters"
+        class="px-3 py-2.5 border border-gray-200 rounded-xl text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-sm active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Right: Search & Add -->
+    <div class="flex items-center gap-3 w-full xl:w-auto">
+      <!-- Search -->
+      <div class="relative w-full sm:w-72">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <input [formControl]="searchControl" type="text" placeholder="Search users..."
+          class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm" />
+        <button *ngIf="searchControl.value" (click)="resetFilters()"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none focus:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
 
       <!-- Add User Button -->
       <button (click)="openAddUserModal()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95 w-full sm:w-auto justify-center">
-        <span class="text-lg leading-none">+</span> Add User
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95">
+        <span class="text-lg leading-none">+</span> New User
       </button>
     </div>
   </div>
 
   <!-- Data Table -->
   <div class="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-    <div class="overflow-auto flex-1">
-      <table class="w-full text-left border-collapse">
+
+    <!-- Skeleton Loading -->
+    <div *ngIf="isLoading()" class="p-6">
+      <app-skeleton-table [rows]="8" [cols]="6" [template]="['checkbox', 'user', 'badge', 'badge', 'text', 'actions']">
+      </app-skeleton-table>
+    </div>
+
+    <!-- Main Table -->
+    <div *ngIf="!isLoading()" class="flex-1 overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[800px]">
         <thead class="bg-slate-50 sticky top-0 z-10">
           <tr>
-            <th class="px-6 py-4 border-b border-slate-100 w-16">
-              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($event)"
-                class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+            <th class="px-6 py-4 border-b border-slate-100 w-16 text-center">
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($any($event.target).checked)"
+                class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
             </th>
             <th
               class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700"
@@ -73,9 +150,14 @@
               <span *ngIf="sortColumn() === 'fullName'" class="ml-1">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
             </th>
             <th class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Role</th>
+              Role
+            </th>
             <th class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Status</th>
+              Status
+            </th>
+            <th class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Last Active
+            </th>
             <th
               class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700"
               (click)="toggleSort('createdAt')">
@@ -84,16 +166,21 @@
             </th>
             <th
               class="px-6 py-4 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-              Actions</th>
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr *ngFor="let user of paginatedUsers()" [class.bg-purple-50]="isRowSelected(user.id)"
+          <tr *ngFor="let user of paginatedUsers()" [class.bg-blue-50]="selectedIds().has(user.id)"
             class="hover:bg-slate-50 transition-colors group">
-            <td class="px-6 py-4">
-              <input type="checkbox" [checked]="isRowSelected(user.id)" (change)="toggleSelectRow(user.id)"
-                class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+
+            <!-- Checkbox -->
+            <td class="px-6 py-4 text-center">
+              <input type="checkbox" [checked]="selectedIds().has(user.id)" (change)="toggleSelection(user.id)"
+                class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
             </td>
+
+            <!-- User Info -->
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <img [src]="user.avatarUrl"
@@ -104,6 +191,8 @@
                 </div>
               </div>
             </td>
+
+            <!-- Role -->
             <td class="px-6 py-4">
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold capitalize border"
                 [ngClass]="{
@@ -114,19 +203,40 @@
                 {{ user.role.toLowerCase() }}
               </span>
             </td>
+
+            <!-- Status -->
             <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full" [ngClass]="user.isActive ? 'bg-emerald-500' : 'bg-rose-500'"></div>
-                <span class="text-sm font-medium" [ngClass]="user.isActive ? 'text-emerald-700' : 'text-rose-700'">
-                  {{ user.isActive ? 'Active' : 'Blocked' }}
+              <ng-container *ngIf="user.isDeleted; else activeStatus">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                  Deleted
                 </span>
-              </div>
+              </ng-container>
+              <ng-template #activeStatus>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full" [ngClass]="user.isActive ? 'bg-emerald-500' : 'bg-rose-500'"></div>
+                  <span class="text-sm font-medium" [ngClass]="user.isActive ? 'text-emerald-700' : 'text-rose-700'">
+                    {{ user.isActive ? 'Active' : 'Blocked' }}
+                  </span>
+                </div>
+              </ng-template>
             </td>
+
+            <!-- Last Active -->
+            <td class="px-6 py-4 text-sm text-slate-500 font-medium">
+              <span *ngIf="user.lastLogin" class="text-slate-700">{{ user.lastLogin | date:'MMM d, h:mm a' }}</span>
+              <span *ngIf="!user.lastLogin" class="text-slate-400 italic">Never</span>
+            </td>
+
+            <!-- Joined Date -->
             <td class="px-6 py-4 text-sm text-slate-500 font-medium">
               {{ user.createdAt | date:'mediumDate' }}
             </td>
+
+            <!-- Actions -->
             <td class="px-6 py-4 text-right">
-              <div class="flex items-center justify-end gap-1 transition-opacity">
+              <div
+                class="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                 <!-- Actions for Non-Deleted Users -->
                 <ng-container *ngIf="!user.isDeleted">
                   <button (click)="onResetPassword(user)"
@@ -150,27 +260,28 @@
                   <button (click)="onToggleStatus(user)"
                     class="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
                     [title]="user.isActive ? 'Block' : 'Unblock'">
-                    <svg *ngIf="user.isActive" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                    <svg *ngIf="!user.isActive" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-                    </svg>
+                    <ng-container *ngIf="user.isActive">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                      </svg>
+                    </ng-container>
+                    <ng-container *ngIf="!user.isActive">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                    </ng-container>
                   </button>
                   <button (click)="onDeleteUser(user)"
                     class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                     title="Delete">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                      </path>
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
                   </button>
                 </ng-container>
@@ -190,20 +301,23 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="filteredUsers().length === 0">
-            <td colspan="6" class="py-12 text-center text-slate-400">
-              No users found matching your filters.
-            </td>
-          </tr>
         </tbody>
       </table>
-    </div>
 
-    <!-- Pagination -->
-    <app-pagination [currentPage]="currentPage()" [totalItems]="totalUsersCount()" [pageSize]="pageSize()"
-      itemName="users" (pageChange)="onPageChange($event)">
-    </app-pagination>
+      <!-- Empty State -->
+      <div *ngIf="paginatedUsers().length === 0" class="p-8">
+        <app-empty-state message="No users found"
+          subMessage="We couldn't find any users matching your filters. Try clearing them to see all results.">
+        </app-empty-state>
+      </div>
+
+    </div>
   </div>
+
+  <!-- Pagination -->
+  <app-pagination *ngIf="!isLoading()" [currentPage]="currentPage()" [totalItems]="totalUsersCount()"
+    [pageSize]="pageSize()" itemName="users" (pageChange)="onPageChange($event)">
+  </app-pagination>
 </div>
 
 <!-- Add/Edit User Modal -->
@@ -430,6 +544,41 @@
       <button (click)="confirmRestoreUser()"
         class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">
         Restore
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Confirmation Modal for Bulk Actions -->
+<div *ngIf="isConfirmModalOpen()"
+  class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-all">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
+    <!-- Dynamic Icon -->
+    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
+      [ngClass]="{
+        'bg-rose-100 text-rose-600': confirmConfig()?.action === 'BULK_DELETE' || confirmConfig()?.action === 'BULK_BLOCK'
+      }">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ confirmConfig()?.title }}</h3>
+    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2">
+      {{ confirmConfig()?.message }}
+    </p>
+
+    <div class="flex justify-center gap-3">
+      <button (click)="closeConfirmModal()"
+        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+
+      <button (click)="onConfirmAction()"
+        class="flex-1 px-4 py-3.5 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all">
+        Confirm
       </button>
     </div>
   </div>

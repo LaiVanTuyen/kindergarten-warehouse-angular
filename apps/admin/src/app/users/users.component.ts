@@ -1,12 +1,25 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
+import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
+  FormControl,
 } from '@angular/forms';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
+import { combineLatest, timer } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ToastService } from '../shared/toast/toast.service';
 
 // Mock Data for Demonstration
@@ -71,7 +84,14 @@ const MOCK_USERS: any[] = [
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PaginationComponent,
+    SkeletonTableComponent,
+    BreadcrumbComponent,
+    EmptyStateComponent,
+  ],
   templateUrl: './users.component.html',
   styles: [],
 })
@@ -81,75 +101,87 @@ export class UsersComponent {
 
   // -- State Signals --
   allUsers = signal<any[]>(MOCK_USERS);
+  isLoading = signal(false);
 
   // Selection for bulk actions
-  selectedUserIds = signal<Set<string>>(new Set());
+  selectedIds = signal<Set<string>>(new Set());
 
   // Pagination
   currentPage = signal(1);
   pageSize = signal(10);
 
-  // Filter Signals
+  // Filter Signals (Driven by FormControls)
   searchQuery = signal('');
   roleFilter = signal<'ALL' | 'ADMIN' | 'TEACHER' | 'USER'>('ALL');
   statusFilter = signal<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>('ALL');
+
+  // Form Controls for UI
+  searchControl = new FormControl('');
+  roleControl = new FormControl('ALL');
+  statusControl = new FormControl('ALL');
 
   // Sorting
   sortColumn = signal<'fullName' | 'createdAt'>('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
 
-  // Computed Users (Filtered & Sorted)
-  filteredUsers = computed(() => {
-    let users = this.allUsers();
+  // Computed Users (Filtered & Sorted) with Async Simulation
+  private filterState$ = combineLatest([
+    toObservable(this.allUsers),
+    toObservable(this.searchQuery),
+    toObservable(this.roleFilter),
+    toObservable(this.statusFilter),
+    toObservable(this.sortColumn),
+    toObservable(this.sortDirection),
+  ]).pipe(
+    tap(() => this.isLoading.set(true)),
+    switchMap(([users, queryRaw, role, status, col, dir]) => {
+      return timer(500).pipe(
+        map(() => {
+          let res = users;
 
-    // 1. Filter by Search
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      users = users.filter(
-        (u) =>
-          u.fullName.toLowerCase().includes(query) ||
-          u.email.toLowerCase().includes(query)
+          // 1. Filter by Search
+          const query = queryRaw.toLowerCase();
+          if (query) {
+            res = res.filter(
+              (u) =>
+                u.fullName.toLowerCase().includes(query) ||
+                u.email.toLowerCase().includes(query)
+            );
+          }
+
+          // 2. Filter by Role
+          if (role !== 'ALL') {
+            res = res.filter((u) => u.role === role);
+          }
+
+          // 3. Filter by Status (and Soft Delete)
+          if (status === 'DELETED') {
+            res = res.filter((u) => u.isDeleted === true);
+          } else {
+            res = res.filter((u) => u.isDeleted !== true);
+            if (status !== 'ALL') {
+              const isActive = status === 'ACTIVE';
+              res = res.filter((u) => u.isActive === isActive);
+            }
+          }
+
+          // 4. Sort
+          res = [...res].sort((a, b) => {
+            const valA = a[col];
+            const valB = b[col];
+            if (valA < valB) return dir === 'asc' ? -1 : 1;
+            if (valA > valB) return dir === 'asc' ? 1 : -1;
+            return 0;
+          });
+
+          return res;
+        }),
+        tap(() => this.isLoading.set(false))
       );
-    }
+    })
+  );
 
-    // 2. Filter by Role
-    const role = this.roleFilter();
-    if (role !== 'ALL') {
-      users = users.filter((u) => u.role === role);
-    }
-
-    // 3. Filter by Status
-    // 3. Filter by Status (and Soft Delete)
-    const status = this.statusFilter();
-
-    if (status === 'DELETED') {
-      // Show ONLY deleted users
-      users = users.filter((u) => u.isDeleted === true);
-    } else {
-      // Show ONLY non-deleted users
-      users = users.filter((u) => u.isDeleted !== true);
-
-      // Apply matching status if not ALL
-      if (status !== 'ALL') {
-        const isActive = status === 'ACTIVE';
-        users = users.filter((u) => u.isActive === isActive);
-      }
-    }
-
-    // 4. Sort
-    const col = this.sortColumn();
-    const dir = this.sortDirection();
-
-    users = [...users].sort((a, b) => {
-      const valA = a[col];
-      const valB = b[col];
-      if (valA < valB) return dir === 'asc' ? -1 : 1;
-      if (valA > valB) return dir === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return users;
-  });
+  filteredUsers = toSignal(this.filterState$, { initialValue: [] });
 
   // Derived Statistics
   totalUsersCount = computed(() => this.filteredUsers().length);
@@ -184,23 +216,30 @@ export class UsersComponent {
       isActive: [true],
       isDeleted: [false],
     });
+
+    // -- Filter Subscriptions --
+    this.searchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((val) => {
+        this.searchQuery.set(val || '');
+        this.currentPage.set(1);
+      });
+
+    this.roleControl.valueChanges.subscribe((val) => {
+      this.roleFilter.set((val as any) || 'ALL');
+      this.currentPage.set(1);
+    });
+
+    this.statusControl.valueChanges.subscribe((val) => {
+      this.statusFilter.set((val as any) || 'ALL');
+      this.currentPage.set(1);
+    });
   }
 
-  // -- Search & Filter Actions --
-  onSearch(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(val);
-    this.currentPage.set(1); // Reset page
-  }
-
-  onFilterRole(role: string) {
-    this.roleFilter.set(role as any);
-    this.currentPage.set(1);
-  }
-
-  onFilterStatus(status: string) {
-    this.statusFilter.set(status as any);
-    this.currentPage.set(1);
+  resetFilters() {
+    this.searchControl.setValue('');
+    this.roleControl.setValue('ALL');
+    this.statusControl.setValue('ALL');
   }
 
   toggleSort(column: 'fullName' | 'createdAt') {
@@ -213,18 +252,20 @@ export class UsersComponent {
   }
 
   // -- Bulk Selection --
-  toggleSelectAll(event: any) {
-    const checked = event.target.checked;
+  toggleSelectAll(checked: boolean) {
     if (checked) {
       const ids = this.filteredUsers().map((u) => u.id);
-      this.selectedUserIds.set(new Set(ids));
+      this.selectedIds.set(new Set(ids));
     } else {
-      this.selectedUserIds.set(new Set());
+      this.selectedIds.set(new Set());
     }
   }
 
-  toggleSelectRow(id: string) {
-    this.selectedUserIds.update((set) => {
+  isRowSelected(id: string) {
+    return this.selectedIds().has(id);
+  }
+  toggleSelection(id: string) {
+    this.selectedIds.update((set) => {
       const newSet = new Set(set);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
@@ -235,12 +276,97 @@ export class UsersComponent {
   isAllSelected() {
     const visible = this.paginatedUsers();
     if (visible.length === 0) return false;
-    const selected = this.selectedUserIds();
+    const selected = this.selectedIds();
     return visible.every((u) => selected.has(u.id));
   }
 
-  isRowSelected(id: string) {
-    return this.selectedUserIds().has(id);
+  // -- Bulk Actions --
+  bulkBlock() {
+    const selected = this.selectedIds();
+    if (selected.size === 0) return;
+
+    this.openConfirmModal(
+      'Block Selected Users?',
+      `Are you sure you want to BLOCK ${selected.size} selected users? They will lose access.`,
+      'BULK_BLOCK'
+    );
+  }
+
+  executeBulkBlock() {
+    const selected = this.selectedIds();
+    this.allUsers.update((users) =>
+      users.map((u) => (selected.has(u.id) ? { ...u, isActive: false } : u))
+    );
+    this.toastService.show(`${selected.size} users blocked`, 'success');
+    this.selectedIds.set(new Set());
+  }
+
+  bulkDelete() {
+    const selected = this.selectedIds();
+    if (selected.size === 0) return;
+
+    this.openConfirmModal(
+      'Delete Selected Users?',
+      `Are you sure you want to DELETE ${selected.size} selected users? This cannot be undone.`,
+      'BULK_DELETE'
+    );
+  }
+
+  executeBulkDelete() {
+    const selected = this.selectedIds();
+    const timestamp = new Date().getTime();
+    this.allUsers.update((users) =>
+      users.map((u) => {
+        if (selected.has(u.id)) {
+          return {
+            ...u,
+            isDeleted: true,
+            email: `${u.email}_deleted_${timestamp}`,
+            username: `${u.username}_deleted_${timestamp}`,
+          };
+        }
+        return u;
+      })
+    );
+    this.toastService.show(`${selected.size} users moved to bin`, 'success');
+    this.selectedIds.set(new Set());
+  }
+
+  // GENERIC CONFIRMATION MODAL STATE
+  isConfirmModalOpen = signal(false);
+  confirmConfig = signal<{
+    title: string;
+    message: string;
+    action: 'BULK_BLOCK' | 'BULK_DELETE';
+  } | null>(null);
+
+  openConfirmModal(
+    title: string,
+    message: string,
+    action: 'BULK_BLOCK' | 'BULK_DELETE'
+  ) {
+    this.confirmConfig.set({ title, message, action });
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmConfig.set(null);
+  }
+
+  onConfirmAction() {
+    const config = this.confirmConfig();
+    if (!config) return;
+
+    switch (config.action) {
+      case 'BULK_BLOCK':
+        this.executeBulkBlock();
+        break;
+      case 'BULK_DELETE':
+        this.executeBulkDelete();
+        break;
+    }
+    this.closeConfirmModal();
   }
 
   // -- Modal Actions --

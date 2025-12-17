@@ -12,11 +12,16 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 })
 export class AdminLayoutComponent {
   isProfileOpen = signal(false);
+  isSidebarOpen = signal(false);
 
   constructor(private router: Router) {}
 
   toggleProfile() {
     this.isProfileOpen.update((v) => !v);
+  }
+
+  toggleSidebar() {
+    this.isSidebarOpen.update((v) => !v);
   }
 
   logout() {

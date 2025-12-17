@@ -13,6 +13,7 @@ export interface Resource {
   topicId?: string;
   createdAt?: string | Date;
   comments?: Comment[];
+  fileSize?: string;
 }
 
 export interface User {
@@ -25,6 +26,7 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string;
   createdAt: string;
+  lastLogin?: string | Date;
 }
 
 export interface Comment {

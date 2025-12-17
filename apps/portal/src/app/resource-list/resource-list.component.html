@@ -24,27 +24,54 @@
   </div>
 
   <!-- Category Pills (Horizontal Scroll) -->
-  <div id="resources" class="flex flex-wrap justify-center gap-4 mb-10">
-    <!-- 'All' Pill -->
-    <button (click)="onCategoryChange('')" class="px-6 py-2 rounded-full font-medium transition-all shadow-sm border"
-      [ngClass]="
-        (selectedCategory$ | async) === ''
-          ? 'bg-gradient-to-r from-primary-pink to-primary-blue text-white border-transparent shadow-md'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-primary-pink hover:text-primary-pink'
-      ">
-      {{ 'list.all' | translate }}
-    </button>
+  <!-- Categories -->
+  <div class="mt-8">
+    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-blue" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      Categories
+    </h4>
+    <div class="space-y-2" *ngIf="categories$ | async as categoriesRes">
+      <button (click)="onCategoryChange('')" [class.bg-primary-blue]="(selectedCategory$ | async) === ''"
+        [class.text-white]="(selectedCategory$ | async) === ''" [class.shadow-lg]="(selectedCategory$ | async) === ''"
+        [class.shadow-blue-500\/30]="(selectedCategory$ | async) === ''"
+        [class.bg-white]="(selectedCategory$ | async) !== ''" [class.text-gray-600]="(selectedCategory$ | async) !== ''"
+        [class.hover:bg-gray-50]="(selectedCategory$ | async) !== ''"
+        class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center justify-between group border border-transparent"
+        [class.border-gray-100]="(selectedCategory$ | async) !== ''">
+        <span class="font-medium">{{ 'list.all' | translate }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
+          [class.text-white]="(selectedCategory$ | async) === ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
 
-    <!-- Categories -->
-    <button *ngFor="let cat of (categories$ | async)?.data" (click)="onCategoryChange(cat.id)"
-      class="px-6 py-2 rounded-full font-medium transition-all shadow-sm border flex items-center gap-2" [ngClass]="
-        (selectedCategory$ | async) === cat.id
-          ? 'bg-gradient-to-r from-primary-pink to-primary-blue text-white border-transparent shadow-md'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-primary-pink hover:text-primary-pink'
-      ">
-      <span>{{ cat.icon }}</span>
-      <span>{{ cat.name }}</span>
-    </button>
+      <button *ngFor="let cat of categoriesRes.data" (click)="onCategoryChange(cat.id)"
+        [class.bg-primary-blue]="(selectedCategory$ | async) === cat.id"
+        [class.text-white]="(selectedCategory$ | async) === cat.id"
+        [class.shadow-lg]="(selectedCategory$ | async) === cat.id"
+        [class.shadow-blue-500\/30]="(selectedCategory$ | async) === cat.id"
+        [class.bg-white]="(selectedCategory$ | async) !== cat.id"
+        [class.text-gray-600]="(selectedCategory$ | async) !== cat.id"
+        [class.hover:bg-gray-50]="(selectedCategory$ | async) !== cat.id"
+        class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center justify-between group border border-transparent"
+        [class.border-gray-100]="(selectedCategory$ | async) !== cat.id">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">{{ cat.icon }}</span>
+          <span class="font-medium">{{ cat.name }}</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
+          [class.text-white]="(selectedCategory$ | async) === cat.id" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Resource Grid -->

@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, computed } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -13,11 +13,19 @@ import {
 } from '@angular/cdk/drag-drop';
 import { Banner } from '@kindergarten-warehouse/data-access';
 import { BannerService } from '@kindergarten-warehouse/data-access';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-banners',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DragDropModule,
+    BreadcrumbComponent,
+    EmptyStateComponent, // Add EmptyStateComponent
+  ],
   templateUrl: './banners.component.html',
   styles: [
     `
@@ -214,14 +222,18 @@ export class BannersComponent implements OnInit {
 
         // Update the specific banner's details in the new list
         reorderedList = reorderedList.map((b) =>
-          b.id === id ? { ...b, ...formValue, display_order: b.display_order } : b
+          b.id === id
+            ? { ...b, ...formValue, display_order: b.display_order }
+            : b
         );
 
         // Sync with Backend (Mock Batch Update)
-        this.bannerService.updateReorderedBanners(reorderedList).subscribe(() => {
-          this.loadBanners();
-          this.closeModal();
-        });
+        this.bannerService
+          .updateReorderedBanners(reorderedList)
+          .subscribe(() => {
+            this.loadBanners();
+            this.closeModal();
+          });
       } else {
         // Simple Update (No order change)
         this.bannerService.updateBanner(id, formValue).subscribe(() => {
@@ -234,21 +246,26 @@ export class BannersComponent implements OnInit {
       this.bannerService.createBanner(formValue).subscribe((newBanner) => {
         // After creation, we need to ensure the order is respected (shifting others if needed)
         this.loadBanners(); // Reload to get the full list including the new one
-        
+
         // Timeout to allow signal update or straightforward sequencing
         setTimeout(() => {
-           // We perform a reorder to ensure the new banner (which might cause a collision)
-           // is inserted correctly and others are shifted.
-           const desiredOrder = formValue.display_order;
-           const listWithNew = this.banners();
-           
-           // If the simplistic create just appended or collided, this reorder fixes it
-           const reorderedList = this.handleManualReorder(newBanner.id, desiredOrder);
-           
-           this.bannerService.updateReorderedBanners(reorderedList).subscribe(() => {
-             this.loadBanners();
-             this.closeModal();
-           });
+          // We perform a reorder to ensure the new banner (which might cause a collision)
+          // is inserted correctly and others are shifted.
+          const desiredOrder = formValue.display_order;
+          const listWithNew = this.banners();
+
+          // If the simplistic create just appended or collided, this reorder fixes it
+          const reorderedList = this.handleManualReorder(
+            newBanner.id,
+            desiredOrder
+          );
+
+          this.bannerService
+            .updateReorderedBanners(reorderedList)
+            .subscribe(() => {
+              this.loadBanners();
+              this.closeModal();
+            });
         }, 100);
       });
     }
