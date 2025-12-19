@@ -33,6 +33,7 @@ const MOCK_USERS: any[] = [
     isActive: false,
     isDeleted: true,
     createdAt: '2023-01-15',
+    lastLogin: '2023-11-20T10:30:00',
     avatarUrl: 'https://i.pravatar.cc/150?u=1',
   },
   {
@@ -44,6 +45,7 @@ const MOCK_USERS: any[] = [
     isActive: true,
     isDeleted: false,
     createdAt: '2023-03-22',
+    lastLogin: '2023-12-01T08:15:00',
     avatarUrl: 'https://i.pravatar.cc/150?u=2',
   },
   {
@@ -55,6 +57,7 @@ const MOCK_USERS: any[] = [
     isActive: false,
     isDeleted: false,
     createdAt: '2023-06-10',
+    lastLogin: null,
     avatarUrl: 'https://i.pravatar.cc/150?u=3',
   },
   {
@@ -66,6 +69,7 @@ const MOCK_USERS: any[] = [
     isActive: true,
     isDeleted: false,
     createdAt: '2023-07-05',
+    lastLogin: '2023-12-05T09:45:00',
     avatarUrl: 'https://i.pravatar.cc/150?u=4',
   },
   {
@@ -77,6 +81,7 @@ const MOCK_USERS: any[] = [
     isActive: true,
     isDeleted: false,
     createdAt: '2023-08-12',
+    lastLogin: '2023-11-28T14:20:00',
     avatarUrl: 'https://i.pravatar.cc/150?u=5',
   },
 ];
@@ -93,7 +98,14 @@ const MOCK_USERS: any[] = [
     EmptyStateComponent,
   ],
   templateUrl: './users.component.html',
-  styles: [],
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class UsersComponent {
   private fb = inject(FormBuilder);
@@ -414,6 +426,11 @@ export class UsersComponent {
     this.userForm.patchValue({ password: pwd });
   }
 
+  // -- Role Confirmation Modal --
+  isRoleConfirmModalOpen = signal(false);
+  pendingUserUpdate: any | null = null;
+  pendingRoleChange = { oldRole: '', newRole: '' };
+
   submitUserForm() {
     if (this.userForm.invalid) {
       this.userForm.markAllAsTouched();
@@ -423,24 +440,67 @@ export class UsersComponent {
     const formVal = this.userForm.value;
 
     if (this.isEditMode()) {
-      this.allUsers.update((users) =>
-        users.map((u) =>
-          u.id === formVal.id ? { ...u, ...formVal, avatarUrl: u.avatarUrl } : u
-        )
-      );
-      this.toastService.show('User updated successfully', 'success');
+      const currentUser = this.currentUser();
+      // Check for Role Change
+      if (currentUser && currentUser.role !== formVal.role) {
+        this.pendingUserUpdate = formVal;
+        this.pendingRoleChange = {
+          oldRole: currentUser.role,
+          newRole: formVal.role,
+        };
+        this.isRoleConfirmModalOpen.set(true);
+        this.closeUserModal(); // Close edit modal temporarily
+        return;
+      }
+
+      // Proceed directly if no role change
+      this.forceUpdateUser(formVal);
+      this.closeUserModal();
     } else {
+      // Create new user (no confirmation needed)
       const newUser = {
         ...formVal,
         id: Math.random().toString(36).substr(2, 9),
         isDeleted: false,
+        lastLogin: null,
         createdAt: new Date().toISOString(),
         avatarUrl: `https://i.pravatar.cc/150?u=${Math.random()}`,
       };
       this.allUsers.update((users) => [newUser, ...users]);
       this.toastService.show('User created successfully', 'success');
+      this.closeUserModal();
     }
-    this.closeUserModal();
+  }
+
+  confirmRoleChange() {
+    if (this.pendingUserUpdate) {
+      this.forceUpdateUser(this.pendingUserUpdate);
+      this.toastService.show(
+        `Role changed to ${this.pendingRoleChange.newRole}`,
+        'success'
+      );
+      this.closeRoleConfirmModal();
+    }
+  }
+
+  closeRoleConfirmModal() {
+    this.isRoleConfirmModalOpen.set(false);
+    this.pendingUserUpdate = null;
+    // Re-open edit modal if cancelled? Or just close everything.
+    // UX: If cancel, maybe we should just go back to edit modal?
+    // For now, let's just close confirmation.
+  }
+
+  private forceUpdateUser(formVal: any) {
+    this.allUsers.update((users) =>
+      users.map((u) =>
+        u.id === formVal.id ? { ...u, ...formVal, avatarUrl: u.avatarUrl } : u
+      )
+    );
+    if (!this.pendingUserUpdate) {
+      // Only show toast if not coming from confirm modal (avoids double toast)
+      this.toastService.show('User updated successfully', 'success');
+    }
   }
 
   // -- Block/Unblock Modal State --

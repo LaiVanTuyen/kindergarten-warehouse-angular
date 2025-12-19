@@ -29,7 +29,14 @@ import { EmptyStateComponent } from '../shared/components/empty-state/empty-stat
     EmptyStateComponent,
   ],
   templateUrl: './categories.component.html',
-  styles: [],
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class CategoriesComponent {
   private fb = inject(FormBuilder);

@@ -24,7 +24,7 @@
 
       @for (banner of banners(); track banner.id) {
       <div cdkDrag [cdkDragData]="banner"
-        class="banner-box group bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
+        class="banner-box group bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
 
         <!-- Drag Placeholder -->
         <div *cdkDragPlaceholder class="opacity-0"></div>
@@ -44,7 +44,7 @@
 
         <!-- Image Preview (16:9) -->
         <div
-          class="relative w-32 aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group-hover:border-blue-200 transition-colors flex-shrink-0 cursor-zoom-in"
+          class="relative w-48 aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group-hover:border-blue-200 transition-colors flex-shrink-0 cursor-zoom-in"
           (click)="openPreview(banner.image_url, $event)">
           <img [src]="banner.image_url" class="w-full h-full object-cover">
 
@@ -153,8 +153,9 @@
       </div>
       } @empty {
       <div class="h-64 flex items-center justify-center">
-        <app-empty-state message="No banners yet" subMessage="Create a banner to start customizing your homepage."
-          actionLabel="Create Banner" (actionClicked)="openCreateModal()">
+        <app-empty-state message="No banners created yet"
+          subMessage="Create a banner to start customizing your homepage." actionLabel="Create Banner"
+          (actionClicked)="openCreateModal()">
         </app-empty-state>
       </div>
       }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Resource } from '../models/models';
-import { AuthService } from './general.service';
+import { AuthService } from './auth.service';
 import { inject } from '@angular/core';
 
 @Injectable({
@@ -204,6 +204,13 @@ export class ResourceService {
 
   rejectResource(id: string): Observable<boolean> {
     return this.updateStatus(id, 'rejected');
+  }
+
+  moveResources(ids: string[], topicId: string): Observable<boolean> {
+    this.mockResources = this.mockResources.map((r) =>
+      ids.includes(r.id) ? { ...r, topicId } : r
+    );
+    return of(true);
   }
 
   incrementViewCount(id: string): Observable<void> {

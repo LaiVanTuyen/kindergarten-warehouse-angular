@@ -3,11 +3,18 @@ import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { BannersComponent } from './banners/banners.component';
 import { CategoriesComponent } from './categories/categories.component';
+import { authGuard } from '@kindergarten-warehouse/data-access';
 
 export const appRoutes: Route[] = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./login/login.component').then((m) => m.LoginComponent),
+  },
+  {
     path: '',
     component: AdminLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {

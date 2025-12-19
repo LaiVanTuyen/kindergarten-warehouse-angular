@@ -1,14 +1,22 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective],
+  imports: [CommonModule, NgxEchartsDirective, FormsModule],
   templateUrl: './dashboard.component.html',
-  styles: [],
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class DashboardComponent {
   // Signals
@@ -21,6 +29,14 @@ export class DashboardComponent {
     totalUsers: 45,
     pendingApprovals: 8,
   });
+
+  // Custom Date Range
+  customStartDate = signal('');
+  customEndDate = signal('');
+
+  // Resource View Modal
+  isViewModalOpen = signal(false);
+  selectedResource = signal<any>(null);
 
   // Chart Options Signals
   resourceChartOption = signal<EChartsOption>({});
@@ -104,6 +120,32 @@ export class DashboardComponent {
         totalUsers: 25,
         pendingApprovals: 8,
       }));
+    } else if (filter === 'this_month') {
+      // 4 Weeks Data
+      xAxisData = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      resourceData = [12, 19, 15, 25];
+      viewData = [3200, 4100, 3800, 5600];
+      userData = [8, 12, 10, 15];
+
+      this.stats.update(() => ({
+        totalResources: 71,
+        totalViews: 16700,
+        totalUsers: 45,
+        pendingApprovals: 8,
+      }));
+    } else if (filter === 'custom') {
+      // Custom Range Mock
+      xAxisData = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'];
+      resourceData = [5, 10, 8, 15, 12];
+      viewData = [800, 1200, 1100, 1500, 1300];
+      userData = [2, 4, 3, 6, 5];
+
+      this.stats.update(() => ({
+        totalResources: 50,
+        totalViews: 5900,
+        totalUsers: 20,
+        pendingApprovals: 8,
+      }));
     } else {
       // 12-Month Mock Data (Jan - Dec)
       xAxisData = [
@@ -178,10 +220,12 @@ export class DashboardComponent {
     serverStatus: 'ONLINE',
   });
 
+  isRamWarning = computed(() => this.systemHealth().ramUsage > 80);
+
   updateSystemHealth() {
     // Simulate slight variations
     const cpu = Math.floor(Math.random() * (60 - 30 + 1)) + 30; // 30-60%
-    const ram = Math.floor(Math.random() * (80 - 50 + 1)) + 50; // 50-80%
+    const ram = Math.floor(Math.random() * (95 - 50 + 1)) + 50; // 50-95% (To test alert > 80)
 
     this.systemHealth.update((s) => ({
       ...s,
@@ -270,5 +314,15 @@ export class DashboardComponent {
       ...s,
       pendingApprovals: s.pendingApprovals - 1,
     }));
+  }
+
+  viewResource(resource: any) {
+    this.selectedResource.set(resource);
+    this.isViewModalOpen.set(true);
+  }
+
+  closeViewModal() {
+    this.isViewModalOpen.set(false);
+    this.selectedResource.set(null);
   }
 }

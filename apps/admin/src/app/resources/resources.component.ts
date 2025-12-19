@@ -35,7 +35,14 @@ import { ToastService } from '../shared/toast/toast.service';
     EmptyStateComponent,
   ],
   templateUrl: './resources.component.html',
-  styles: [],
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class ResourcesComponent {
   private fb = inject(FormBuilder);
@@ -193,6 +200,18 @@ export class ResourcesComponent {
         this.topics().filter((t) => t.categoryId === catId)
       );
       this.uploadForm.get('topicId')?.reset();
+    });
+
+    // Move Modal Category Change
+    this.moveTargetCategoryId.valueChanges.subscribe((catId) => {
+      this.moveTargetTopicId.reset();
+      if (catId) {
+        this.filteredTopics.set(
+          this.topics().filter((t) => t.categoryId === catId)
+        );
+      } else {
+        this.filteredTopics.set(this.topics());
+      }
     });
   }
 
@@ -370,6 +389,40 @@ export class ResourcesComponent {
           this.loadData();
         }
       });
+    });
+  }
+
+  // BULK MOVE LOGIC
+  isMoveModalOpen = signal(false);
+  moveTargetTopicId = new FormControl('', Validators.required);
+  moveTargetCategoryId = new FormControl('');
+
+  openMoveModal() {
+    this.moveTargetCategoryId.reset();
+    this.moveTargetTopicId.reset();
+    this.isMoveModalOpen.set(true);
+  }
+
+  closeMoveModal() {
+    this.isMoveModalOpen.set(false);
+    this.moveTargetCategoryId.reset();
+    this.moveTargetTopicId.reset();
+  }
+
+  executeBulkMove() {
+    const ids = Array.from(this.selectedIds());
+    const topicId = this.moveTargetTopicId.value;
+
+    if (ids.length === 0 || !topicId) return;
+
+    this.resourceService.moveResources(ids, topicId).subscribe(() => {
+      this.toastService.show(
+        `Moved ${ids.length} resources to new topic`,
+        'success'
+      );
+      this.selectedIds.set(new Set());
+      this.closeMoveModal();
+      this.loadData();
     });
   }
 

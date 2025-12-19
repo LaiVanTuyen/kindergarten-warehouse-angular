@@ -28,6 +28,14 @@ import { EmptyStateComponent } from '../shared/components/empty-state/empty-stat
     EmptyStateComponent,
   ],
   templateUrl: './audit-logs.component.html',
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class AuditLogsComponent {
   auditLogService = inject(AuditLogService);
