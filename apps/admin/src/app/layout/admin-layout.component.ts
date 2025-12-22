@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { AuthService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-admin-layout',
@@ -14,7 +15,7 @@ export class AdminLayoutComponent {
   isProfileOpen = signal(false);
   isSidebarOpen = signal(false);
 
-  constructor(private router: Router) {}
+  constructor(private authService: AuthService) {}
 
   toggleProfile() {
     this.isProfileOpen.update((v) => !v);
@@ -25,8 +26,6 @@ export class AdminLayoutComponent {
   }
 
   logout() {
-    console.log('Logging out...');
-    // In a real app, clear tokens here
-    this.router.navigate(['/portal']);
+    this.authService.logout();
   }
 }

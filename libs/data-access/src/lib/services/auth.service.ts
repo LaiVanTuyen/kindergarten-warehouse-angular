@@ -24,8 +24,13 @@ export class AuthService {
     avatarUrl: '',
   };
 
+  private currentUserSubject = new BehaviorSubject<User | null>(
+    this.hasToken() ? this._currentUser : null
+  );
+  public currentUser$ = this.currentUserSubject.asObservable();
+
   get currentUserValue(): User | null {
-    return this.hasToken() ? this._currentUser : null;
+    return this.currentUserSubject.value;
   }
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -38,6 +43,7 @@ export class AuthService {
           if (response.token) {
             this.setToken(response.token);
             this.loggedIn.next(true);
+            this.currentUserSubject.next(this._currentUser);
           }
         })
       );
@@ -46,6 +52,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     this.loggedIn.next(false);
+    this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 
