@@ -14,10 +14,14 @@ export class CategoryService {
   ];
 
   private mockTopics: Topic[] = [
-    { id: 't1', title: 'Alphabet', categoryId: 'c1' },
-    { id: 't2', title: 'Vocabulary', categoryId: 'c1' },
-    { id: 't3', title: 'Numbers', categoryId: 'c2' },
-    { id: 't4', title: 'Shapes', categoryId: 'c2' },
+    { id: 't1', title: 'Drawing', categoryId: 'c1' },
+    { id: 't2', title: 'Origami', categoryId: 'c1' },
+    { id: 't3', title: 'Fairy Tales', categoryId: 'c2' },
+    { id: 't4', title: 'Adventure', categoryId: 'c2' },
+    { id: 't5', title: 'Counting', categoryId: 'c3' },
+    { id: 't6', title: 'Geometry', categoryId: 'c3' },
+    { id: 't7', title: 'Sing-Along', categoryId: 'c4' },
+    { id: 't8', title: 'Dance Moves', categoryId: 'c4' },
   ];
 
   // Categories CRUD

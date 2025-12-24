@@ -6,7 +6,7 @@ export interface Resource {
   date: string;
   url?: string;
   status: 'pending' | 'approved' | 'rejected';
-  type: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD';
+  type: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD' | 'AUDIO' | 'IMAGE';
   viewsCount: number;
   description?: string;
   rating?: number;
@@ -14,6 +14,7 @@ export interface Resource {
   createdAt?: string | Date;
   comments?: Comment[];
   fileSize?: string;
+  downloadCount?: number;
 }
 
 export interface User {

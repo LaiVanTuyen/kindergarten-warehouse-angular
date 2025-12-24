@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ResourceService } from '@kindergarten-warehouse/data-access';
-import { switchMap } from 'rxjs';
+import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
+import { switchMap, map } from 'rxjs';
 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../pipes/translate.pipe';
+import { ResourceCardComponent } from '../resource-card/resource-card.component';
 import {
   AuthService,
   Comment,
@@ -20,7 +21,13 @@ registerLocaleData(localeVi);
 @Component({
   selector: 'app-resource-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    TranslatePipe,
+    ResourceCardComponent,
+  ],
   templateUrl: './resource-detail.component.html',
   styles: [],
 })
@@ -40,6 +47,10 @@ export class ResourceDetailComponent {
       return this.resourceService.getResource(id || '');
     })
   );
+
+  relatedResources$ = this.resourceService
+    .getResources(1, 4)
+    .pipe(map((res) => res.data));
 
   isYouTube(url: string | undefined): boolean {
     if (!url) return false;
@@ -71,12 +82,13 @@ export class ResourceDetailComponent {
     return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
   }
 
-  downloadResource(url: string | undefined) {
-    if (!url) return;
-    window.open(url, '_blank');
+  downloadResource(resource: Resource) {
+    if (resource.url) {
+      window.open(resource.url, '_blank');
+    }
   }
 
-  submitComment(resource: any) {
+  submitComment(resource: Resource) {
     if (!this.authService.isLoggedIn) {
       alert('You must be logged in to post a comment.');
       return;

@@ -41,9 +41,11 @@ export class TranslationService {
       'login.signin': 'Sign in',
       'list.noResults': 'No resources found matching your selection.',
       'list.view': 'View',
+      'list.play': 'Play',
       'list.download': 'Download',
       'list.views': 'views',
-      'detail.noComments': 'No comments yet. Be the first to share your thoughts!',
+      'detail.noComments':
+        'No comments yet. Be the first to share your thoughts!',
       'banner.explore': 'Explore Now',
       'sort.newest': 'Newest First',
       'sort.nameAsc': 'Name (A-Z)',
@@ -51,15 +53,21 @@ export class TranslationService {
       'sort.ratingDesc': 'Rating (High to Low)',
       'sort.ratingAsc': 'Rating (Low to High)',
       'about.title': 'About',
-      'about.welcome': 'Welcome to KinderWorld, your premier digital resource warehouse for kindergarten education. We are dedicated to providing high-quality, engaging, and educational materials for teachers, parents, and young learners.',
+      'about.welcome':
+        'Welcome to KinderWorld, your premier digital resource warehouse for kindergarten education. We are dedicated to providing high-quality, engaging, and educational materials for teachers, parents, and young learners.',
       'about.curated.title': 'Curated Content',
-      'about.curated.desc': 'Hand-picked resources designed by educational experts.',
+      'about.curated.desc':
+        'Hand-picked resources designed by educational experts.',
       'about.creative.title': 'Creative Learning',
-      'about.creative.desc': 'Fostering creativity through interactive materials.',
+      'about.creative.desc':
+        'Fostering creativity through interactive materials.',
       'about.global.title': 'Global Community',
       'about.global.desc': 'Connecting educators and families worldwide.',
       'detail.loading': 'Loading resource...',
       'detail.noDescription': 'No description available for this resource.',
+      'detail.related': 'Related Resources',
+      'list.filters': 'Filters',
+      'list.noTopics': 'No topics available for this category.',
     },
     vi: {
       'header.home': 'Trang Chủ',
@@ -75,6 +83,7 @@ export class TranslationService {
       'list.search': 'Tìm kiếm tài nguyên...',
       'list.noResults': 'Không tìm thấy tài nguyên nào phù hợp.',
       'list.view': 'Xem',
+      'list.play': 'Phát',
       'list.download': 'Tải về',
       'list.views': 'lượt xem',
       'detail.back': 'Quay lại',
@@ -86,7 +95,8 @@ export class TranslationService {
       'detail.post': 'Gửi Bình Luận',
       'detail.loginToComment': 'Vui lòng đăng nhập để bình luận.',
       'detail.loginBtn': 'Đăng Nhập để Bình Luận',
-      'detail.noComments': 'Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!',
+      'detail.noComments':
+        'Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!',
       'detail.loading': 'Đang tải tài nguyên...',
       'detail.noDescription': 'Không có mô tả cho tài nguyên này.',
       'login.welcome': 'Chào Mừng Trở Lại!',
@@ -103,13 +113,20 @@ export class TranslationService {
       'sort.ratingDesc': 'Đánh Giá (Cao - Thấp)',
       'sort.ratingAsc': 'Đánh Giá (Thấp - Cao)',
       'about.title': 'Giới Thiệu',
-      'about.welcome': 'Chào mừng đến với KinderWorld, kho tài nguyên kỹ thuật số hàng đầu cho giáo dục mầm non. Chúng tôi cam kết cung cấp các tài liệu chất lượng cao, hấp dẫn và mang tính giáo dục cho giáo viên, phụ huynh và các em nhỏ.',
+      'about.welcome':
+        'Chào mừng đến với KinderWorld, kho tài nguyên kỹ thuật số hàng đầu cho giáo dục mầm non. Chúng tôi cam kết cung cấp các tài liệu chất lượng cao, hấp dẫn và mang tính giáo dục cho giáo viên, phụ huynh và các em nhỏ.',
       'about.curated.title': 'Nội Dung Chọn Lọc',
-      'about.curated.desc': 'Tài nguyên được tuyển chọn kỹ lưỡng bởi các chuyên gia giáo dục.',
+      'about.curated.desc':
+        'Tài nguyên được tuyển chọn kỹ lưỡng bởi các chuyên gia giáo dục.',
       'about.creative.title': 'Học Tập Sáng Tạo',
-      'about.creative.desc': 'Khơi dậy sự sáng tạo thông qua các tài liệu tương tác.',
+      'about.creative.desc':
+        'Khơi dậy sự sáng tạo thông qua các tài liệu tương tác.',
       'about.global.title': 'Cộng Đồng Toàn Cầu',
-      'about.global.desc': 'Kết nối các nhà giáo dục và gia đình trên toàn thế giới.',
+      'about.global.desc':
+        'Kết nối các nhà giáo dục và gia đình trên toàn thế giới.',
+      'detail.related': 'Tài Nguyên Liên Quan',
+      'list.filters': 'Bộ lọc',
+      'list.noTopics': 'Không có chủ đề nào.',
     },
   };
 

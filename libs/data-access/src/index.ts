@@ -9,3 +9,5 @@ export * from './lib/services/audit-log.service';
 export * from './lib/services/auth.service';
 export * from './lib/guards/auth.guard';
 export * from './lib/interceptors/auth.interceptor';
+export * from './lib/interceptors/error.interceptor';
+export * from './lib/services/toast.service';
