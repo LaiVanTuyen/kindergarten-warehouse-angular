@@ -72,3 +72,9 @@ export interface Banner {
   end_date?: string;
   platform?: 'desktop' | 'mobile';
 }
+
+export interface AgeGroup {
+  id: string;
+  name: string;
+  range?: string; // Optional description like "3-4 years"
+}

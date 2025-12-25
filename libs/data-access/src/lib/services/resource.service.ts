@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Resource } from '../models/models';
+import { Resource, AgeGroup } from '../models/models';
 import { AuthService } from './auth.service';
 import { inject } from '@angular/core';
 
@@ -9,7 +9,17 @@ import { inject } from '@angular/core';
 })
 export class ResourceService {
   authService = inject(AuthService);
-  private mockResources: Resource[] = [
+
+  private mockAgeGroups: AgeGroup[] = [
+    { id: 'age-0-12', name: 'Nhà trẻ (0-12 tháng)' },
+    { id: 'age-1-3', name: 'Nhà trẻ (1-3 tuổi)' },
+    { id: 'age-3-4', name: 'Mẫu giáo (3-4 tuổi)' },
+    { id: 'age-4-5', name: 'Mẫu giáo (4-5 tuổi)' },
+    { id: 'age-5-6', name: 'Tiền tiểu học (5-6 tuổi)' },
+  ];
+
+  /* Assigned random ageGroupIds to existing mocks for demo purposes */
+  private mockResources: (Resource & { ageGroupId?: string })[] = [
     // c1: Arts & Crafts (t1: Drawing, t2: Origami)
     {
       id: '1',
@@ -24,6 +34,7 @@ export class ResourceService {
       description: 'Học những bước cơ bản để vẽ tranh.',
       createdAt: '2023-11-01',
       topicId: 't1',
+      ageGroupId: 'age-3-4',
       url: 'https://example.com/video1',
       fileSize: '120 MB',
       downloadCount: 75,
@@ -41,6 +52,7 @@ export class ResourceService {
       description: 'Các kỹ thuật đánh bóng và phác thảo.',
       createdAt: '2023-11-02',
       topicId: 't1',
+      ageGroupId: 'age-5-6',
       url: 'https://example.com/pdf1',
       fileSize: '5 MB',
       downloadCount: 40,
@@ -58,6 +70,7 @@ export class ResourceService {
       description: 'Trang tô màu có thể in được.',
       createdAt: '2023-11-03',
       topicId: 't1',
+      ageGroupId: 'age-1-3',
       url: 'https://example.com/img1',
       fileSize: '2 MB',
       downloadCount: 120,
@@ -75,6 +88,7 @@ export class ResourceService {
       description: 'Cách gấp hạc giấy đơn giản.',
       createdAt: '2023-11-04',
       topicId: 't2',
+      ageGroupId: 'age-4-5',
       url: 'https://example.com/video2',
       fileSize: '80 MB',
     },
@@ -91,6 +105,7 @@ export class ResourceService {
       description: 'Hướng dẫn từng bước gấp thuyền giấy.',
       createdAt: '2023-11-05',
       topicId: 't2',
+      ageGroupId: 'age-3-4',
       url: 'https://example.com/img2',
       fileSize: '1.5 MB',
     },
@@ -107,6 +122,7 @@ export class ResourceService {
       description: 'Bộ sưu tập các mẫu gấp động vật.',
       createdAt: '2023-11-06',
       topicId: 't2',
+      ageGroupId: 'age-5-6',
       url: 'https://example.com/pdf2',
       fileSize: '8 MB',
     },
@@ -406,12 +422,18 @@ export class ResourceService {
     },
   ];
 
+  getAgeGroups(): Observable<AgeGroup[]> {
+    return of(this.mockAgeGroups);
+  }
+
   getResources(
     page = 1,
     limit = 10,
     filters?: {
       topicId?: string;
-      topicIds?: string[]; // New filter for multiple topics (e.g. Category selection)
+      topicIds?: string[];
+      ageGroupId?: string; // New filter
+      ageGroupIds?: string[]; // New filter multiple
       search?: string;
       status?: 'pending' | 'approved' | 'rejected';
       type?: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD';
@@ -426,6 +448,16 @@ export class ResourceService {
     if (filters?.topicIds && filters.topicIds.length > 0) {
       filtered = filtered.filter(
         (r) => r.topicId && filters.topicIds?.includes(r.topicId)
+      );
+    }
+
+    if (filters?.ageGroupId) {
+      filtered = filtered.filter((r) => r.ageGroupId === filters.ageGroupId);
+    }
+
+    if (filters?.ageGroupIds && filters.ageGroupIds.length > 0) {
+      filtered = filtered.filter(
+        (r) => r.ageGroupId && filters.ageGroupIds?.includes(r.ageGroupId)
       );
     }
 

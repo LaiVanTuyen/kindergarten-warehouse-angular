@@ -60,45 +60,24 @@ export class ResourceListComponent implements OnInit, OnDestroy {
 
   categories$ = this.categoryService.getCategories();
 
-  selectedCategory$ = new BehaviorSubject<string>('');
-  searchQuery$ = this.route.queryParams.pipe(
-    map((params) => params['search'] || '')
-  );
-
-  // Derived State for UI
-  activeCategoryName$ = combineLatest([
-    this.categories$,
-    this.selectedCategory$,
-  ]).pipe(
-    map(([categories, selectedId]) => {
-      const cat = categories.data.find((c) => c.id === selectedId);
-      return cat ? cat.name : null;
-    })
-  );
-
-  pageTitle$ = this.activeCategoryName$.pipe(
-    map((name) => (name ? `${name}` : 'Tài liệu khám phá'))
-  );
-
-  breadcrumb$ = this.activeCategoryName$.pipe(
-    map((name) =>
-      name ? ['Trang chủ', 'Tài liệu', name] : ['Trang chủ', 'Tài liệu']
-    )
-  );
-
-  // Sidebar State
+  // Sidebar & Filter State (Sources)
   expandedCategory$ = new BehaviorSubject<string>('');
-  selectedTopicIds$ = new BehaviorSubject<string[]>([]); // Changed to Array
+  selectedCategory$ = new BehaviorSubject<string>('');
+  selectedTopicId$ = new BehaviorSubject<string | null>(null); // Single Select
   currentTopics$ = new BehaviorSubject<Topic[]>([]);
   topicsCache: { [key: string]: Topic[] } = {};
 
+  searchQuery$ = this.route.queryParams.pipe(
+    map((params) => params['search'] || '')
+  );
+  sortOption$ = new BehaviorSubject<string>('newest');
+
   isLoading$ = new BehaviorSubject<boolean>(true);
 
-  // Resources based on filters
   // Pagination State
   currentPage$ = new BehaviorSubject<number>(1);
   itemsPerPage = 8;
-  totalItems$ = new BehaviorSubject<number>(0); // Reactive totalItems
+  totalItems$ = new BehaviorSubject<number>(0);
 
   totalPages$ = this.totalItems$.pipe(
     map((total) => Math.ceil(total / this.itemsPerPage))
@@ -108,7 +87,43 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     map((total) => Array.from({ length: total }, (_, i) => i + 1))
   );
 
-  sortOption$ = new BehaviorSubject<string>('newest'); // Default sort
+  // Derived State (Depends on State above)
+  activeTitle$ = combineLatest([
+    this.categories$,
+    this.selectedCategory$,
+    this.selectedTopicId$,
+    this.expandedCategory$,
+  ]).pipe(
+    map(([categories, selectedCatId, selectedTopicId]) => {
+      // 1. If Topic is Selected, show Topic Title
+      if (selectedTopicId) {
+        for (const catId in this.topicsCache) {
+          const topic = this.topicsCache[catId].find(
+            (t) => t.id === selectedTopicId
+          );
+          if (topic) return topic.title;
+        }
+      }
+
+      // 2. If Category is Selected (and no topic), show Category Name
+      if (selectedCatId) {
+        const cat = categories.data.find((c) => c.id === selectedCatId);
+        if (cat) return cat.name;
+      }
+
+      return null;
+    })
+  );
+
+  pageTitle$ = this.activeTitle$.pipe(
+    map((name) => (name ? `${name}` : 'Tài liệu khám phá'))
+  );
+
+  breadcrumb$ = this.activeTitle$.pipe(
+    map((name) =>
+      name ? ['Trang chủ', 'Tài liệu', name] : ['Trang chủ', 'Tài liệu']
+    )
+  );
 
   constructor() {}
 
@@ -134,63 +149,68 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   // We trigger resource loading whenever filters OR page changes
   // We use combineLatest for filters, and merge page changes?
   // Actually, let's keep it simple: any filter change resets page to 1. Page change just triggers reload.
+  ageGroups$ = this.resourceService.getAgeGroups();
+  selectedAgeGroupIds$ = new BehaviorSubject<string[]>([]);
 
-  private filterState$ = combineLatest([
+  // Combined Filters Stream
+  private filters$ = combineLatest([
     this.selectedCategory$,
-    this.selectedTopicIds$,
+    this.selectedTopicId$,
+    this.selectedAgeGroupIds$,
     this.searchQuery$.pipe(startWith('')),
     this.sortOption$,
     this.currentPage$,
-  ]);
+  ]).pipe(
+    map(([category, topicId, ageGroupIds, search, sort, page]) => ({
+      category,
+      topicId,
+      ageGroupIds,
+      search,
+      sort,
+      page,
+    }))
+  );
 
-  resources$ = this.filterState$.pipe(
+  resources$ = this.filters$.pipe(
     debounceTime(100), // Prevent rapid double-firing
     tap(() => this.isLoading$.next(true)),
-    switchMap(([categoryId, topicIds, search, sort, page]) => {
+    switchMap(({ category, topicId, ageGroupIds, search, sort, page }) => {
       console.log('Filter changed:', {
-        categoryId,
-        topicIds,
+        category,
+        topicId,
+        ageGroupIds,
         search,
         sort,
         page,
       });
-      // Logic:
-      // If TopicIds are selected -> Filter by those topicIds
-      // If Category is selected (but no specific topics) -> Filter by ALL topics in that category
 
       let targetTopicIds: string[] | undefined = undefined;
 
-      if (topicIds && topicIds.length > 0) {
-        targetTopicIds = topicIds;
-      } else if (categoryId) {
+      if (topicId) {
+        targetTopicIds = [topicId];
+      } else if (category) {
         // Fallback to Category Topics if no specific topics selected
-        const cachedTopics = this.topicsCache[categoryId];
+        const cachedTopics = this.topicsCache[category];
         if (cachedTopics) {
           targetTopicIds = cachedTopics.map((t) => t.id);
-        } else {
-          // If topics not loaded yet, we might miss filtering here in this synchronous flow.
-          // However, onCategoryChange triggers fetching, so hopefully they arrive soon
-          // and trigger this stream again via `currentTopics$` if we were listening to it?
-          // Actually, we are not listening to currentTopics$ here.
-          // Ideally we should include currentTopics$ in combineLatest or just rely on the fetch.
-          // For now, let's leave it as best effort based on cache.
         }
       }
 
-      // Hardcode isLoading reset in case of error/completion
-      // const safeFinalize = () => this.isLoading$.next(false);
-      // finalized in pipe
-
       return this.resourceService
-        .getResources(page, this.itemsPerPage, {
+        .getResources(page, 9, {
           topicIds: targetTopicIds,
+          // Note: Service uses 'topicIds' for filtering.
+          // If we have a single topicId, we pass it as [topicId].
+          // If we have a category, we pass all topics in that category.
+
+          ageGroupIds: ageGroupIds.length > 0 ? ageGroupIds : undefined,
           search,
           status: 'approved',
         })
         .pipe(
           map((res) => {
             console.log('API Response:', res);
-            this.totalItems$.next(res.total); // Update reactive total
+            this.totalItems$.next(res.total);
             return res.data;
           }),
           catchError(() => {
@@ -234,21 +254,21 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   }
 
   toggleCategory(catId: string, forceOpen = false) {
-    // 3. Rewrite toggleCategory (Open/Close)
     const isSame = this.expandedCategory$.value === catId;
 
     if (isSame && !forceOpen) {
-      this.expandedCategory$.next(''); // Close if same and not forced
+      this.expandedCategory$.next(''); // Just Close
     } else {
-      this.expandedCategory$.next(catId); // Open new
+      this.expandedCategory$.next(catId); // Just Open
 
-      // Update selected Category
-      this.selectedCategory$.next(catId);
-
-      // Also fetch topics if needed
+      // Fetch topics so they are visible in the accordion
       if (!this.topicsCache[catId]) {
         this.categoryService.getTopics(catId).subscribe((res) => {
           this.topicsCache[catId] = res.data;
+          // Note: We don't necessarily need to push to currentTopics$ if we use the cache in the template
+          // But our template iterates `currentTopics$`.
+          // We should probably update the template to iterate `topicsCache[cat.id]` or similar,
+          // OR update `currentTopics` to match the *expanded* category.
           this.currentTopics$.next(res.data);
         });
       } else {
@@ -256,52 +276,54 @@ export class ResourceListComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (this.expandedCategory$.value === '') {
-      this.selectedCategory$.next(''); // Clear selection if collapsed
-      this.currentTopics$.next([]);
-    }
-
-    this.currentPage$.next(1);
+    // Crucial: DO NOT reset filters or page here.
   }
 
-  // Backward compatibility wrapper if needed, or replace html calls
-  onCategoryChange(catId: string) {
-    if (catId === '') {
-      this.resetFilters();
-    } else {
-      this.toggleCategory(catId);
-    }
+  // Updated to handle "All" button specifically
+  onAllCategoriesClick() {
+    this.resetFilters();
   }
+
+  // Deprecated/Modified: onCategoryChange used to be the click handler.
+  // Now we use `toggleCategory` for the accordion headers directly?
+  // Or keep `onCategoryChange` but make it behavior differently.
+  // Let's rely on the template calling `toggleCategory` for headers.
 
   resetFilters() {
     this.expandedCategory$.next('');
     this.selectedCategory$.next('');
-    this.selectedTopicIds$.next([]);
+    this.selectedTopicId$.next(null);
     this.currentTopics$.next([]);
     this.currentPage$.next(1);
   }
 
-  toggleTopic(topicId: string) {
-    // 2. Rewrite toggleTopic function (Select multiple)
-    const currentIds = this.selectedTopicIds$.value;
-    const index = currentIds.indexOf(topicId);
+  // Refactored Single Select Logic
+  selectTopic(topicId: string, categoryId: string) {
+    this.selectedTopicId$.next(topicId);
 
-    let newIds: string[];
-    if (index > -1) {
-      // If it is: Delete it (Deselect)
-      newIds = currentIds.filter((id) => id !== topicId);
-    } else {
-      // If it is not: Add it to the array (Select add)
-      newIds = [...currentIds, topicId];
+    // Auto-Expand Category (Parent Recognition)
+    if (this.expandedCategory$.value !== categoryId) {
+      this.toggleCategory(categoryId, true);
     }
 
-    this.selectedTopicIds$.next(newIds);
-    this.currentPage$.next(1); // Next: Call the loadResources function again and reset to page 1.
+    this.currentPage$.next(1);
   }
 
-  // Backward compatibility
-  onTopicChange(topicId: string) {
-    this.toggleTopic(topicId);
+  // Helper for Template
+  onTopicClick(topic: Topic) {
+    this.selectTopic(topic.id, topic.categoryId);
+  }
+
+  // Deprecated/Removed: toggleTopic for multi-select
+
+  toggleAgeGroup(ageId: string) {
+    const current = this.selectedAgeGroupIds$.value;
+    if (current.includes(ageId)) {
+      this.selectedAgeGroupIds$.next(current.filter((id) => id !== ageId));
+    } else {
+      this.selectedAgeGroupIds$.next([...current, ageId]);
+    }
+    this.currentPage$.next(1);
   }
 
   onSortChange(event: Event) {
@@ -330,6 +352,21 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     } else {
       document.body.style.overflow = '';
     }
+  }
+
+  isCategoryActive(catId: string): boolean {
+    const selectedTopic = this.selectedTopicId$.value;
+    // 1. If a topic is selected, check if it belongs to this category
+    if (selectedTopic) {
+      // Check cache (Active Parent Logic)
+      const topics = this.topicsCache[catId];
+      if (topics && topics.some((t) => t.id === selectedTopic)) {
+        return true;
+      }
+    }
+    // 2. Fallback: If no topic selected, check if this category itself is selected
+    // (This allows "All in [Category]" to still highlight the parent)
+    return this.selectedCategory$.value === catId;
   }
 
   closeMobileFilter() {

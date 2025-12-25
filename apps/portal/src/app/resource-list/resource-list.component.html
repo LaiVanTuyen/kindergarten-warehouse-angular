@@ -13,7 +13,7 @@
         </span>
         <div class="flex items-center gap-2">
           <!-- Show count helper if needed -->
-          <span *ngIf="(activeCategoryName$ | async)"
+          <span *ngIf="(activeTitle$ | async)"
             class="text-xs bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full font-bold">1 Active</span>
           <i class="ph ph-caret-right text-gray-400"></i>
         </div>
@@ -36,6 +36,7 @@
       </div>
 
       <div class="bg-white md:rounded-3xl md:p-6 md:shadow-sm md:border md:border-gray-100 sticky top-24">
+        <!-- Tier 1: Categories -->
         <h4 class="font-bold text-gray-900 mb-6 flex items-center gap-2 text-xl">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-500" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
@@ -49,15 +50,15 @@
 
         <div class="space-y-3" *ngIf="categories$ | async as categoriesRes">
           <!-- All Categories Button -->
-          <button (click)="onCategoryChange('')"
+          <button (click)="onAllCategoriesClick()"
             class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border"
-            [ngClass]="(selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0
+            [ngClass]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null
               ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30 border-transparent' 
               : 'bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-600 border-gray-100 hover:border-pink-100'">
             <span class="font-bold">Tất cả</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-opacity"
-              [class.opacity-100]="(selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0"
-              [class.opacity-0]="!((selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0)"
+              [class.opacity-100]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null"
+              [class.opacity-0]="!((selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null)"
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
@@ -67,17 +68,21 @@
           <div *ngFor="let cat of categoriesRes.data" class="flex flex-col">
             <button (click)="toggleCategory(cat.id)"
               class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border mb-1"
-              [ngClass]="(expandedCategory$ | async) === cat.id 
-                  ? 'bg-pink-50 text-primary-pink font-bold border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm' 
-                  : 'bg-white text-gray-600 hover:bg-pink-50 hover:text-primary-pink border-gray-100 hover:border-pink-100'">
+              [ngClass]="{
+                 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm': (expandedCategory$ | async) === cat.id,
+                 'bg-white border-gray-100': (expandedCategory$ | async) !== cat.id
+              }">
               <div class="flex items-center gap-3">
                 <span class="text-xl">{{ cat.icon }}</span>
-                <span>{{ cat.name }}</span>
+                <span [class.font-bold]="isCategoryActive(cat.id)" [class.text-pink-600]="isCategoryActive(cat.id)"
+                  [class.text-gray-900]="!isCategoryActive(cat.id) && (expandedCategory$ | async) === cat.id"
+                  [class.text-gray-600]="!isCategoryActive(cat.id) && (expandedCategory$ | async) !== cat.id">
+                  {{ cat.name }}
+                </span>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200"
                 [class.rotate-180]="(expandedCategory$ | async) === cat.id"
-                [class.text-pink-600]="(expandedCategory$ | async) === cat.id" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+                [class.text-pink-600]="isCategoryActive(cat.id)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -90,16 +95,49 @@
                 {{ 'list.noTopics' | translate }}
               </div>
 
-              <button *ngFor="let topic of currentTopics$ | async" (click)="toggleTopic(topic.id)"
-                class="w-full text-left px-4 py-2.5 text-sm rounded-xl transition-all flex items-center justify-between hover:translate-x-1"
-                [ngClass]="(selectedTopicIds$ | async)?.includes(topic.id) 
-                            ? 'text-sky-600 font-bold bg-sky-50' 
-                            : 'text-gray-500 hover:text-sky-600 hover:bg-sky-50 hover:font-semibold'">
+              <button *ngFor="let topic of currentTopics$ | async" (click)="onTopicClick(topic)"
+                class="w-full text-left px-4 py-3 text-sm transition-all flex items-center justify-between relative group/topic"
+                [ngClass]="(selectedTopicId$ | async) === topic.id 
+                            ? 'text-pink-600 font-bold bg-pink-50 border-l-4 border-l-pink-500' 
+                            : 'text-gray-500 hover:text-pink-600 hover:bg-pink-50 hover:font-semibold border-l-4 border-l-transparent'">
                 <span>{{ topic.title }}</span>
-                <i *ngIf="(selectedTopicIds$ | async)?.includes(topic.id)" class="ph-bold ph-check text-sky-600"></i>
+                <!-- Radio Dot Logic -->
+                <div
+                  class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center bg-white group-hover/topic:border-pink-300"
+                  [class.border-pink-600]="(selectedTopicId$ | async) === topic.id">
+                  <div class="w-2.5 h-2.5 rounded-full bg-pink-600 transition-transform duration-200"
+                    [class.scale-100]="(selectedTopicId$ | async) === topic.id"
+                    [class.scale-0]="(selectedTopicId$ | async) !== topic.id"></div>
+                </div>
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- Tier 2: Age Filter (New) -->
+        <hr class="my-6 border-pink-100 border-dashed">
+
+        <h4 class="font-bold text-gray-900 mb-4 text-lg">Độ tuổi</h4>
+        <div class="space-y-2">
+          <label *ngFor="let age of ageGroups$ | async"
+            class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-pink-50 group">
+            <div class="relative flex items-center">
+              <input type="checkbox" [checked]="(selectedAgeGroupIds$ | async)?.includes(age.id)"
+                (change)="toggleAgeGroup(age.id)"
+                class="peer w-5 h-5 border-2 border-gray-300 rounded text-pink-500 focus:ring-pink-500 focus:ring-offset-0 cursor-pointer transition-colors checked:border-pink-500 checked:bg-pink-500 hover:border-pink-400">
+              <svg
+                class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span class="text-gray-600 group-hover:text-pink-600 transition-colors font-medium text-sm"
+              [class.text-pink-700]="(selectedAgeGroupIds$ | async)?.includes(age.id)"
+              [class.font-bold]="(selectedAgeGroupIds$ | async)?.includes(age.id)">
+              {{ age.name }}
+            </span>
+          </label>
         </div>
       </div>
     </div>
@@ -128,8 +166,8 @@
       <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-8 gap-4 px-2">
         <div>
           <h2 class="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
-            <ng-container *ngIf="(activeCategoryName$ | async) as catName; else defaultTitle">
-              {{ catName }}
+            <ng-container *ngIf="(activeTitle$ | async) as title; else defaultTitle">
+              {{ title }}
             </ng-container>
             <ng-template #defaultTitle>
               Khám phá tài liệu
@@ -141,7 +179,7 @@
 
         <div class="relative min-w-[220px]">
           <select (change)="onSortChange($event)"
-            class="w-full appearance-none bg-white border border-gray-200 text-gray-700 py-3 pl-5 pr-12 rounded-full shadow-sm focus:outline-none focus:border-secondary-500 focus:ring-4 focus:ring-secondary-500/10 cursor-pointer font-bold transition-all hover:bg-gray-50 text-sm">
+            class="w-full appearance-none bg-white border border-gray-200 text-gray-700 py-3 pl-5 pr-12 rounded-2xl shadow-sm focus:outline-none focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 cursor-pointer font-bold transition-all hover:bg-gray-50 text-sm">
             <option value="newest">Mới nhất</option>
             <option value="name-asc">Tên (A-Z)</option>
             <option value="name-desc">Tên (Z-A)</option>
@@ -177,18 +215,18 @@
 
           <ng-template #empty>
             <div
-              class="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-gray-100 shadow-sm col-span-full">
-              <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-400" viewBox="0 0 256 256">
-                  <path
-                    d="M208.57,173.19l-7.79-13.63a88.16,88.16,0,0,0-15.09-18.42c16.52-25.29,14.65-59.54-4.81-79A40.23,40.23,0,0,0,147,48c0-.65,0-1.32.06-2a8,8,0,0,0-6.19-8.48A40,40,0,0,0,92.51,57.73a40.22,40.22,0,0,0-35.63,13.1c-19.46,19.46-21.33,53.71-4.81,79a88.16,88.16,0,0,0-15.09,18.42l-7.79,13.63A40,40,0,0,0,64,240H192a40,40,0,0,0,16.57-76.81ZM99.19,65.6a24,24,0,0,1,26.4,7.85A93.47,93.47,0,0,1,107,88.72,94.27,94.27,0,0,1,88.22,70a24,24,0,0,1,11-4.43Zm-7-2.6A24,24,0,0,1,68.22,70a94.27,94.27,0,0,1-18.75,18.75,93.47,93.47,0,0,1-18.59-15.27A24,24,0,0,1,92.16,63ZM192,224H64a24,24,0,0,1-20.87-35.91l7.79-13.64A72.18,72.18,0,0,1,89.59,102h0a79.25,79.25,0,0,0,23.16,16,8,8,0,0,0,4.6,0,79.25,79.25,0,0,0,23.16-16h0a72.18,72.18,0,0,1,38.67,112.42l7.79,13.64A24,24,0,0,1,192,224ZM80,152a12,12,0,1,1,12,12A12,12,0,0,1,80,152Zm84,0a12,12,0,1,1,12,12A12,12,0,0,1,164,152Z"
-                    fill="currentColor"></path>
-                </svg>
+              class="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm col-span-full">
+              <div class="w-32 h-32 bg-pink-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                <!-- Bear substitute icon (Paw print or custom if available, using Paw here for cuteness) -->
+                <i class="ph-fill ph-paw-print text-6xl text-pink-300"></i>
               </div>
-              <h3 class="text-xl font-bold text-gray-800 mb-2">Oops!</h3>
-              <p class="text-gray-500 max-w-xs mx-auto mb-6">Chưa có tài liệu nào ở mục này.</p>
-              <button (click)="onCategoryChange('')" class="text-pink-600 font-bold hover:underline">
-                View All Resources
+              <h3 class="text-2xl font-black text-gray-800 mb-3">Không tìm thấy tài liệu nào</h3>
+              <p class="text-gray-500 max-w-sm mx-auto mb-8 text-base">
+                Rất tiếc, không có bài học nào phù hợp với lựa chọn của bạn. Thử chọn độ tuổi hoặc chủ đề khác nhé!
+              </p>
+              <button (click)="onAllCategoriesClick()"
+                class="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 hover:scale-105 transition-all">
+                Xem tất cả tài liệu
               </button>
             </div>
           </ng-template>
