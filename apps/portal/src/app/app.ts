@@ -2,11 +2,18 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from './header/header.component';
+import { FooterComponent } from './footer/footer.component';
 import { ToastComponent } from './shared/toast/toast.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, ToastComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    HeaderComponent,
+    FooterComponent,
+    ToastComponent,
+  ],
   selector: 'app-root',
   templateUrl: './app.component.html',
 })

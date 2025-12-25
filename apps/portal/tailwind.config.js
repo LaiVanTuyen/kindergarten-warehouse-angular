@@ -15,29 +15,30 @@ module.exports = {
           50: '#FFF0F3',
           100: '#FFE3E8',
           200: '#FFC7D1',
-          300: '#FFAUB9',
+          300: '#FFABBD',
           400: '#FF8FA3',
-          500: '#FF637D',
+          500: '#FF637D', // Hot Pink
           600: '#E63D5C',
           700: '#C2203F',
           800: '#A11630',
           900: '#851226',
         },
         secondary: {
-          DEFAULT: '#8AC4FF', // Sky Blue
-          50: '#F0F7FF',
-          100: '#E0EFFF',
-          200: '#C2DFFF',
-          300: '#A3CFFF',
-          400: '#8AC4FF',
-          500: '#66AFFF',
-          600: '#4094FF',
-          700: '#1F7AFF',
-          800: '#005CE6',
-          900: '#0047B3',
+          DEFAULT: '#FFB38A', // Peach/Orange
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FB923C',
+          500: '#F97316',
+          600: '#EA580C', // Dark Orange
+          700: '#C2410C',
+          800: '#9A3412',
+          900: '#7C2D12',
         },
+        'primary-pink': '#FF637D', // Explicitly defined for gradients/text
         'soft-pink': '#FF8FA3',
-        'sky-blue': '#8AC4FF',
+        'sky-blue': '#8AC4FF', // Keeping reference if needed but unused
       },
       fontFamily: {
         sans: ['Quicksand', 'Nunito', 'sans-serif'],

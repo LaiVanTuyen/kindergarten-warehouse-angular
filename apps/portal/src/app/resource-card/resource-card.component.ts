@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe } from '../pipes/translate.pipe';
+
 import { Resource } from '@kindergarten-warehouse/data-access';
 import { ToastService } from '@kindergarten-warehouse/data-access';
 import { RouterModule } from '@angular/router';
@@ -15,7 +15,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-resource-card',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './resource-card.component.html',
   styles: [],
 })

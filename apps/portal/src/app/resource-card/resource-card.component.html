@@ -69,18 +69,19 @@
         </p>
 
         <!-- Rating Stars (Two-Tag Logic: Fill vs Empty) -->
-        <div class="flex items-center text-yellow-400 mb-3">
-            <div class="flex items-center gap-1" *ngIf="resource.rating">
+        <!-- Rating Stars (Two-Tag Logic: Fill vs Empty) -->
+        <div class="flex items-center text-yellow-400 mb-3" *ngIf="(resource.rating || 0) > 0">
+            <div class="flex items-center gap-1">
                 <span class="font-bold text-gray-700 text-xs mt-[2px] leading-none">{{ resource.rating }}</span>
                 <div class="flex gap-0.5">
                     <ng-container *ngFor="let star of starTemplate">
                         <!-- Case 1: Fill Star (Yellow) - using ph-fill ph-star -->
-                        <i *ngIf="resource.rating >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
+                        <i *ngIf="(resource.rating || 0) >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
                         <!-- Case 2: Half Star (Yellow) - using ph-fill ph-star-half -->
-                        <i *ngIf="resource.rating < star && resource.rating > (star - 1)"
+                        <i *ngIf="(resource.rating || 0) < star && (resource.rating || 0) > (star - 1)"
                             class="ph-fill ph-star-half text-yellow-400 text-base"></i>
                         <!-- Case 3: Empty Star (Gray) - using ph ph-star -->
-                        <i *ngIf="resource.rating <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
+                        <i *ngIf="(resource.rating || 0) <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
                     </ng-container>
                 </div>
             </div>
@@ -111,18 +112,18 @@
 
             <div class="flex gap-2">
                 <button (click)="onView()"
-                    class="px-4 py-1.5 rounded-full border border-secondary-600 text-secondary-600 text-xs font-bold shadow-sm hover:bg-blue-50 transition-all flex items-center gap-1">
+                    class="px-5 py-2 rounded-full border border-primary-pink text-primary-pink text-sm font-bold shadow-sm hover:bg-pink-50 transition-all flex items-center gap-1 group/btn">
                     <ng-container *ngIf="resource.type === 'AUDIO' || resource.type === 'VIDEO'; else viewText">
                         <i class="ph-fill ph-play"></i>
-                        {{ 'list.play' | translate }}
+                        Xem
                     </ng-container>
                     <ng-template #viewText>
-                        {{ 'list.view' | translate }}
+                        Xem
                     </ng-template>
                 </button>
                 <button (click)="onDownload($event)"
-                    class="w-8 h-8 flex items-center justify-center rounded-full bg-secondary-600 text-white shadow-lg hover:bg-secondary-700 hover:shadow-xl transition-all">
-                    <i class="ph-bold ph-download-simple"></i>
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-pink-100 text-primary-pink shadow-md hover:bg-pink-200 hover:shadow-lg transition-all">
+                    <i class="ph-bold ph-download-simple text-lg"></i>
                 </button>
             </div>
         </div>

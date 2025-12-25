@@ -9,7 +9,7 @@
         class="w-full flex items-center justify-between px-6 py-4 bg-white rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-800 hover:bg-gray-50 transition-colors">
         <span class="flex items-center gap-2">
           <i class="ph ph-faders text-lg text-primary-500"></i>
-          {{ 'list.filters' | translate }} & Categories
+          Bộ lọc & Danh mục
         </span>
         <div class="flex items-center gap-2">
           <!-- Show count helper if needed -->
@@ -44,7 +44,7 @@
             <rect x="14" y="14" width="7" height="7"></rect>
             <rect x="3" y="14" width="7" height="7"></rect>
           </svg>
-          Categories
+          Danh mục
         </h4>
 
         <div class="space-y-3" *ngIf="categories$ | async as categoriesRes">
@@ -54,7 +54,7 @@
             [ngClass]="(selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0
               ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30 border-transparent' 
               : 'bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-600 border-gray-100 hover:border-pink-100'">
-            <span class="font-bold">{{ 'list.all' | translate }}</span>
+            <span class="font-bold">Tất cả</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-opacity"
               [class.opacity-100]="(selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0"
               [class.opacity-0]="!((selectedCategory$ | async) === '' && (selectedTopicIds$ | async)?.length === 0)"
@@ -68,8 +68,8 @@
             <button (click)="toggleCategory(cat.id)"
               class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border mb-1"
               [ngClass]="(expandedCategory$ | async) === cat.id 
-                  ? 'bg-pink-50 text-pink-700 font-bold border-pink-200' 
-                  : 'bg-white text-gray-600 hover:bg-sky-50 hover:text-sky-600 border-gray-100 hover:border-sky-100'">
+                  ? 'bg-pink-50 text-primary-pink font-bold border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm' 
+                  : 'bg-white text-gray-600 hover:bg-pink-50 hover:text-primary-pink border-gray-100 hover:border-pink-100'">
               <div class="flex items-center gap-3">
                 <span class="text-xl">{{ cat.icon }}</span>
                 <span>{{ cat.name }}</span>
@@ -129,24 +129,24 @@
         <div>
           <h2 class="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
             <ng-container *ngIf="(activeCategoryName$ | async) as catName; else defaultTitle">
-              {{ catName }} Resources
+              {{ catName }}
             </ng-container>
             <ng-template #defaultTitle>
-              {{ 'list.explore' | translate }}
+              Khám phá tài liệu
             </ng-template>
             <span class="hidden sm:inline-block w-2 h-2 rounded-full bg-secondary-500 mb-1"></span>
           </h2>
-          <p class="text-gray-400 font-medium mt-1 ml-1 text-sm">Discover the best resources for your kids</p>
+          <p class="text-gray-400 font-medium mt-1 ml-1 text-sm">Khám phá các tài liệu tốt nhất cho bé</p>
         </div>
 
         <div class="relative min-w-[220px]">
           <select (change)="onSortChange($event)"
             class="w-full appearance-none bg-white border border-gray-200 text-gray-700 py-3 pl-5 pr-12 rounded-full shadow-sm focus:outline-none focus:border-secondary-500 focus:ring-4 focus:ring-secondary-500/10 cursor-pointer font-bold transition-all hover:bg-gray-50 text-sm">
-            <option value="newest">{{ 'sort.newest' | translate }}</option>
-            <option value="name-asc">{{ 'sort.nameAsc' | translate }}</option>
-            <option value="name-desc">{{ 'sort.nameDesc' | translate }}</option>
-            <option value="rating-desc">{{ 'sort.ratingDesc' | translate }}</option>
-            <option value="rating-asc">{{ 'sort.ratingAsc' | translate }}</option>
+            <option value="newest">Mới nhất</option>
+            <option value="name-asc">Tên (A-Z)</option>
+            <option value="name-desc">Tên (Z-A)</option>
+            <option value="rating-desc">Đánh giá cao nhất</option>
+            <option value="rating-asc">Đánh giá thấp nhất</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
             <i class="ph-bold ph-caret-down text-lg"></i>
@@ -211,8 +211,8 @@
           <button *ngFor="let page of pages" (click)="goToPage(page)"
             class="w-10 h-10 rounded-full font-bold text-sm transition-all" [ngClass]="
                 (currentPage$ | async) === page
-                ? 'bg-gradient-to-r from-sky-500 to-sky-600 text-white shadow-lg shadow-sky-500/30 transform scale-105'
-                : 'text-gray-600 hover:bg-sky-50 bg-white border border-gray-200'
+                ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30 transform scale-105'
+                : 'text-gray-600 hover:bg-pink-50 bg-white border border-gray-200'
             ">
             {{ page }}
           </button>

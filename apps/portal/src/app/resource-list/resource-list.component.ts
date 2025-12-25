@@ -77,11 +77,13 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   );
 
   pageTitle$ = this.activeCategoryName$.pipe(
-    map((name) => (name ? `${name} Resources` : 'list.explore'))
+    map((name) => (name ? `${name}` : 'Tài liệu khám phá'))
   );
 
   breadcrumb$ = this.activeCategoryName$.pipe(
-    map((name) => (name ? ['Home', 'Resources', name] : ['Home', 'Resources']))
+    map((name) =>
+      name ? ['Trang chủ', 'Tài liệu', name] : ['Trang chủ', 'Tài liệu']
+    )
   );
 
   // Sidebar State

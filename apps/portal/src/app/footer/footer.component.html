@@ -1,0 +1,90 @@
+<footer class="bg-gray-50 pt-16 pb-8 border-t border-gray-100 font-sans mt-auto">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <!-- Brand -->
+            <div class="space-y-4">
+                <a routerLink="/" class="inline-flex items-center gap-2 group">
+                    <span class="text-2xl font-black text-primary-500 tracking-tight">Kinder</span>
+                    <span class="text-2xl font-black text-secondary-600 tracking-tight">World</span>
+                </a>
+                <p class="text-gray-500 text-sm leading-relaxed max-w-xs">
+                    Nền tảng tài liệu giáo dục mầm non hàng đầu. Giúp bé vừa học vừa chơi, phát triển toàn diện.
+                </p>
+                <div class="flex gap-4 pt-2">
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-primary-500 hover:bg-primary-50 transition-all">
+                        <i class="ph-fill ph-facebook-logo text-xl"></i>
+                    </a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-pink-500 hover:bg-pink-50 transition-all">
+                        <i class="ph-fill ph-instagram-logo text-xl"></i>
+                    </a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                        <i class="ph-fill ph-youtube-logo text-xl"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h4 class="font-bold text-gray-900 mb-6 text-lg">Liên kết nhanh</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a routerLink="/" class="text-gray-500 hover:text-primary-500 transition-colors">Trang chủ</a>
+                    </li>
+                    <li><a routerLink="/resources" class="text-gray-500 hover:text-primary-500 transition-colors">Tài
+                            liệu</a></li>
+                    <li><a routerLink="/about" class="text-gray-500 hover:text-primary-500 transition-colors">Về chúng
+                            tôi</a></li>
+                    <li><a href="#" class="text-gray-500 hover:text-primary-500 transition-colors">Liên hệ</a></li>
+                </ul>
+            </div>
+
+            <!-- Categories -->
+            <div>
+                <h4 class="font-bold text-gray-900 mb-6 text-lg">Danh mục</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a routerLink="/resources" [queryParams]="{ category: 'c1' }"
+                            class="text-gray-500 hover:text-primary-500 transition-colors">Thủ công & Mỹ thuật</a></li>
+                    <li><a routerLink="/resources" [queryParams]="{ category: 'c2' }"
+                            class="text-gray-500 hover:text-primary-500 transition-colors">Giờ kể chuyện</a></li>
+                    <li><a routerLink="/resources" [queryParams]="{ category: 'c3' }"
+                            class="text-gray-500 hover:text-primary-500 transition-colors">Câu đố toán học</a></li>
+                    <li><a routerLink="/resources" [queryParams]="{ category: 'c4' }"
+                            class="text-gray-500 hover:text-primary-500 transition-colors">Âm nhạc & Bước nhảy</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h4 class="font-bold text-gray-900 mb-6 text-lg">Liên hệ</h4>
+                <ul class="space-y-4 text-sm">
+                    <li class="flex items-start gap-3">
+                        <i class="ph-fill ph-map-pin text-primary-500 text-lg mt-0.5"></i>
+                        <span class="text-gray-500">123 Đường ABC, Quận XYZ,<br>TP. Hồ Chí Minh</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="ph-fill ph-envelope-simple text-primary-500 text-lg"></i>
+                        <a href="mailto:contact@kinderworld.com"
+                            class="text-gray-500 hover:text-primary-500">contact@kinderworld.com</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="ph-fill ph-phone text-primary-500 text-lg"></i>
+                        <a href="tel:+84123456789" class="text-gray-500 hover:text-primary-500">+84 123 456 789</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-400 text-sm font-medium">
+                © 2024 KinderWorld. All rights reserved.
+            </p>
+            <div class="flex gap-6 text-sm text-gray-400">
+                <a href="#" class="hover:text-primary-500 transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-primary-500 transition-colors">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>

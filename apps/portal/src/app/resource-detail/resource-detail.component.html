@@ -4,16 +4,16 @@
     <nav class="flex mb-8" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
-          <a routerLink="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-blue">
+          <a routerLink="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-pink">
             <i class="ph ph-house mr-2 text-lg"></i>
-            Home
+            Trang chủ
           </a>
         </li>
         <li>
           <div class="flex items-center">
             <i class="ph ph-caret-right text-gray-400"></i>
             <a routerLink="/resources"
-              class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-blue md:ml-2">Resources</a>
+              class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-pink md:ml-2">Tài liệu</a>
           </div>
         </li>
         <li aria-current="page">
@@ -44,17 +44,11 @@
             </ng-template>
           </ng-container>
 
-          <!-- Document Viewer (PDF, WORD, EXCEL) -->
-          <ng-container *ngIf="['PDF', 'WORD', 'EXCEL'].includes(resource.type)">
-            <iframe [src]="getSafeDocUrl(resource.url)" class="w-full h-[500px] rounded-xl shadow-md bg-white"
-              frameborder="0"></iframe>
-          </ng-container>
-
-          <!-- Fallback / Thumbnail -->
-          <ng-container *ngIf="!['VIDEO', 'PDF', 'WORD', 'EXCEL'].includes(resource.type)">
+          <!-- Document Viewer Card (Fixed "Black Screen" Issue) -->
+          <ng-container *ngIf="!['VIDEO'].includes(resource.type)">
             <div
-              class="flex flex-col items-center justify-center w-full min-h-[400px] bg-gradient-to-br from-indigo-50/50 via-white to-pink-50/50 rounded-2xl border border-gray-100 p-8 text-center relative overflow-hidden">
-              <!-- Decorative Background Elements -->
+              class="flex flex-col items-center justify-center w-full min-h-[400px] bg-gradient-to-br from-indigo-50/80 via-white to-pink-50/80 rounded-2xl border border-gray-100 p-8 text-center relative overflow-hidden">
+              <!-- Decorative Elements -->
               <div
                 class="absolute top-0 right-0 w-64 h-64 bg-yellow-200/20 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4">
               </div>
@@ -62,33 +56,37 @@
                 class="absolute bottom-0 left-0 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl translate-y-1/4 -translate-x-1/4">
               </div>
 
-              <!-- Thumbnail or Icon -->
+              <!-- Icon/Thumbnail -->
               <div class="relative z-10 mb-6 group transition-transform hover:-translate-y-2 duration-500">
                 <div
-                  class="absolute inset-0 bg-secondary-200 rounded-xl rotate-3 opacity-20 group-hover:rotate-6 transition-transform">
+                  class="absolute inset-0 bg-blue-200 rounded-xl rotate-3 opacity-20 group-hover:rotate-6 transition-transform">
                 </div>
                 <div
-                  class="absolute inset-0 bg-primary-pink/20 rounded-xl -rotate-3 opacity-20 group-hover:-rotate-6 transition-transform">
+                  class="absolute inset-0 bg-pink-200 rounded-xl -rotate-3 opacity-20 group-hover:-rotate-6 transition-transform">
                 </div>
 
                 <img *ngIf="resource.thumbnail" [src]="resource.thumbnail"
                   class="w-48 h-48 object-cover rounded-xl shadow-xl relative bg-white" alt="Resource Preview" />
 
                 <div *ngIf="!resource.thumbnail"
-                  class="w-48 h-48 flex items-center justify-center rounded-xl bg-white shadow-xl relative text-secondary-400">
-                  <i class="ph-fill ph-file-archive text-7xl"></i>
+                  class="w-48 h-48 flex items-center justify-center rounded-xl bg-white shadow-xl relative text-sky-500">
+                  <i *ngIf="resource.type === 'PDF'" class="ph-fill ph-file-pdf text-7xl text-red-500"></i>
+                  <i *ngIf="resource.type === 'WORD'" class="ph-fill ph-file-doc text-7xl text-blue-500"></i>
+                  <i *ngIf="resource.type === 'EXCEL'" class="ph-fill ph-file-xls text-7xl text-green-500"></i>
+                  <i *ngIf="!['PDF','WORD','EXCEL'].includes(resource.type)"
+                    class="ph-fill ph-file-text text-7xl text-gray-400"></i>
                 </div>
               </div>
 
-              <h3 class="text-xl font-bold text-gray-800 mb-2 relative z-10">Preview Not Available</h3>
+              <h3 class="text-xl font-bold text-gray-800 mb-2 relative z-10">Xem trước tài liệu</h3>
               <p class="text-gray-500 mb-6 max-w-xs mx-auto text-sm leading-relaxed relative z-10">
-                This document does not support live viewing. Please download to view the full version.
+                Vui lòng tải xuống để xem nội dung đầy đủ của tài liệu này.
               </p>
 
               <button (click)="downloadResource(resource)"
-                class="relative z-10 flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-secondary-600 font-bold rounded-full shadow-lg shadow-gray-100 hover:shadow-xl hover:border-secondary-200 hover:text-secondary-700 transition-all transform hover:-translate-y-0.5">
+                class="relative z-10 flex items-center gap-2 px-6 py-3 bg-primary-pink text-white font-bold rounded-full shadow-lg shadow-pink-500/30 hover:shadow-xl hover:bg-pink-600 transition-all transform hover:-translate-y-0.5">
                 <i class="ph-bold ph-download-simple"></i>
-                Download Full Version
+                Tải xuống ngay
               </button>
             </div>
           </ng-container>
@@ -121,7 +119,7 @@
               class="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full text-secondary-600 shadow-sm ml-2">
               <i class="ph-fill ph-download-simple text-sm"></i>
               <span class="font-bold text-sm">{{ resource.downloadCount || 0 }}</span>
-              <span class="text-xs font-medium text-secondary-500">Downloads</span>
+              <span class="text-xs font-medium text-secondary-500">Lượt tải</span>
             </div>
             <!-- Rating Stars -->
             <div class="flex items-center text-yellow-400" *ngIf="resource.rating">
@@ -148,13 +146,13 @@
           </p>
 
           <button (click)="downloadResource(resource)"
-            class="w-full sm:w-auto px-8 py-4 rounded-full bg-secondary-600 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:bg-secondary-700 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 mb-12">
+            class="w-full sm:w-auto px-8 py-4 rounded-full bg-sky-600 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:bg-sky-700 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            {{ 'detail.download' | translate }}
+            Tải xuống miễn phí
             <span class="opacity-90 font-medium ml-1 text-base" *ngIf="resource.fileSize">({{ resource.fileSize
               }})</span>
           </button>
@@ -170,7 +168,7 @@
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>
-          {{ 'detail.comments' | translate }}
+          Bình luận
         </h3>
 
         <!-- Add Comment Form -->
@@ -184,7 +182,7 @@
 
             <div class="flex-1">
               <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'detail.rating' | translate }}</label>
+                <p class="block text-sm font-medium text-gray-700 mb-1">{{ 'detail.rating' | translate }}</p>
                 <div class="flex gap-1">
                   <button *ngFor="let star of [1,2,3,4,5]" (click)="newCommentRating = star"
                     class="focus:outline-none transition-transform hover:scale-110">
@@ -200,9 +198,10 @@
               </div>
 
               <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'detail.yourComment' | translate
+                <label for="comment-content" class="block text-sm font-medium text-gray-700 mb-1">{{
+                  'detail.yourComment' | translate
                   }}</label>
-                <textarea [(ngModel)]="newCommentContent" rows="3"
+                <textarea id="comment-content" [(ngModel)]="newCommentContent" rows="3"
                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-blue/20 focus:border-primary-blue outline-none transition-all resize-none"
                   placeholder="Share your thoughts..."></textarea>
               </div>
@@ -257,7 +256,7 @@
 
 <!-- Related Resources -->
 <div class="mt-16">
-  <h2 class="text-2xl font-bold text-gray-800 mb-8">{{ 'detail.related' | translate }}</h2>
+  <h2 class="text-2xl font-bold text-gray-800 mb-8">Tài liệu liên quan</h2>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
     <div *ngFor="let related of relatedResources$ | async">

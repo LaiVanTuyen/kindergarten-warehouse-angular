@@ -14,7 +14,7 @@ import { ResourceCardComponent } from '../resource-card/resource-card.component'
   templateUrl: './home.component.html',
   styles: [],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   // Implements OnInit
   private resourceService = inject(ResourceService);
 
@@ -25,35 +25,33 @@ export class HomeComponent implements OnInit {
   slides = [
     {
       title:
-        'Discover a World of <br> <span class="text-primary-500">Fun</span> & <span class="text-secondary-600">Learning</span>',
-      subtitle:
-        'Explore thousands of engaging resources, songs, and stories perfect for early childhood education.',
+        'Thế giới <span class="text-primary-500">Vui chơi</span> & <span class="text-secondary-600">Học tập</span>',
+      subtitle: 'Kho tài liệu phong phú, bài hát và câu chuyện hấp dẫn cho bé.',
       image: '/assets/images/banner_fun_learning.png',
       bgFrom: 'from-primary-50',
       bgTo: 'to-secondary-50',
     },
     {
       title:
-        'Empower <span class="text-purple-500">Teachers</span> & <span class="text-yellow-500">Parents</span>',
+        'Đồng hành cùng <span class="text-purple-500">Giáo viên</span> & <span class="text-yellow-500">Phụ huynh</span>',
       subtitle:
-        'Curated lesson plans and activities to spark creativity in every child.',
+        'Giáo án và hoạt động sáng tạo giúp khơi dậy tiềm năng của trẻ.',
       image: '/assets/images/banner_teachers_parents.png',
       bgFrom: 'from-purple-50',
       bgTo: 'to-yellow-50',
     },
     {
       title:
-        'Learning Made <span class="text-green-500">Fun</span> and <span class="text-blue-500">Easy</span>',
-      subtitle:
-        'Interactive games and educational videos that kids love to play.',
+        'Học mà <span class="text-green-500">Chơi</span>, Chơi mà <span class="text-blue-500">Học</span>',
+      subtitle: 'Trò chơi tương tác và video giáo dục thú vị.',
       image: '/assets/images/banner_games.png',
       bgFrom: 'from-green-50',
       bgTo: 'to-blue-50',
     },
     {
       title:
-        'Unlock <span class="text-pink-500">Creativity</span> with <span class="text-orange-500">Art</span>',
-      subtitle: 'Printable coloring pages and crafts for artistic expression.',
+        'Khơi nguồn <span class="text-pink-500">Sáng tạo</span> với <span class="text-orange-500">Nghệ thuật</span>',
+      subtitle: 'Tranh tô màu và thủ công giúp bé thỏa sức sáng tạo.',
       image: '/assets/images/banner_art.png',
       bgFrom: 'from-pink-50',
       bgTo: 'to-orange-50',

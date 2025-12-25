@@ -7,21 +7,21 @@ import { Category, Topic } from '../models/models';
 })
 export class CategoryService {
   private mockCategories: Category[] = [
-    { id: 'c1', name: 'Arts & Crafts', slug: 'arts-crafts', icon: '🎨' },
-    { id: 'c2', name: 'Story Time', slug: 'story-time', icon: '📚' },
-    { id: 'c3', name: 'Math Puzzles', slug: 'math-puzzles', icon: '🧩' },
-    { id: 'c4', name: 'Music & Dance', slug: 'music-dance', icon: '🎵' },
+    { id: 'c1', name: 'Thủ công & Mỹ thuật', slug: 'arts-crafts', icon: '🎨' },
+    { id: 'c2', name: 'Giờ kể chuyện', slug: 'story-time', icon: '📚' },
+    { id: 'c3', name: 'Câu đố toán học', slug: 'math-puzzles', icon: '🧩' },
+    { id: 'c4', name: 'Âm nhạc & Bước nhảy', slug: 'music-dance', icon: '🎵' },
   ];
 
   private mockTopics: Topic[] = [
-    { id: 't1', title: 'Drawing', categoryId: 'c1' },
-    { id: 't2', title: 'Origami', categoryId: 'c1' },
-    { id: 't3', title: 'Fairy Tales', categoryId: 'c2' },
-    { id: 't4', title: 'Adventure', categoryId: 'c2' },
-    { id: 't5', title: 'Counting', categoryId: 'c3' },
-    { id: 't6', title: 'Geometry', categoryId: 'c3' },
-    { id: 't7', title: 'Sing-Along', categoryId: 'c4' },
-    { id: 't8', title: 'Dance Moves', categoryId: 'c4' },
+    { id: 't1', title: 'Vẽ tranh', categoryId: 'c1' },
+    { id: 't2', title: 'Gấp giấy (Origami)', categoryId: 'c1' },
+    { id: 't3', title: 'Truyện cổ tích', categoryId: 'c2' },
+    { id: 't4', title: 'Phiêu lưu', categoryId: 'c2' },
+    { id: 't5', title: 'Tập đếm', categoryId: 'c3' },
+    { id: 't6', title: 'Hình học', categoryId: 'c3' },
+    { id: 't7', title: 'Hát theo', categoryId: 'c4' },
+    { id: 't8', title: 'Điệu nhảy', categoryId: 'c4' },
   ];
 
   // Categories CRUD

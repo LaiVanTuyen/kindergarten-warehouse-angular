@@ -12,31 +12,29 @@
 
         <!-- Logo -->
         <div
-          class="flex items-center cursor-pointer select-none transition-transform hover:scale-105 active:scale-95 group"
+          class="flex items-center cursor-pointer select-none transition-transform hover:scale-105 active:scale-95 group opacity-100 hover:opacity-90"
           routerLink="/">
-          <span
-            class="text-2xl font-black text-primary-500 tracking-tight group-hover:text-primary-500 transition-colors">Kinder</span>
-          <span
-            class="text-2xl font-black  tracking-tight group-hover:text-secondary-500 transition-colors">World</span>
+          <span class="text-2xl font-black text-primary-500 tracking-tight transition-colors">Kinder</span>
+          <span class="text-2xl font-black text-secondary-600 tracking-tight transition-colors">World</span>
         </div>
 
         <!-- Desktop Navigation -->
         <nav class="hidden lg:flex items-center gap-2 text-sm font-bold text-gray-500">
-          <a routerLink="/" routerLinkActive="bg-secondary-50 text-secondary-600 font-bold"
+          <a routerLink="/" routerLinkActive="bg-pink-50 text-primary-pink font-bold"
             [routerLinkActiveOptions]="{ exact: true }"
-            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-500">
+            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-house text-lg mb-0.5"></i>
             {{ 'header.home' | translate }}
           </a>
 
-          <a routerLink="/resources" routerLinkActive="bg-secondary-50 text-secondary-600 font-bold"
-            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-500">
+          <a routerLink="/resources" routerLinkActive="bg-pink-50 text-primary-pink font-bold"
+            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-books text-lg mb-0.5"></i>
             {{ 'header.resources' | translate }}
           </a>
 
-          <a routerLink="/about" routerLinkActive="bg-secondary-50 text-secondary-600 font-bold"
-            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-500">
+          <a routerLink="/about" routerLinkActive="bg-pink-50 text-primary-pink font-bold"
+            class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-info text-lg mb-0.5"></i>
             {{ 'header.about' | translate }}
           </a>
@@ -48,17 +46,17 @@
 
         <!-- Search Bar (Hidden on small mobile, maybe toggle or icon only? For now showing constrained) -->
         <div class="hidden md:block w-48 lg:w-64 relative group">
-          <span
-            class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 group-focus-within: transition-colors">
+          <button
+            class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 hover:text-secondary-600 transition-colors z-10 cursor-pointer">
             <i class="ph ph-magnifying-glass text-xl"></i>
-          </span>
+          </button>
           <input type="text" [value]="searchQuery" (input)="onSearchInput($any($event.target).value)"
             [placeholder]="'list.search' | translate"
             class="w-full pl-10 pr-8 py-2 rounded-full border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-secondary-600 focus:ring-4 focus:ring-secondary-600/10 transition-all text-sm font-medium text-gray-700 placeholder-gray-400" />
 
           <!-- Clear Button -->
           <button *ngIf="searchQuery" (click)="clearSearch()"
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors">
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors z-10">
             <i class="ph ph-x-circle-fill text-lg"></i>
           </button>
         </div>
@@ -108,7 +106,7 @@
         </ng-container>
 
         <a *ngIf="!isLoggedIn" routerLink="/login"
-          class="hidden sm:flex items-center px-6 py-2.5 rounded-full bg-secondary-600 text-white text-sm font-bold shadow-md hover:shadow-lg hover:bg-secondary-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0 border-transparent">
+          class="hidden sm:flex items-center px-6 py-2.5 rounded-full bg-gradient-to-r from-primary-pink to-secondary-600 text-white text-sm font-bold shadow-md hover:shadow-lg hover:from-pink-600 hover:to-secondary-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0 border-transparent">
           {{ 'header.login' | translate }}
         </a>
       </div>
@@ -165,7 +163,7 @@
             class="px-3 py-1.5 rounded-md text-xs font-bold transition-all">VN</button>
         </div>
         <a routerLink="/login" (click)="closeMobileMenu()"
-          class="px-6 py-2.5 rounded-xl bg-primary-500 text-white text-sm font-bold shadow-sm">
+          class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-pink to-secondary-600 text-white text-sm font-bold shadow-sm">
           {{ 'header.login' | translate }}
         </a>
       </div>
