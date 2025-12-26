@@ -13,6 +13,8 @@ import {
   ResourceService,
   CategoryService,
   Topic,
+  Category,
+  AgeGroup,
 } from '@kindergarten-warehouse/data-access';
 import {
   combineLatest,
@@ -27,6 +29,7 @@ import {
   debounceTime,
   Subject,
   takeUntil,
+  shareReplay,
 } from 'rxjs';
 
 import { ActivatedRoute, Router } from '@angular/router';
@@ -47,7 +50,29 @@ import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-ske
     LoadingSkeletonComponent,
   ],
   templateUrl: './resource-list.component.html',
-  styles: [],
+  styles: [
+    `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #fbcfe8; /* pink-200 */
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #f9a8d4; /* pink-300 */
+      }
+      /* Firefox */
+      .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #fbcfe8 transparent;
+      }
+    `,
+  ],
 })
 export class ResourceListComponent implements OnInit, OnDestroy {
   private resourceService = inject(ResourceService);
@@ -58,7 +83,9 @@ export class ResourceListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  categories$ = this.categoryService.getCategories();
+  categories$ = this.categoryService.getCategories().pipe(
+    shareReplay(1) // Share the result to avoid multiple API calls
+  );
 
   // Sidebar & Filter State (Sources)
   expandedCategory$ = new BehaviorSubject<string>('');
@@ -74,6 +101,10 @@ export class ResourceListComponent implements OnInit, OnDestroy {
 
   isLoading$ = new BehaviorSubject<boolean>(true);
 
+  // Age Groups State
+  ageGroups$ = this.resourceService.getAgeGroups().pipe(shareReplay(1));
+  selectedAgeGroups$ = new BehaviorSubject<AgeGroup[]>([]);
+
   // Pagination State
   currentPage$ = new BehaviorSubject<number>(1);
   itemsPerPage = 8;
@@ -87,27 +118,33 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     map((total) => Array.from({ length: total }, (_, i) => i + 1))
   );
 
+  // Cache Update Signal
+  private topicsCacheUpdated$ = new BehaviorSubject<void>(undefined);
+
   // Derived State (Depends on State above)
   activeTitle$ = combineLatest([
     this.categories$,
     this.selectedCategory$,
     this.selectedTopicId$,
-    this.expandedCategory$,
+    this.topicsCacheUpdated$,
   ]).pipe(
-    map(([categories, selectedCatId, selectedTopicId]) => {
+    map(([categories, selectedCatId, selectedTopicId, _]) => {
       // 1. If Topic is Selected, show Topic Title
       if (selectedTopicId) {
+        // Search all cache to be safe and handle type mismatches
         for (const catId in this.topicsCache) {
           const topic = this.topicsCache[catId].find(
-            (t) => t.id === selectedTopicId
+            (t) => String(t.id) === String(selectedTopicId)
           );
           if (topic) return topic.title;
         }
       }
 
-      // 2. If Category is Selected (and no topic), show Category Name
+      // 2. If Category is Selected, show Category Name
       if (selectedCatId) {
-        const cat = categories.data.find((c) => c.id === selectedCatId);
+        const cat = categories.data.find(
+          (c) => String(c.id) === String(selectedCatId)
+        );
         if (cat) return cat.name;
       }
 
@@ -119,24 +156,149 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     map((name) => (name ? `${name}` : 'Tài liệu khám phá'))
   );
 
-  breadcrumb$ = this.activeTitle$.pipe(
-    map((name) =>
-      name ? ['Trang chủ', 'Tài liệu', name] : ['Trang chủ', 'Tài liệu']
-    )
+  breadcrumb$ = combineLatest([
+    this.categories$,
+    this.selectedCategory$,
+    this.selectedTopicId$,
+    this.topicsCacheUpdated$,
+  ]).pipe(
+    map(([categories, selectedCatId, selectedTopicId, _]) => {
+      const base = ['Trang chủ', 'Tài liệu'];
+
+      if (selectedTopicId) {
+        // Find Topic Object first
+        let foundTopic: Topic | undefined;
+        for (const catId in this.topicsCache) {
+          const t = this.topicsCache[catId].find(
+            (item) => String(item.id) === String(selectedTopicId)
+          );
+          if (t) {
+            foundTopic = t;
+            break;
+          }
+        }
+
+        if (foundTopic) {
+          // Robustly find parent via topic.categoryId
+          const parentCat = categories.data.find(
+            (c) => String(c.id) === String(foundTopic?.categoryId)
+          );
+
+          if (parentCat) {
+            return [...base, parentCat.name, foundTopic.title];
+          } else {
+            // Fallback if parent not found but topic exists (shouldn't happen)
+            return [...base, foundTopic.title];
+          }
+        }
+      }
+
+      if (selectedCatId) {
+        const cat = categories.data.find(
+          (c) => String(c.id) === String(selectedCatId)
+        );
+        if (cat) return [...base, cat.name];
+      }
+
+      return base;
+    })
   );
 
   constructor() {}
 
   ngOnInit() {
-    // Handle initial query params (e.g. from Home page)
-    this.route.queryParams
+    // Initialization Logic: Load Categories & AgeGroups -> Read URL -> Find Object -> Activate
+    combineLatest([this.categories$, this.ageGroups$, this.route.queryParams])
       .pipe(takeUntil(this.destroy$))
-      .subscribe((params) => {
-        const catId = params['category'];
-        if (catId && catId !== this.selectedCategory$.value) {
-          this.toggleCategory(catId, true); // Pass true to force open/select without toggling off
+      .subscribe(([categoriesRes, ageGroups, params]) => {
+        const catSlug = params['category'];
+        const topicSlug = params['topic'];
+        const agesParam = params['ages'];
+
+        // 1. Handle Age Groups Sync
+        if (agesParam) {
+          const slugs = agesParam.split(',');
+          const matchedAges = ageGroups.filter((g) => slugs.includes(g.slug));
+          // Only update if different to avoid infinite loops if we were 2-way binding differently
+          // But here we rely on URL as source of truth mostly
+          const currentIds = this.selectedAgeGroups$.value
+            .map((g) => g.id)
+            .sort()
+            .join(',');
+          const newIds = matchedAges
+            .map((g) => g.id)
+            .sort()
+            .join(',');
+
+          if (currentIds !== newIds) {
+            this.selectedAgeGroups$.next(matchedAges);
+          }
+        } else {
+          if (this.selectedAgeGroups$.value.length > 0) {
+            this.selectedAgeGroups$.next([]);
+          }
+        }
+
+        // 2. Handle Category & Topic Sync
+        let foundCat: Category | undefined;
+
+        if (catSlug) {
+          foundCat = categoriesRes.data.find((c) => c.slug === catSlug);
+          if (foundCat) {
+            // Update Sidebar State for Category
+            const isCategoryAlreadySelected =
+              this.selectedCategory$.value === foundCat.id;
+
+            if (!isCategoryAlreadySelected) {
+              this.expandedCategory$.next(foundCat.id);
+              this.selectedCategory$.next(foundCat.id);
+            }
+
+            // Load Topics for this category to resolve topic slug
+            // We need to fetch topics to check if topicSlug exists
+            const targetCatId = foundCat.id; // Capture ID for closure safety
+            if (!this.topicsCache[targetCatId]) {
+              this.categoryService.getTopics(targetCatId).subscribe((res) => {
+                this.topicsCache[targetCatId] = res.data;
+                this.currentTopics$.next(res.data);
+                this.topicsCacheUpdated$.next();
+
+                this.resolveTopicSlug(topicSlug, targetCatId);
+              });
+            } else {
+              // If already cached, just ensure currentTopics is updated (e.g. if switching back)
+              this.currentTopics$.next(this.topicsCache[targetCatId]);
+              this.resolveTopicSlug(topicSlug, targetCatId);
+            }
+          } else {
+            // Slug not found in categories? Maybe handle 404 or just reset
+            console.warn(`Category slug '${catSlug}' not found.`);
+          }
+        } else {
+          // No category slug -> Reset if needed, but 'resetFilters' handles the view logic usually
         }
       });
+  }
+
+  // Helper to resolve topic slug after topics are loaded
+  private resolveTopicSlug(topicSlug: string | undefined, catId: string) {
+    if (topicSlug && this.topicsCache[catId]) {
+      const foundTopic = this.topicsCache[catId].find(
+        (t) => t.slug === topicSlug
+      );
+      if (foundTopic) {
+        if (this.selectedTopicId$.value !== foundTopic.id) {
+          this.selectedTopicId$.next(foundTopic.id);
+        }
+      } else {
+        console.warn(
+          `Topic slug '${topicSlug}' not found in category ${catId}.`
+        );
+        this.selectedTopicId$.next(null);
+      }
+    } else {
+      this.selectedTopicId$.next(null);
+    }
   }
 
   ngOnDestroy() {
@@ -149,22 +311,20 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   // We trigger resource loading whenever filters OR page changes
   // We use combineLatest for filters, and merge page changes?
   // Actually, let's keep it simple: any filter change resets page to 1. Page change just triggers reload.
-  ageGroups$ = this.resourceService.getAgeGroups();
-  selectedAgeGroupIds$ = new BehaviorSubject<string[]>([]);
 
   // Combined Filters Stream
   private filters$ = combineLatest([
     this.selectedCategory$,
     this.selectedTopicId$,
-    this.selectedAgeGroupIds$,
+    this.selectedAgeGroups$,
     this.searchQuery$.pipe(startWith('')),
     this.sortOption$,
     this.currentPage$,
   ]).pipe(
-    map(([category, topicId, ageGroupIds, search, sort, page]) => ({
+    map(([category, topicId, ageGroups, search, sort, page]) => ({
       category,
       topicId,
-      ageGroupIds,
+      ageGroups,
       search,
       sort,
       page,
@@ -174,11 +334,11 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   resources$ = this.filters$.pipe(
     debounceTime(100), // Prevent rapid double-firing
     tap(() => this.isLoading$.next(true)),
-    switchMap(({ category, topicId, ageGroupIds, search, sort, page }) => {
+    switchMap(({ category, topicId, ageGroups, search, sort, page }) => {
       console.log('Filter changed:', {
         category,
         topicId,
-        ageGroupIds,
+        ageGroups,
         search,
         sort,
         page,
@@ -195,6 +355,12 @@ export class ResourceListComponent implements OnInit, OnDestroy {
           targetTopicIds = cachedTopics.map((t) => t.id);
         }
       }
+
+      // Note: We don't need to manually filter by slug here because the
+      // subscriptions to URL updates above will set the IDs (category, topicId)
+      // which then triggers this stream.
+
+      const ageGroupIds = ageGroups.map((g) => g.id);
 
       return this.resourceService
         .getResources(page, 9, {
@@ -253,30 +419,36 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleCategory(catId: string, forceOpen = false) {
-    const isSame = this.expandedCategory$.value === catId;
+  toggleCategory(category: Category, forceOpen = false) {
+    // Navigate using SLUG instead of just setting state locally
+    // If it's the same category and we are just toggling it closed (if logic allowed),
+    // we might want to navigate to root. But instructions say "Selecting a parent category -> remove Topic param".
+    // Also usually toggling header in accordion opens it.
+
+    // We update URL, and let the ngOnInit subscription handle state update.
+
+    const isSame = this.expandedCategory$.value === category.id;
 
     if (isSame && !forceOpen) {
-      this.expandedCategory$.next(''); // Just Close
+      // Ideally we might want to close it aka deselect everything?
+      // The original logic was: expandedCategory$.next(''); selectedCategory$.next('');
+      this.router.navigate(['/resources'], {
+        queryParams: {
+          category: null,
+          topic: null,
+        },
+        queryParamsHandling: 'merge',
+      });
     } else {
-      this.expandedCategory$.next(catId); // Just Open
-
-      // Fetch topics so they are visible in the accordion
-      if (!this.topicsCache[catId]) {
-        this.categoryService.getTopics(catId).subscribe((res) => {
-          this.topicsCache[catId] = res.data;
-          // Note: We don't necessarily need to push to currentTopics$ if we use the cache in the template
-          // But our template iterates `currentTopics$`.
-          // We should probably update the template to iterate `topicsCache[cat.id]` or similar,
-          // OR update `currentTopics` to match the *expanded* category.
-          this.currentTopics$.next(res.data);
-        });
-      } else {
-        this.currentTopics$.next(this.topicsCache[catId]);
-      }
+      // Select Category, Deselect Topic
+      this.router.navigate(['/resources'], {
+        queryParams: {
+          category: category.slug, // Use Slug
+          topic: null,
+        },
+        queryParamsHandling: 'merge',
+      });
     }
-
-    // Crucial: DO NOT reset filters or page here.
   }
 
   // Updated to handle "All" button specifically
@@ -294,36 +466,83 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     this.selectedCategory$.next('');
     this.selectedTopicId$.next(null);
     this.currentTopics$.next([]);
+    this.selectedAgeGroups$.next([]); // Clear Age Group Filters
     this.currentPage$.next(1);
+
+    // Clear search/query params and ensure we act as a full reset
+    this.router.navigate(['/resources']);
   }
 
   // Refactored Single Select Logic
-  selectTopic(topicId: string, categoryId: string) {
-    this.selectedTopicId$.next(topicId);
+  selectTopic(topic: Topic, categoryId: string) {
+    // Note: topic.slug might need to be added to Topic interface if not present (Done in Step 1)
 
-    // Auto-Expand Category (Parent Recognition)
-    if (this.expandedCategory$.value !== categoryId) {
-      this.toggleCategory(categoryId, true);
-    }
+    // We already have categoryId logic, but we should find the Category object to get its slug for the URL
+    // Or we rely on the fact that if we are selecting a topic, the category is likely already selected/expanded.
+    // But to be safe and "get the .slug field from the clicked object", we should ensure we have the category slug.
 
-    this.currentPage$.next(1);
+    // We can lookup category slug from our cache if needed, or pass category object.
+    // However, the `Topic` object interface usually has `categoryId`. We can find the category in `categories$` if needed.
+    // Since `selectTopic` is called from the template inside a loop where we have access to the category...
+    // But wait, the template loop is `let topic of currentTopics$`. We don't have the category object readily available in that scope inside the *ngFor of topics,
+    // unless we pass it down or look it up.
+
+    // Better lookup category from `categories$` snapshot or subscription?
+    // We can subscribe to `categories$` once or use a locally stored list if `shareReplay` is used.
+
+    this.categories$.pipe(takeUntil(this.destroy$)).subscribe((cats) => {
+      const cat = cats.data.find((c) => c.id === categoryId);
+      if (cat) {
+        this.router.navigate(['/resources'], {
+          queryParams: {
+            category: cat.slug,
+            topic: topic.slug,
+          },
+          queryParamsHandling: 'merge',
+        });
+      }
+    });
   }
 
   // Helper for Template
-  onTopicClick(topic: Topic) {
-    this.selectTopic(topic.id, topic.categoryId);
+  onTopicClick(topic: Topic, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectTopic(topic, topic.categoryId);
   }
 
   // Deprecated/Removed: toggleTopic for multi-select
 
-  toggleAgeGroup(ageId: string) {
-    const current = this.selectedAgeGroupIds$.value;
-    if (current.includes(ageId)) {
-      this.selectedAgeGroupIds$.next(current.filter((id) => id !== ageId));
+  toggleAgeGroup(age: AgeGroup) {
+    const current = this.selectedAgeGroups$.value;
+    const exists = current.find((g) => g.id === age.id);
+
+    let newSelection: AgeGroup[];
+
+    if (exists) {
+      newSelection = current.filter((g) => g.id !== age.id);
     } else {
-      this.selectedAgeGroupIds$.next([...current, ageId]);
+      newSelection = [...current, age];
     }
+
+    // Update URL
+    const slugs = newSelection.map((g) => g.slug).join(',');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ages: slugs.length > 0 ? slugs : null },
+      queryParamsHandling: 'merge',
+    });
+
     this.currentPage$.next(1);
+  }
+
+  removeAgeFilter(age: AgeGroup) {
+    this.toggleAgeGroup(age);
+  }
+
+  isChecked(ageId: string): boolean {
+    return this.selectedAgeGroups$.value.some((g) => g.id === ageId);
   }
 
   onSortChange(event: Event) {
@@ -354,13 +573,21 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     }
   }
 
+  isTopicSelected(topicId: any): boolean {
+    const selected = this.selectedTopicId$.value;
+    return String(selected) === String(topicId);
+  }
+
   isCategoryActive(catId: string): boolean {
     const selectedTopic = this.selectedTopicId$.value;
     // 1. If a topic is selected, check if it belongs to this category
     if (selectedTopic) {
       // Check cache (Active Parent Logic)
       const topics = this.topicsCache[catId];
-      if (topics && topics.some((t) => t.id === selectedTopic)) {
+      if (
+        topics &&
+        topics.some((t) => String(t.id) === String(selectedTopic))
+      ) {
         return true;
       }
     }

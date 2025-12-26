@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
-import { switchMap, map } from 'rxjs';
+import { switchMap, map, of, combineLatest } from 'rxjs';
 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,9 @@ import { TranslatePipe } from '../pipes/translate.pipe';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
 import {
   AuthService,
+  Category,
+  Topic,
+  CategoryService,
   Comment,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
@@ -34,6 +37,7 @@ registerLocaleData(localeVi);
 export class ResourceDetailComponent {
   private route = inject(ActivatedRoute);
   private resourceService = inject(ResourceService);
+  private categoryService = inject(CategoryService);
   private sanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
   public translationService = inject(TranslationService);
@@ -43,10 +47,40 @@ export class ResourceDetailComponent {
 
   resource$ = this.route.paramMap.pipe(
     switchMap((params) => {
-      const id = params.get('id');
-      return this.resourceService.getResource(id || '');
+      const slug = params.get('slug');
+      return this.resourceService.getResource(slug || '');
     })
   );
+
+  // Breadcrumb Logic: Resource -> Topic -> Category
+  breadcrumbInfo$ = this.resource$.pipe(
+    switchMap((resource) => {
+      if (!resource || !resource.topicId) {
+        return of({ category: null, topic: null });
+      }
+
+      const topicId = resource.topicId;
+
+      return combineLatest([
+        this.categoryService.getCategories(),
+        this.categoryService.getAllTopicsMock(),
+      ]).pipe(
+        map(([categories, topics]) => {
+          const topic = topics.find((t) => t.id === topicId);
+          const category = topic
+            ? categories.data.find((c) => c.id === topic.categoryId)
+            : null;
+          // Fallback if topic not found but resource has explicit category?
+          // Usually resource only has topicId based on model.
+          return { category: category || null, topic: topic || null };
+        })
+      );
+    })
+  );
+
+  // Re-implementing simplified version assuming we simply add a helper to `CategoryService`
+  // OR we just use a quicker check if we can't change service.
+  // I will add `getAllTopicsMock` to `general.service.ts` first.
 
   relatedResources$ = this.resourceService
     .getResources(1, 4)

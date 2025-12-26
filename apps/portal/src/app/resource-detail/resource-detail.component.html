@@ -1,267 +1,283 @@
 <div class="container mx-auto px-4 py-12 font-sans">
-  <div *ngIf="resource$ | async as resource; else loading">
-    <!-- Breadcrumbs -->
-    <nav class="flex mb-8" aria-label="Breadcrumb">
-      <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-          <a routerLink="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-pink">
-            <i class="ph ph-house mr-2 text-lg"></i>
-            Trang chủ
-          </a>
-        </li>
-        <li>
-          <div class="flex items-center">
-            <i class="ph ph-caret-right text-gray-400"></i>
-            <a routerLink="/resources"
-              class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-pink md:ml-2">Tài liệu</a>
-          </div>
-        </li>
-        <li aria-current="page">
-          <div class="flex items-center">
-            <i class="ph ph-caret-right text-gray-400"></i>
-            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 line-clamp-1 max-w-xs">{{ resource.title
-              }}</span>
-          </div>
-        </li>
-      </ol>
-    </nav>
-
-    <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-2">
-        <!-- Preview Section -->
-        <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">
-          <!-- Video Player -->
-          <ng-container *ngIf="resource.type === 'VIDEO'">
-            <div *ngIf="isYouTube(resource.url); else directVideo" class="w-full h-full min-h-[300px]">
-              <iframe [src]="getSafeVideoUrl(resource.url)" class="w-full h-full rounded-xl shadow-md aspect-video"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen></iframe>
+  <div *ngIf="{ resource: resource$ | async, breadcrumb: breadcrumbInfo$ | async } as data; else loading">
+    <ng-container *ngIf="data.resource as resource">
+      <!-- Breadcrumbs -->
+      <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+          <li class="inline-flex items-center">
+            <a routerLink="/"
+              class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-pink">
+              <i class="ph ph-house mr-2 text-lg"></i>
+              Trang chủ
+            </a>
+          </li>
+          <li>
+            <div class="flex items-center">
+              <i class="ph ph-caret-right text-gray-400"></i>
+              <a routerLink="/resources"
+                class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-pink md:ml-2">Tài liệu</a>
             </div>
-            <ng-template #directVideo>
-              <video [src]="getSafeVideoUrl(resource.url)" controls
-                class="w-full max-h-[500px] rounded-xl shadow-md"></video>
-            </ng-template>
-          </ng-container>
-
-          <!-- Document Viewer Card (Fixed "Black Screen" Issue) -->
-          <ng-container *ngIf="!['VIDEO'].includes(resource.type)">
-            <div
-              class="flex flex-col items-center justify-center w-full min-h-[400px] bg-gradient-to-br from-indigo-50/80 via-white to-pink-50/80 rounded-2xl border border-gray-100 p-8 text-center relative overflow-hidden">
-              <!-- Decorative Elements -->
-              <div
-                class="absolute top-0 right-0 w-64 h-64 bg-yellow-200/20 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4">
-              </div>
-              <div
-                class="absolute bottom-0 left-0 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl translate-y-1/4 -translate-x-1/4">
-              </div>
-
-              <!-- Icon/Thumbnail -->
-              <div class="relative z-10 mb-6 group transition-transform hover:-translate-y-2 duration-500">
-                <div
-                  class="absolute inset-0 bg-blue-200 rounded-xl rotate-3 opacity-20 group-hover:rotate-6 transition-transform">
-                </div>
-                <div
-                  class="absolute inset-0 bg-pink-200 rounded-xl -rotate-3 opacity-20 group-hover:-rotate-6 transition-transform">
-                </div>
-
-                <img *ngIf="resource.thumbnail" [src]="resource.thumbnail"
-                  class="w-48 h-48 object-cover rounded-xl shadow-xl relative bg-white" alt="Resource Preview" />
-
-                <div *ngIf="!resource.thumbnail"
-                  class="w-48 h-48 flex items-center justify-center rounded-xl bg-white shadow-xl relative text-sky-500">
-                  <i *ngIf="resource.type === 'PDF'" class="ph-fill ph-file-pdf text-7xl text-red-500"></i>
-                  <i *ngIf="resource.type === 'WORD'" class="ph-fill ph-file-doc text-7xl text-blue-500"></i>
-                  <i *ngIf="resource.type === 'EXCEL'" class="ph-fill ph-file-xls text-7xl text-green-500"></i>
-                  <i *ngIf="!['PDF','WORD','EXCEL'].includes(resource.type)"
-                    class="ph-fill ph-file-text text-7xl text-gray-400"></i>
-                </div>
-              </div>
-
-              <h3 class="text-xl font-bold text-gray-800 mb-2 relative z-10">Xem trước tài liệu</h3>
-              <p class="text-gray-500 mb-6 max-w-xs mx-auto text-sm leading-relaxed relative z-10">
-                Vui lòng tải xuống để xem nội dung đầy đủ của tài liệu này.
-              </p>
-
-              <button (click)="downloadResource(resource)"
-                class="relative z-10 flex items-center gap-2 px-6 py-3 bg-primary-pink text-white font-bold rounded-full shadow-lg shadow-pink-500/30 hover:shadow-xl hover:bg-pink-600 transition-all transform hover:-translate-y-0.5">
-                <i class="ph-bold ph-download-simple"></i>
-                Tải xuống ngay
-              </button>
+          </li>
+          <li *ngIf="data.breadcrumb?.category as category">
+            <div class="flex items-center">
+              <i class="ph ph-caret-right text-gray-400"></i>
+              <a [routerLink]="['/resources']" [queryParams]="{ category: category.slug }"
+                class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-pink md:ml-2">
+                {{ category.name }}
+              </a>
             </div>
-          </ng-container>
-        </div>
+          </li>
+          <li aria-current="page">
+            <div class="flex items-center">
+              <i class="ph ph-caret-right text-gray-400"></i>
+              <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 line-clamp-1 max-w-xs">{{ resource.title
+                }}</span>
+            </div>
+          </li>
+        </ol>
+      </nav>
 
-        <!-- Details Section -->
-        <div class="p-8 lg:p-12 flex flex-col justify-center">
-          <div class="flex items-center gap-3 mb-4">
-            <span class="px-3 py-1 rounded-full text-xs font-bold" [ngClass]="{
+      <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2">
+          <!-- Preview Section -->
+          <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">
+            <!-- Video Player -->
+            <ng-container *ngIf="resource.type === 'VIDEO'">
+              <div *ngIf="isYouTube(resource.url); else directVideo" class="w-full h-full min-h-[300px]">
+                <iframe [src]="getSafeVideoUrl(resource.url)" class="w-full h-full rounded-xl shadow-md aspect-video"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen></iframe>
+              </div>
+              <ng-template #directVideo>
+                <video [src]="getSafeVideoUrl(resource.url)" controls
+                  class="w-full max-h-[500px] rounded-xl shadow-md"></video>
+              </ng-template>
+            </ng-container>
+
+            <!-- Document Viewer Card (Fixed "Black Screen" Issue) -->
+            <ng-container *ngIf="!['VIDEO'].includes(resource.type)">
+              <div
+                class="flex flex-col items-center justify-center w-full min-h-[400px] bg-gradient-to-br from-indigo-50/80 via-white to-pink-50/80 rounded-2xl border border-gray-100 p-8 text-center relative overflow-hidden">
+                <!-- Decorative Elements -->
+                <div
+                  class="absolute top-0 right-0 w-64 h-64 bg-yellow-200/20 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4">
+                </div>
+                <div
+                  class="absolute bottom-0 left-0 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl translate-y-1/4 -translate-x-1/4">
+                </div>
+
+                <!-- Icon/Thumbnail -->
+                <div class="relative z-10 mb-6 group transition-transform hover:-translate-y-2 duration-500">
+                  <div
+                    class="absolute inset-0 bg-blue-200 rounded-xl rotate-3 opacity-20 group-hover:rotate-6 transition-transform">
+                  </div>
+                  <div
+                    class="absolute inset-0 bg-pink-200 rounded-xl -rotate-3 opacity-20 group-hover:-rotate-6 transition-transform">
+                  </div>
+
+                  <img *ngIf="resource.thumbnail" [src]="resource.thumbnail"
+                    (error)="img.src='assets/images/placeholder.png'" #img
+                    class="w-48 h-48 object-cover rounded-xl shadow-xl relative bg-white" alt="Resource Preview" />
+
+                  <div *ngIf="!resource.thumbnail"
+                    class="w-48 h-48 flex items-center justify-center rounded-xl bg-white shadow-xl relative text-sky-500">
+                    <i *ngIf="resource.type === 'PDF'" class="ph-fill ph-file-pdf text-7xl text-red-500"></i>
+                    <i *ngIf="resource.type === 'WORD'" class="ph-fill ph-file-doc text-7xl text-blue-500"></i>
+                    <i *ngIf="resource.type === 'EXCEL'" class="ph-fill ph-file-xls text-7xl text-green-500"></i>
+                    <i *ngIf="!['PDF','WORD','EXCEL'].includes(resource.type)"
+                      class="ph-fill ph-file-text text-7xl text-gray-400"></i>
+                  </div>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 mb-2 relative z-10">Xem trước tài liệu</h3>
+                <p class="text-gray-500 mb-6 max-w-xs mx-auto text-sm leading-relaxed relative z-10">
+                  Vui lòng tải xuống để xem nội dung đầy đủ của tài liệu này.
+                </p>
+
+                <button
+                  class="relative z-10 flex items-center gap-2 px-6 py-3 bg-white text-primary-pink border-2 border-primary-pink font-bold rounded-full shadow-lg hover:shadow-xl hover:bg-pink-50 transition-all transform hover:-translate-y-0.5">
+                  <i class="ph-bold ph-eye"></i>
+                  Xem trước
+                </button>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Details Section -->
+          <div class="p-8 lg:p-12 flex flex-col justify-center">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="px-3 py-1 rounded-full text-xs font-bold" [ngClass]="{
               'bg-lime-100 text-lime-600': resource.type === 'VIDEO',
               'bg-orange-100 text-orange-600': ['PDF','WORD','EXCEL'].includes(resource.type),
               'bg-purple-100 text-purple-600': resource.type === 'AUDIO',
               'bg-rose-100 text-rose-500': resource.type === 'IMAGE',
               'bg-blue-50 text-secondary-600': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE'].includes(resource.type)
             }">
-              <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-video mr-1"></i>
-              <i *ngIf="['PDF','WORD','EXCEL'].includes(resource.type)" class="ph-fill ph-file-text mr-1"></i>
-              <i *ngIf="resource.type === 'AUDIO'" class="ph-fill ph-music-note mr-1"></i>
-              <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image mr-1"></i>
-              <i *ngIf="!['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE'].includes(resource.type)"
-                class="ph-fill ph-file mr-1"></i>
-              {{ resource.type }}
-            </span>
-            <span class="text-gray-400 text-sm flex items-center">
-              <i class="ph-fill ph-eye mr-1 text-lg"></i>
-              {{ resource.viewsCount }} {{ 'list.views' | translate }}
-            </span>
-            <!-- Download Count Highlight -->
-            <div
-              class="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full text-secondary-600 shadow-sm ml-2">
-              <i class="ph-fill ph-download-simple text-sm"></i>
-              <span class="font-bold text-sm">{{ resource.downloadCount || 0 }}</span>
-              <span class="text-xs font-medium text-secondary-500">Lượt tải</span>
-            </div>
-            <!-- Rating Stars -->
-            <div class="flex items-center text-yellow-400" *ngIf="resource.rating">
-              <span class="font-bold text-gray-700 mr-2 ml-2 text-sm mt-[2px] leading-none">{{ resource.rating }}</span>
-              <div class="flex gap-0.5">
-                <!-- Manual Loop for Stars in Detail Page -->
-                <ng-container *ngFor="let star of [1,2,3,4,5]">
-                  <i *ngIf="resource.rating >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
-                  <i *ngIf="resource.rating < star && resource.rating > (star - 1)"
-                    class="ph-fill ph-star-half text-yellow-400 text-base"></i>
-                  <i *ngIf="resource.rating <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
-                </ng-container>
+                <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-video mr-1"></i>
+                <i *ngIf="['PDF','WORD','EXCEL'].includes(resource.type)" class="ph-fill ph-file-text mr-1"></i>
+                <i *ngIf="resource.type === 'AUDIO'" class="ph-fill ph-music-note mr-1"></i>
+                <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image mr-1"></i>
+                <i *ngIf="!['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE'].includes(resource.type)"
+                  class="ph-fill ph-file mr-1"></i>
+                {{ resource.type }}
+              </span>
+              <span class="text-gray-400 text-sm flex items-center">
+                <i class="ph-fill ph-eye mr-1 text-lg"></i>
+                {{ resource.viewsCount }} {{ 'list.views' | translate }}
+              </span>
+              <!-- Download Count Highlight -->
+              <div
+                class="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full text-secondary-600 shadow-sm ml-2">
+                <i class="ph-fill ph-download-simple text-sm"></i>
+                <span class="font-bold text-sm">{{ resource.downloadCount || 0 }}</span>
+                <span class="text-xs font-medium text-secondary-500">Lượt tải</span>
+              </div>
+              <!-- Rating Stars -->
+              <div class="flex items-center text-yellow-400" *ngIf="resource.rating">
+                <span class="font-bold text-gray-700 mr-2 ml-2 text-sm mt-[2px] leading-none">{{ resource.rating
+                  }}</span>
+                <div class="flex gap-0.5">
+                  <!-- Manual Loop for Stars in Detail Page -->
+                  <ng-container *ngFor="let star of [1,2,3,4,5]">
+                    <i *ngIf="resource.rating >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
+                    <i *ngIf="resource.rating < star && resource.rating > (star - 1)"
+                      class="ph-fill ph-star-half text-yellow-400 text-base"></i>
+                    <i *ngIf="resource.rating <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
+                  </ng-container>
+                </div>
               </div>
             </div>
+
+            <h1 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-6">
+              {{ resource.title }}
+            </h1>
+
+            <p class="text-gray-600 text-lg leading-relaxed mb-8">
+              {{ resource.description || ('detail.noDescription' | translate) }}
+            </p>
+
+            <button (click)="downloadResource(resource)"
+              class="w-full md:w-auto md:self-start px-8 py-3 rounded-full bg-primary-pink text-white font-bold text-lg shadow-lg hover:shadow-xl hover:bg-pink-600 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 mb-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Tải xuống
+              <span class="opacity-90 font-medium ml-1 text-base" *ngIf="resource.fileSize">({{ resource.fileSize
+                }})</span>
+            </button>
+
           </div>
-
-          <h1
-            class="text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-pink to-primary-blue mb-6">
-            {{ resource.title }}
-          </h1>
-
-          <p class="text-gray-600 text-lg leading-relaxed mb-8">
-            {{ resource.description || ('detail.noDescription' | translate) }}
-          </p>
-
-          <button (click)="downloadResource(resource)"
-            class="w-full sm:w-auto px-8 py-4 rounded-full bg-sky-600 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:bg-sky-700 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 mb-12">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Tải xuống miễn phí
-            <span class="opacity-90 font-medium ml-1 text-base" *ngIf="resource.fileSize">({{ resource.fileSize
-              }})</span>
-          </button>
-
         </div>
-      </div>
 
-      <!-- Comments Section -->
-      <div class="p-8 border-t border-gray-100 bg-gray-50/50">
-        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-blue" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-          </svg>
-          Bình luận
-        </h3>
+        <!-- Comments Section -->
+        <div class="p-8 border-t border-gray-100 bg-gray-50/50">
+          <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-blue" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            Bình luận
+          </h3>
 
-        <!-- Add Comment Form -->
-        <div *ngIf="authService.currentUser$ | async as user; else loginPrompt"
-          class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h4 class="font-bold text-gray-800 mb-4">{{ 'detail.leaveComment' | translate }}</h4>
+          <!-- Add Comment Form -->
+          <div *ngIf="authService.currentUser$ | async as user; else loginPrompt"
+            class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h4 class="font-bold text-gray-800 mb-4">{{ 'detail.leaveComment' | translate }}</h4>
 
-          <div class="flex gap-4">
-            <img [src]="user.avatarUrl || 'assets/images/default-avatar.png'" [alt]="user.fullName"
-              class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100">
+            <div class="flex gap-4">
+              <img [src]="user.avatarUrl || 'assets/images/default-avatar.png'" [alt]="user.fullName"
+                class="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100">
 
-            <div class="flex-1">
-              <div class="mb-4">
-                <p class="block text-sm font-medium text-gray-700 mb-1">{{ 'detail.rating' | translate }}</p>
-                <div class="flex gap-1">
-                  <button *ngFor="let star of [1,2,3,4,5]" (click)="newCommentRating = star"
-                    class="focus:outline-none transition-transform hover:scale-110">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6"
-                      [class.text-yellow-400]="star <= newCommentRating" [class.fill-current]="star <= newCommentRating"
-                      [class.text-gray-300]="star > newCommentRating" viewBox="0 0 24 24" stroke="currentColor"
-                      stroke-width="2">
-                      <polygon
-                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
+              <div class="flex-1">
+                <div class="mb-4">
+                  <p class="block text-sm font-medium text-gray-700 mb-1">{{ 'detail.rating' | translate }}</p>
+                  <div class="flex gap-1">
+                    <button *ngFor="let star of [1,2,3,4,5]" (click)="newCommentRating = star"
+                      class="focus:outline-none transition-transform hover:scale-110">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6"
+                        [class.text-yellow-400]="star <= newCommentRating"
+                        [class.fill-current]="star <= newCommentRating" [class.text-gray-300]="star > newCommentRating"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <polygon
+                          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label for="comment-content" class="block text-sm font-medium text-gray-700 mb-1">{{
+                    'detail.yourComment' | translate
+                    }}</label>
+                  <textarea id="comment-content" [(ngModel)]="newCommentContent" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-blue/20 focus:border-primary-blue outline-none transition-all resize-none"
+                    placeholder="Share your thoughts..."></textarea>
+                </div>
+
+                <div class="flex justify-end">
+                  <button (click)="submitComment(resource)" [disabled]="!newCommentContent.trim()"
+                    class="px-6 py-2.5 bg-primary-blue text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    {{ 'detail.post' | translate }}
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+          <ng-template #loginPrompt>
+            <div class="text-center py-4">
+              <p class="text-gray-500 mb-3">{{ 'detail.loginToComment' | translate }}</p>
+              <a routerLink="/login"
+                class="inline-block px-6 py-2 rounded-full border border-primary-blue text-primary-blue font-bold hover:bg-blue-50 transition-all">
+                {{ 'detail.loginBtn' | translate }}
+              </a>
+            </div>
+          </ng-template>
+        </div>
 
-              <div class="mb-4">
-                <label for="comment-content" class="block text-sm font-medium text-gray-700 mb-1">{{
-                  'detail.yourComment' | translate
-                  }}</label>
-                <textarea id="comment-content" [(ngModel)]="newCommentContent" rows="3"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-blue/20 focus:border-primary-blue outline-none transition-all resize-none"
-                  placeholder="Share your thoughts..."></textarea>
+        <div class="space-y-6" *ngIf="resource.comments && resource.comments.length > 0">
+          <div *ngFor="let comment of resource.comments" class="flex gap-4">
+            <div
+              class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-500">
+              {{ comment.user.charAt(0) }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold text-gray-800">{{ comment.user }}</span>
+                <span class="text-xs text-gray-400">{{ comment.date |
+                  date:'mediumDate':undefined:((translationService.currentLang$ | async) || 'en') }}</span>
               </div>
-
-              <div class="flex justify-end">
-                <button (click)="submitComment(resource)" [disabled]="!newCommentContent.trim()"
-                  class="px-6 py-2.5 bg-primary-blue text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  {{ 'detail.post' | translate }}
-                </button>
+              <div class="flex text-yellow-400 mb-1">
+                <svg *ngFor="let star of [1,2,3,4,5]" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3"
+                  [class.text-gray-300]="star > comment.rating" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
               </div>
+              <p class="text-gray-600 text-sm">{{ comment.content }}</p>
             </div>
           </div>
         </div>
-        <ng-template #loginPrompt>
-          <div class="text-center py-4">
-            <p class="text-gray-500 mb-3">{{ 'detail.loginToComment' | translate }}</p>
-            <a routerLink="/login"
-              class="inline-block px-6 py-2 rounded-full border border-primary-blue text-primary-blue font-bold hover:bg-blue-50 transition-all">
-              {{ 'detail.loginBtn' | translate }}
-            </a>
-          </div>
-        </ng-template>
       </div>
-
-      <div class="space-y-6" *ngIf="resource.comments && resource.comments.length > 0">
-        <div *ngFor="let comment of resource.comments" class="flex gap-4">
-          <div
-            class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-500">
-            {{ comment.user.charAt(0) }}
-          </div>
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-bold text-gray-800">{{ comment.user }}</span>
-              <span class="text-xs text-gray-400">{{ comment.date |
-                date:'mediumDate':undefined:((translationService.currentLang$ | async) || 'en') }}</span>
-            </div>
-            <div class="flex text-yellow-400 mb-1">
-              <svg *ngFor="let star of [1,2,3,4,5]" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3"
-                [class.text-gray-300]="star > comment.rating" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            </div>
-            <p class="text-gray-600 text-sm">{{ comment.content }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </ng-container>
   </div>
 </div>
 
 
 <!-- Related Resources -->
-<div class="mt-16">
-  <h2 class="text-2xl font-bold text-gray-800 mb-8">Tài liệu liên quan</h2>
+<div class="bg-gray-50/50 pt-16 pb-24 mt-8 border-t border-gray-100">
+  <div class="container mx-auto px-4">
+    <h2 class="text-2xl font-bold text-gray-800 mb-8">Tài liệu liên quan</h2>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-    <div *ngFor="let related of relatedResources$ | async">
-      <app-resource-card [resource]="related" (view)="downloadResource(related)" (download)="downloadResource(related)">
-      </app-resource-card>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div *ngFor="let related of relatedResources$ | async">
+        <app-resource-card [resource]="related" (view)="downloadResource(related)"
+          (download)="downloadResource(related)">
+        </app-resource-card>
+      </div>
     </div>
   </div>
 </div>

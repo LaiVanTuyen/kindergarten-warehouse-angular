@@ -11,11 +11,19 @@ export class ResourceService {
   authService = inject(AuthService);
 
   private mockAgeGroups: AgeGroup[] = [
-    { id: 'age-0-12', name: 'Nhà trẻ (0-12 tháng)' },
-    { id: 'age-1-3', name: 'Nhà trẻ (1-3 tuổi)' },
-    { id: 'age-3-4', name: 'Mẫu giáo (3-4 tuổi)' },
-    { id: 'age-4-5', name: 'Mẫu giáo (4-5 tuổi)' },
-    { id: 'age-5-6', name: 'Tiền tiểu học (5-6 tuổi)' },
+    {
+      id: 'age-0-12',
+      name: 'Nhà trẻ (0-12 tháng)',
+      slug: 'nha-tre-0-12-thang',
+    },
+    { id: 'age-1-3', name: 'Nhà trẻ (1-3 tuổi)', slug: 'nha-tre-1-3-tuoi' },
+    { id: 'age-3-4', name: 'Mẫu giáo (3-4 tuổi)', slug: 'mau-giao-3-4-tuoi' },
+    { id: 'age-4-5', name: 'Mẫu giáo (4-5 tuổi)', slug: 'mau-giao-4-5-tuoi' },
+    {
+      id: 'age-5-6',
+      name: 'Tiền tiểu học (5-6 tuổi)',
+      slug: 'tien-tieu-hoc-5-6-tuoi',
+    },
   ];
 
   /* Assigned random ageGroupIds to existing mocks for demo purposes */
@@ -24,6 +32,7 @@ export class ResourceService {
     {
       id: '1',
       title: 'Cơ bản về vẽ',
+      slug: 'co-ban-ve-ve',
       uploader: 'Admin',
       date: '2023-11-01',
       thumbnail: '🎨',
@@ -42,6 +51,7 @@ export class ResourceService {
     {
       id: '2',
       title: 'Phác thảo nâng cao',
+      slug: 'phac-thao-nang-cao',
       uploader: 'Họa sĩ Joe',
       date: '2023-11-02',
       thumbnail: '✏️',
@@ -60,6 +70,7 @@ export class ResourceService {
     {
       id: '3',
       title: 'Sách tô màu',
+      slug: 'sach-to-mau',
       uploader: 'Admin',
       date: '2023-11-03',
       thumbnail: '🖍️',
@@ -78,6 +89,7 @@ export class ResourceService {
     {
       id: '4',
       title: 'Gấp hạc giấy',
+      slug: 'gap-hac-giay',
       uploader: 'Origami Master',
       date: '2023-11-04',
       thumbnail: '🦢',
@@ -95,6 +107,7 @@ export class ResourceService {
     {
       id: '5',
       title: 'Gấp thuyền giấy',
+      slug: 'gap-thuyen-giay',
       uploader: 'Admin',
       date: '2023-11-05',
       thumbnail: '⛵',
@@ -112,6 +125,7 @@ export class ResourceService {
     {
       id: '6',
       title: 'Động vật Origami',
+      slug: 'dong-vat-origami',
       uploader: 'Admin',
       date: '2023-11-06',
       thumbnail: '🐸',
@@ -131,6 +145,7 @@ export class ResourceService {
     {
       id: '7',
       title: 'Cô bé Lọ Lem',
+      slug: 'co-be-lo-lem',
       uploader: 'Người kể chuyện',
       date: '2023-11-07',
       thumbnail: '👠',
@@ -147,6 +162,7 @@ export class ResourceService {
     {
       id: '8',
       title: 'Bạch Tuyết',
+      slug: 'bach-tuyet',
       uploader: 'Admin',
       date: '2023-11-08',
       thumbnail: '🍎',
@@ -163,6 +179,7 @@ export class ResourceService {
     {
       id: '9',
       title: 'Hansel & Gretel',
+      slug: 'hansel-and-gretel',
       uploader: 'Admin',
       date: '2023-11-09',
       thumbnail: '🏠',
@@ -179,6 +196,7 @@ export class ResourceService {
     {
       id: '10',
       title: 'Khám phá rừng xanh',
+      slug: 'kham-pha-rung-xanh',
       uploader: 'Đội thám hiểm',
       date: '2023-11-10',
       thumbnail: '🦁',
@@ -195,6 +213,7 @@ export class ResourceService {
     {
       id: '11',
       title: 'Bản đồ kho báu',
+      slug: 'ban-do-kho-bau',
       uploader: 'Admin',
       date: '2023-11-11',
       thumbnail: '🗺️',
@@ -211,6 +230,7 @@ export class ResourceService {
     {
       id: '12',
       title: 'Chuyện cướp biển',
+      slug: 'chuyen-cuop-bien',
       uploader: 'Thuyền trưởng Hook',
       date: '2023-11-12',
       thumbnail: '🏴‍☠️',
@@ -229,6 +249,7 @@ export class ResourceService {
     {
       id: '13',
       title: 'Đếm đến 10',
+      slug: 'dem-den-10',
       uploader: 'Math Whiz',
       date: '2023-11-13',
       thumbnail: '🔟',
@@ -245,6 +266,7 @@ export class ResourceService {
     {
       id: '14',
       title: 'Thẻ số Flashcards',
+      slug: 'the-so-flashcards',
       uploader: 'Admin',
       date: '2023-11-14',
       thumbnail: '🃏',
@@ -261,6 +283,7 @@ export class ResourceService {
     {
       id: '15',
       title: 'Bảng số 1-100',
+      slug: 'bang-so-1-100',
       uploader: 'Admin',
       date: '2023-11-15',
       thumbnail: '📊',
@@ -277,6 +300,7 @@ export class ResourceService {
     {
       id: '16',
       title: 'Bài hát hình khối',
+      slug: 'bai-hat-hinh-khoi',
       uploader: 'Giáo viên nhạc',
       date: '2023-11-16',
       thumbnail: '🔺',
@@ -293,6 +317,7 @@ export class ResourceService {
     {
       id: '17',
       title: 'Hình khối 3D',
+      slug: 'hinh-khoi-3d',
       uploader: 'Admin',
       date: '2023-11-17',
       thumbnail: '🧊',
@@ -309,6 +334,7 @@ export class ResourceService {
     {
       id: '18',
       title: 'Bài tập hình học',
+      slug: 'bai-tap-hinh-hoc',
       uploader: 'Admin',
       date: '2023-11-18',
       thumbnail: '📝',
@@ -327,6 +353,7 @@ export class ResourceService {
     {
       id: '19',
       title: 'Bài hát buổi sáng',
+      slug: 'bai-hat-buoi-sang',
       uploader: 'Admin',
       date: '2023-11-19',
       thumbnail: '☀️',
@@ -343,6 +370,7 @@ export class ResourceService {
     {
       id: '20',
       title: 'Bài hát ABC',
+      slug: 'bai-hat-abc',
       uploader: 'Admin',
       date: '2023-11-20',
       thumbnail: '🔤',
@@ -359,6 +387,7 @@ export class ResourceService {
     {
       id: '21',
       title: 'Bài hát mẫu giáo',
+      slug: 'bai-hat-mau-giao',
       uploader: 'Admin',
       date: '2023-11-21',
       thumbnail: '👶',
@@ -375,6 +404,7 @@ export class ResourceService {
     {
       id: '22',
       title: 'Cơ bản múa Ballet',
+      slug: 'co-ban-mua-ballet',
       uploader: 'Giáo viên múa',
       date: '2023-11-22',
       thumbnail: '🩰',
@@ -391,6 +421,7 @@ export class ResourceService {
     {
       id: '23',
       title: 'Hip Hop cho bé',
+      slug: 'hip-hop-cho-be',
       uploader: 'Cool Dancer',
       date: '2023-11-23',
       thumbnail: '🧢',
@@ -407,6 +438,7 @@ export class ResourceService {
     {
       id: '24',
       title: 'Bài nhảy',
+      slug: 'bai-nhay',
       uploader: 'Admin',
       date: '2023-11-24',
       thumbnail: '💃',
@@ -495,8 +527,14 @@ export class ResourceService {
     });
   }
 
-  getResource(id: string): Observable<Resource | undefined> {
-    const resource = this.mockResources.find((r) => r.id === id);
+  getResource(slugOrId: string): Observable<Resource | undefined> {
+    // Try finding by slug first (since slugs are unique-ish user facing IDs)
+    let resource = this.mockResources.find((r) => r.slug === slugOrId);
+
+    // Fallback to finding by ID if not found (for backwards compatibility)
+    if (!resource) {
+      resource = this.mockResources.find((r) => r.id === slugOrId);
+    }
     return of(resource);
   }
 

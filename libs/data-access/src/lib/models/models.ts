@@ -15,6 +15,7 @@ export interface Resource {
   comments?: Comment[];
   fileSize?: string;
   downloadCount?: number;
+  slug?: string;
 }
 
 export interface User {
@@ -50,6 +51,7 @@ export interface Topic {
   id: string;
   title: string;
   categoryId: string;
+  slug: string;
 }
 
 export interface Stats {
@@ -76,5 +78,6 @@ export interface Banner {
 export interface AgeGroup {
   id: string;
   name: string;
+  slug: string;
   range?: string; // Optional description like "3-4 years"
 }

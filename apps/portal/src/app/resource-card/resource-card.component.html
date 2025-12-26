@@ -1,4 +1,4 @@
-<div [routerLink]="['/resources', resource.id]"
+<div [routerLink]="['/resources', resource.slug || resource.id]"
     class="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full animate-fade-in-up cursor-pointer relative z-0">
     <!-- Thumbnail -->
     <div class="aspect-w-16 aspect-h-10 bg-gray-100 relative overflow-hidden h-48">
