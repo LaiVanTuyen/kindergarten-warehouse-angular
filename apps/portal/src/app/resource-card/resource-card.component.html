@@ -1,17 +1,17 @@
 <div [routerLink]="['/resources', resource.slug || resource.id]"
     class="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full animate-fade-in-up cursor-pointer relative z-0">
     <!-- Thumbnail -->
-    <div class="aspect-w-16 aspect-h-10 bg-gray-100 relative overflow-hidden h-48">
+    <div class="aspect-w-16 aspect-h-10 bg-gray-50 relative overflow-hidden h-48">
         <!-- Enforcing h-48 container height -->
 
-        <!-- Image with Lazy Loading & Error Handling -->
-        <!-- Logic: Display ONLY if thumbnail exists AND no error -->
+        <!-- Real Image / Thumbnail -->
         <ng-container *ngIf="resource.thumbnail && !hasImageError">
             <img [src]="resource.thumbnail" (error)="onImageError()" loading="lazy"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                class="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                [ngClass]="{'object-cover': ['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type), 'object-contain p-6': !['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type)}"
                 alt="{{ resource.title }} thumbnail" />
 
-            <!-- Video Overlay (Play Button on top of Image) -->
+            <!-- Video Overlay -->
             <div *ngIf="resource.type === 'VIDEO'"
                 class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                 <div
@@ -21,31 +21,35 @@
             </div>
         </ng-container>
 
-        <!-- Fallback / Placeholder if no thumbnail or error -->
-        <!-- Logic: Display ONLY if no thumbnail OR error occurred -->
-        <!-- Fallback / Placeholder if no thumbnail or error -->
+        <!-- Fallback / Placeholder -->
         <div *ngIf="!resource.thumbnail || hasImageError"
-            class="w-full h-full flex items-center justify-center relative overflow-hidden" [ngClass]="{
-                'bg-gradient-to-br from-lime-400 to-green-500': resource.type === 'VIDEO',
-                'bg-gradient-to-br from-orange-400 to-amber-500': ['PDF','WORD','EXCEL'].includes(resource.type),
-                'bg-gradient-to-br from-purple-400 to-fuchsia-500': resource.type === 'AUDIO',
-                'bg-gradient-to-br from-rose-400 to-pink-500': resource.type === 'IMAGE',
-                'bg-gradient-to-br from-blue-400 to-indigo-500': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE'].includes(resource.type)
+            class="w-full h-full flex items-center justify-center relative overflow-hidden transition-transform duration-500 group-hover:scale-105"
+            [ngClass]="{
+                'bg-emerald-50': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
+                'bg-blue-50': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
+                'bg-orange-50': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type),
+                'bg-rose-50': resource.type === 'PDF',
+                'bg-purple-50': resource.type === 'IMAGE' || resource.type === 'VIDEO',
+                'bg-indigo-50': resource.type === 'AUDIO',
+                'bg-gray-100': !['EXCEL','WORD','PPT','PDF','IMAGE','VIDEO','AUDIO'].includes(resource.type)
             }">
 
-            <!-- Decorative Circles -->
-            <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/20 rounded-full blur-xl"></div>
-            <div class="absolute -bottom-4 -left-4 w-20 h-20 bg-black/5 rounded-full blur-lg"></div>
-
             <!-- Icon -->
-            <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-play-circle text-6xl text-white drop-shadow-md"></i>
-            <i *ngIf="['PDF','WORD','EXCEL'].includes(resource.type)"
-                class="ph-fill ph-file-text text-6xl text-white drop-shadow-md"></i>
-            <!-- Changed Audio Icon to Play Button Concept if needed, keeping music note but clear -->
-            <i *ngIf="resource.type === 'AUDIO'" class="ph-fill ph-play-circle text-6xl text-white drop-shadow-md"></i>
-            <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image text-6xl text-white drop-shadow-md"></i>
-            <i *ngIf="!['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE'].includes(resource.type)"
-                class="ph-fill ph-file text-6xl text-white drop-shadow-md"></i>
+            <i *ngIf="resource.type === 'VIDEO'"
+                class="ph-fill ph-play-circle text-6xl text-purple-500 drop-shadow-sm"></i>
+            <i *ngIf="['PDF'].includes(resource.type)"
+                class="ph-fill ph-file-pdf text-6xl text-rose-500 drop-shadow-sm"></i>
+            <i *ngIf="['WORD', 'DOC', 'DOCX'].includes(resource.type)"
+                class="ph-fill ph-file-doc text-6xl text-blue-500 drop-shadow-sm"></i>
+            <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type)"
+                class="ph-fill ph-file-xls text-6xl text-emerald-500 drop-shadow-sm"></i>
+            <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type)"
+                class="ph-fill ph-presentation text-6xl text-orange-500 drop-shadow-sm"></i>
+            <i *ngIf="resource.type === 'AUDIO'"
+                class="ph-fill ph-music-notes text-6xl text-indigo-500 drop-shadow-sm"></i>
+            <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image text-6xl text-purple-500 drop-shadow-sm"></i>
+            <i *ngIf="!['VIDEO','PDF','WORD','DOC','DOCX','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT','AUDIO','IMAGE'].includes(resource.type)"
+                class="ph-fill ph-file text-6xl text-gray-400 drop-shadow-sm"></i>
         </div>
 
         <!-- Favorites Button (Micro-interaction) -->
@@ -61,7 +65,7 @@
     <!-- Content -->
     <div class="p-4 flex-1 flex flex-col">
         <h3
-            class="font-extrabold text-gray-900 text-[1.1rem] mb-1 line-clamp-1 group-hover:text-secondary-600 transition-colors">
+            class="font-extrabold text-gray-900 text-[1.1rem] mb-1 line-clamp-1 group-hover:text-primary-pink transition-colors">
             {{ resource.title }}
         </h3>
         <p class="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">

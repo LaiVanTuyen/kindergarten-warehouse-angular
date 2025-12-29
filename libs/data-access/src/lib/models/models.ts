@@ -6,7 +6,16 @@ export interface Resource {
   date: string;
   url?: string;
   status: 'pending' | 'approved' | 'rejected';
-  type: 'VIDEO' | 'DOCUMENT' | 'PDF' | 'EXCEL' | 'WORD' | 'AUDIO' | 'IMAGE';
+  type:
+    | 'VIDEO'
+    | 'DOCUMENT'
+    | 'PDF'
+    | 'EXCEL'
+    | 'WORD'
+    | 'AUDIO'
+    | 'IMAGE'
+    | 'PPT'
+    | 'POWERPOINT';
   viewsCount: number;
   description?: string;
   rating?: number;
@@ -16,6 +25,8 @@ export interface Resource {
   fileSize?: string;
   downloadCount?: number;
   slug?: string;
+  uploaderAvatar?: string;
+  highlights?: string[];
 }
 
 export interface User {

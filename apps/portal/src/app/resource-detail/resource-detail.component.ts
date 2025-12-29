@@ -16,6 +16,8 @@ import {
   Comment,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
+import { Title } from '@angular/platform-browser';
+import { FileHelper } from '../shared/utils/file-helper';
 import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
 
@@ -115,6 +117,12 @@ export class ResourceDetailComponent {
     )}&embedded=true`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
   }
+
+  getFileIcon(type: string | undefined): string {
+    return FileHelper.getFileIcon(type);
+  }
+
+  isDownloading = false;
 
   downloadResource(resource: Resource) {
     if (resource.url) {
