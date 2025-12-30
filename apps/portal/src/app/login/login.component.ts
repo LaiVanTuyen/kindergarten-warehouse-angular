@@ -5,7 +5,7 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { ToastService } from '@kindergarten-warehouse/data-access';
 
-import { AuthService } from '@kindergarten-warehouse/data-access';
+import { AuthService, LoginRequest } from '@kindergarten-warehouse/data-access';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -21,15 +21,19 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
 
-  username = '';
+  email = '';
   password = '';
   isLoading = false;
 
   onSubmit() {
-    if (this.username) {
+    if (this.email) {
       this.isLoading = true;
+      const loginPayload: LoginRequest = {
+        email: this.email,
+        password: this.password,
+      };
       this.authService
-        .login(this.username)
+        .login(loginPayload)
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
           next: () => {

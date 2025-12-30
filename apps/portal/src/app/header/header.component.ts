@@ -1,4 +1,11 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -55,8 +62,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
         } else {
           this.userInitials = names[0].substring(0, 2).toUpperCase();
         }
+        this.userName = user.fullName;
       } else {
         this.userInitials = 'ME';
+        this.userName = '';
       }
     });
     // Initial check (optional, as BehaviorSubject emits initial value)
@@ -98,7 +107,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Auth State
   isLoggedIn = false;
   userInitials = '';
+  userName = '';
+  isUserMenuOpen = false;
   private authService = inject(AuthService);
+  private eRef = inject(ElementRef);
+
+  @HostListener('document:click', ['$event'])
+  clickout(event: Event) {
+    if (!this.eRef.nativeElement.contains(event.target)) {
+      this.closeUserMenu();
+      this.closeMobileMenu(); // Also close mobile menu if clicking outside
+    }
+  }
+
+  toggleUserMenu() {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+  }
+
+  closeUserMenu() {
+    this.isUserMenuOpen = false;
+  }
 
   checkFavorites() {
     // TODO: Implement actual check against LocalStorage
@@ -107,7 +135,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    this.authService.logout();
+    this.authService.logout('Hẹn gặp lại bạn! 👋');
     this.router.navigate(['/login']);
   }
 }

@@ -102,7 +102,10 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   isLoading$ = new BehaviorSubject<boolean>(true);
 
   // Age Groups State
-  ageGroups$ = this.resourceService.getAgeGroups().pipe(shareReplay(1));
+  ageGroups$ = this.resourceService.getAgeGroups().pipe(
+    map((res) => res.data),
+    shareReplay(1)
+  );
   selectedAgeGroups$ = new BehaviorSubject<AgeGroup[]>([]);
 
   // Pagination State
@@ -363,21 +366,20 @@ export class ResourceListComponent implements OnInit, OnDestroy {
       const ageGroupIds = ageGroups.map((g) => g.id);
 
       return this.resourceService
-        .getResources(page, 9, {
-          topicIds: targetTopicIds,
-          // Note: Service uses 'topicIds' for filtering.
-          // If we have a single topicId, we pass it as [topicId].
-          // If we have a category, we pass all topics in that category.
-
-          ageGroupIds: ageGroupIds.length > 0 ? ageGroupIds : undefined,
-          search,
-          status: 'approved',
+        .getResources({
+          topicId: targetTopicIds ? targetTopicIds[0] : undefined, // Assuming single topic filter for now or update service to support array
+          ageGroupId:
+            ageGroupIds.length > 0 ? ageGroupIds.join(',') : undefined,
+          keyword: search,
+          status: 'APPROVED',
+          page,
+          size: 9,
         })
         .pipe(
           map((res) => {
             console.log('API Response:', res);
-            this.totalItems$.next(res.total);
-            return res.data;
+            this.totalItems$.next(res.data.totalElements);
+            return res.data.content;
           }),
           catchError(() => {
             return of([]);
@@ -556,8 +558,8 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   }
 
   downloadResource(resource: Resource) {
-    if (resource.url) {
-      window.open(resource.url, '_blank');
+    if (resource.fileUrl) {
+      window.open(resource.fileUrl, '_blank');
     }
   }
 

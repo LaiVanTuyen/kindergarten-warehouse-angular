@@ -177,12 +177,12 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // Get latest 4 resources
   latestResources$ = this.resourceService
-    .getResources(1, 4)
-    .pipe(map((res) => res.data));
+    .getResources({ page: 0, size: 4, status: 'APPROVED' })
+    .pipe(map((res) => res.data.content));
 
   downloadResource(resource: Resource) {
-    if (resource.url) {
-      window.open(resource.url, '_blank');
+    if (resource.fileUrl) {
+      window.open(resource.fileUrl, '_blank');
     }
   }
 }

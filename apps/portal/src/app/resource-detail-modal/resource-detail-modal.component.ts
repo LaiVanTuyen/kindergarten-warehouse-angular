@@ -22,8 +22,8 @@ export class ResourceDetailModalComponent {
   }
 
   download() {
-    if (this.resource?.url) {
-      window.open(this.resource.url, '_blank');
+    if (this.resource?.fileUrl) {
+      window.open(this.resource.fileUrl, '_blank');
     }
   }
 

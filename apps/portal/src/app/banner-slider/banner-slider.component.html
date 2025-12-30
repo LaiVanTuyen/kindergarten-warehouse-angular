@@ -3,7 +3,8 @@
     <div class="absolute inset-0 flex transition-transform duration-500 ease-out"
       [style.transform]="'translateX(' + -currentSlide * 100 + '%)'">
       <div *ngFor="let banner of banners" class="min-w-full h-full relative">
-        <img [src]="banner.image_url" class="w-full h-full object-cover" alt="Banner" />
+        <img [src]="banner.imageUrl"
+          class="w-full h-full object-cover transition-transform duration-700 hover:scale-110" alt="Banner" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
           <a *ngIf="banner.link" [href]="banner.link"
             class="bg-white text-primary-pink font-bold py-2 px-6 rounded-full shadow-lg hover:scale-105 transition-transform">

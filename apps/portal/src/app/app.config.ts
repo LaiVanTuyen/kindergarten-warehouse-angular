@@ -11,6 +11,8 @@ import {
   errorInterceptor,
 } from '@kindergarten-warehouse/data-access';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { API_URL } from '@kindergarten-warehouse/data-access';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +27,6 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimations(),
+    { provide: API_URL, useValue: environment.apiUrl },
   ],
 };

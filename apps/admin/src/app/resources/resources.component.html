@@ -202,13 +202,13 @@
                 <!-- Thumbnail with Hover Zoom -->
                 <div
                   class="h-12 w-12 bg-white rounded-xl flex-shrink-0 mr-4 flex items-center justify-center text-2xl shadow-sm border border-gray-100 group-hover:border-blue-200 group-hover:shadow-md transition-all duration-300 hover:scale-150 hover:z-20 hover:shadow-lg hover:border-blue-300 relative cursor-zoom-in">
-                  {{ res.thumbnail }}
+                  {{ res.thumbnailUrl }}
                 </div>
                 <div>
                   <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 text-[15px]">{{
                     res.title }}</div>
                   <div class="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-                    <span class="bg-gray-100 px-1.5 rounded text-[10px]">{{ res.date | date:'MMM d' }}</span>
+                    <span class="bg-gray-100 px-1.5 rounded text-[10px]">{{ res.createdAt | date:'MMM d' }}</span>
                     <span class="text-gray-300">•</span>
                     <span>{{ res.uploader }}</span>
                   </div>
@@ -303,9 +303,9 @@
               <span
                 class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
                 [ngClass]="{
-                  'bg-amber-50 text-amber-700 border-amber-100': res.status === 'pending',
-                  'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'approved',
-                  'bg-rose-50 text-rose-700 border-rose-100': res.status === 'rejected'
+                  'bg-amber-50 text-amber-700 border-amber-100': res.status === 'PENDING',
+                  'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'APPROVED',
+                  'bg-rose-50 text-rose-700 border-rose-100': res.status === 'REJECTED'
                 }">
                 {{ res.status }}
               </span>
@@ -664,7 +664,7 @@
           class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm">
           Close Preview
         </button>
-        <a [href]="previewResource()?.url" target="_blank" download
+        <a [href]="previewResource()?.fileUrl" target="_blank" download
           class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95 text-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

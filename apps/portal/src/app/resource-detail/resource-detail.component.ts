@@ -10,13 +10,10 @@ import { TranslatePipe } from '../pipes/translate.pipe';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
 import {
   AuthService,
-  Category,
-  Topic,
   CategoryService,
   Comment,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
-import { Title } from '@angular/platform-browser';
 import { FileHelper } from '../shared/utils/file-helper';
 import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
@@ -50,7 +47,9 @@ export class ResourceDetailComponent {
   resource$ = this.route.paramMap.pipe(
     switchMap((params) => {
       const slug = params.get('slug');
-      return this.resourceService.getResource(slug || '');
+      return this.resourceService
+        .getResource(slug || '')
+        .pipe(map((res) => res.data));
     })
   );
 
@@ -85,8 +84,8 @@ export class ResourceDetailComponent {
   // I will add `getAllTopicsMock` to `general.service.ts` first.
 
   relatedResources$ = this.resourceService
-    .getResources(1, 4)
-    .pipe(map((res) => res.data));
+    .getResources({ page: 0, size: 4 })
+    .pipe(map((res) => res.data.content));
 
   isYouTube(url: string | undefined): boolean {
     if (!url) return false;
@@ -96,26 +95,67 @@ export class ResourceDetailComponent {
   getSafeVideoUrl(url: string | undefined): SafeResourceUrl {
     if (!url) return '';
     if (this.isYouTube(url)) {
-      // Extract video ID and create embed URL
       let videoId = '';
       if (url.includes('v=')) {
         videoId = url.split('v=')[1].split('&')[0];
       } else if (url.includes('youtu.be/')) {
         videoId = url.split('youtu.be/')[1];
       }
-      return this.sanitizer.bypassSecurityTrustResourceUrl(
-        `https://www.youtube.com/embed/${videoId}`
-      );
+      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
     }
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   getSafeDocUrl(url: string | undefined): SafeResourceUrl {
     if (!url) return '';
-    const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(
+    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
       url
     )}&embedded=true`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
+  }
+
+  canPreviewDoc(resource: Resource): boolean {
+    if (!resource.fileUrl) return false;
+    const type = resource.type; // Assuming type is still mapped or checks need update
+    return ['PDF', 'WORD', 'DOC', 'DOCX'].includes(type);
+  }
+
+  // Pastel colors for avatars
+  getAvatarColor(name: string): string {
+    const colors = [
+      'bg-red-100 text-red-600',
+      'bg-orange-100 text-orange-600',
+      'bg-amber-100 text-amber-600',
+      'bg-green-100 text-green-600',
+      'bg-emerald-100 text-emerald-600',
+      'bg-teal-100 text-teal-600',
+      'bg-cyan-100 text-cyan-600',
+      'bg-sky-100 text-sky-600',
+      'bg-blue-100 text-blue-600',
+      'bg-indigo-100 text-indigo-600',
+      'bg-violet-100 text-violet-600',
+      'bg-purple-100 text-purple-600',
+      'bg-fuchsia-100 text-fuchsia-600',
+      'bg-pink-100 text-pink-600',
+      'bg-rose-100 text-rose-600',
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const index = Math.abs(hash % colors.length);
+    return colors[index];
+  }
+
+  followAuthor(authorName: string) {
+    if (!this.authService.isLoggedIn) {
+      alert('Please login to follow authors.');
+      return;
+    }
+    alert(`Followed ${authorName}!`);
   }
 
   getFileIcon(type: string | undefined): string {
@@ -125,8 +165,8 @@ export class ResourceDetailComponent {
   isDownloading = false;
 
   downloadResource(resource: Resource) {
-    if (resource.url) {
-      window.open(resource.url, '_blank');
+    if (resource.fileUrl) {
+      window.open(resource.fileUrl, '_blank');
     }
   }
 
@@ -143,11 +183,12 @@ export class ResourceDetailComponent {
     const user = this.authService.currentUserValue;
     const newComment: Comment = {
       id: Math.random().toString(36).substr(2, 9),
-      user: user?.username || 'Anonymous',
+      userId: user?.id || 0, // Mock userId if not available
       content: this.newCommentContent,
-      date: new Date(),
+      createdAt: new Date().toISOString(),
       rating: this.newCommentRating,
-      avatarUrl: user?.avatarUrl,
+      user: user || ({ username: 'Anonymous', avatarUrl: '' } as any), // Mock user object
+      resourceId: resource.id,
     };
 
     // In a real app, call service to save comment.

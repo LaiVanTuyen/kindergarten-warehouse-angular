@@ -66,12 +66,12 @@ export class BannersComponent implements OnInit {
 
   constructor(private fb: FormBuilder, private bannerService: BannerService) {
     this.bannerForm = this.fb.group({
-      image_url: ['', [Validators.required]],
+      imageUrl: ['', [Validators.required]],
       link: [''],
-      display_order: [0, [Validators.required, Validators.min(0)]],
-      is_active: [true],
-      start_date: [''],
-      end_date: [''],
+      displayOrder: [0, [Validators.required, Validators.min(0)]],
+      isActive: [true],
+      startDate: [''],
+      endDate: [''],
       platform: ['desktop'],
     });
   }
@@ -83,7 +83,7 @@ export class BannersComponent implements OnInit {
   loadBanners() {
     this.bannerService.getBanners().subscribe((data) => {
       // Sort by display_order initially
-      const sorted = data.sort((a, b) => a.display_order - b.display_order);
+      const sorted = data.sort((a, b) => a.displayOrder - b.displayOrder);
       this.banners.set(sorted);
     });
   }
@@ -96,7 +96,7 @@ export class BannersComponent implements OnInit {
     // Update display_order based on new index
     const updatedBanners = currentBanners.map((banner, index) => ({
       ...banner,
-      display_order: index + 1,
+      displayOrder: index + 1,
     }));
 
     this.banners.set(updatedBanners);
@@ -107,16 +107,16 @@ export class BannersComponent implements OnInit {
 
   // Status & Expiration
   isExpired(banner: Banner): boolean {
-    if (!banner.end_date) return false;
+    if (!banner.endDate) return false;
     const now = new Date();
-    const end = new Date(banner.end_date);
+    const end = new Date(banner.endDate);
     return now > end;
   }
 
   toggleStatus(banner: Banner, event: Event) {
     event.stopPropagation(); // Prevent card click
-    const newStatus = !banner.is_active;
-    const updatedBanner = { ...banner, is_active: newStatus };
+    const newStatus = !banner.isActive;
+    const updatedBanner = { ...banner, isActive: newStatus };
 
     // Optimistic update
     this.banners.update((list) =>
@@ -151,10 +151,10 @@ export class BannersComponent implements OnInit {
     this.isEditMode.set(false);
     this.currentBannerId = null;
     this.bannerForm.reset({
-      image_url: '',
+      imageUrl: '',
       link: '',
-      display_order: this.banners().length + 1, // Default to next order
-      is_active: true,
+      displayOrder: this.banners().length + 1, // Default to next order
+      isActive: true,
       platform: 'desktop',
     });
     this.isModalOpen.set(true);
@@ -164,12 +164,12 @@ export class BannersComponent implements OnInit {
     this.isEditMode.set(true);
     this.currentBannerId = banner.id;
     this.bannerForm.patchValue({
-      image_url: banner.image_url,
+      imageUrl: banner.imageUrl,
       link: banner.link,
-      display_order: banner.display_order,
-      is_active: banner.is_active,
-      start_date: banner.start_date,
-      end_date: banner.end_date,
+      displayOrder: banner.displayOrder,
+      isActive: banner.isActive,
+      startDate: banner.startDate,
+      endDate: banner.endDate,
       platform: banner.platform || 'desktop',
     });
     this.isModalOpen.set(true);
@@ -200,7 +200,7 @@ export class BannersComponent implements OnInit {
     // Renumber strictly 1..N
     return currentBanners.map((b, index) => ({
       ...b,
-      display_order: index + 1,
+      displayOrder: index + 1,
     }));
   }
 
@@ -214,17 +214,15 @@ export class BannersComponent implements OnInit {
     if (isEdit && id) {
       // Update
       const oldBanner = this.banners().find((b) => b.id === id);
-      const newOrder = formValue.display_order;
+      const newOrder = formValue.displayOrder;
 
-      if (oldBanner && oldBanner.display_order !== newOrder) {
+      if (oldBanner && oldBanner.displayOrder !== newOrder) {
         // Order changed: Perform Smart Reorder
         let reorderedList = this.handleManualReorder(id, newOrder);
 
         // Update the specific banner's details in the new list
         reorderedList = reorderedList.map((b) =>
-          b.id === id
-            ? { ...b, ...formValue, display_order: b.display_order }
-            : b
+          b.id === id ? { ...b, ...formValue, displayOrder: b.displayOrder } : b
         );
 
         // Sync with Backend (Mock Batch Update)
@@ -251,7 +249,7 @@ export class BannersComponent implements OnInit {
         setTimeout(() => {
           // We perform a reorder to ensure the new banner (which might cause a collision)
           // is inserted correctly and others are shifted.
-          const desiredOrder = formValue.display_order;
+          const desiredOrder = formValue.displayOrder;
           const listWithNew = this.banners();
 
           // If the simplistic create just appended or collided, this reorder fixes it
@@ -294,9 +292,9 @@ export class BannersComponent implements OnInit {
 
       reader.onload = () => {
         this.bannerForm.patchValue({
-          image_url: reader.result as string,
+          imageUrl: reader.result as string,
         });
-        this.bannerForm.get('image_url')?.markAsDirty();
+        this.bannerForm.get('imageUrl')?.markAsDirty();
       };
 
       reader.readAsDataURL(file);

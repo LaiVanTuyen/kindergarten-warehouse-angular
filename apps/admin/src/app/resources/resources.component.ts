@@ -222,24 +222,26 @@ export class ResourcesComponent {
   }
 
   loadData() {
-    let status: 'pending' | 'approved' | 'rejected' | undefined = undefined;
+    let status: 'PENDING' | 'APPROVED' | 'REJECTED' | undefined = undefined;
     if (this.activeTab() === 'pending') {
-      status = 'pending';
+      status = 'PENDING';
     }
 
     this.isTableLoading.set(true);
 
     this.resourceService
-      .getResources(this.currentPage(), this.pageSize(), {
-        search: this.searchControl.value || undefined,
+      .getResources({
+        page: this.currentPage(),
+        size: this.pageSize(),
+        keyword: this.searchControl.value || undefined,
         status: status,
         type: (this.typeFilter.value as any) || undefined,
         topicId: (this.topicFilter.value as any) || undefined,
       })
       .pipe(delay(500))
       .subscribe((res) => {
-        this.resources.set(res.data);
-        this.totalResources.set(res.total);
+        this.resources.set(res.data.content);
+        this.totalResources.set(res.data.totalElements);
         this.selectedIds.set(new Set()); // Clear selection on load
         this.isTableLoading.set(false);
       });
@@ -437,7 +439,7 @@ export class ResourcesComponent {
       topicId: resource.topicId,
       type: resource.type,
       description: resource.description,
-      url: resource.url,
+      url: resource.fileUrl,
     });
 
     const catId = this.getCategoryIdFromTopic(resource.topicId);
@@ -477,8 +479,8 @@ export class ResourcesComponent {
       type: val.type,
       topicId: val.topicId,
       description: val.description,
-      url: val.url || 'https://example.com',
-      thumbnail: val.type === 'VIDEO' ? '🎬' : '📄',
+      fileUrl: val.url || 'https://example.com',
+      thumbnailUrl: val.type === 'VIDEO' ? '🎬' : '📄',
     };
 
     if (this.isEditMode() && this.currentResourceId) {
@@ -492,7 +494,7 @@ export class ResourcesComponent {
     } else {
       const currentUser = this.authService.currentUserValue;
       const isAdmin = currentUser?.role === 'ADMIN';
-      const status = isAdmin ? 'approved' : 'pending';
+      const status = isAdmin ? 'APPROVED' : 'PENDING';
 
       this.resourceService
         .createResource({
@@ -517,8 +519,8 @@ export class ResourcesComponent {
     console.log('Clicked Preview:', resource); // Debugging
     this.previewResource.set(resource);
     this.isLoading.set(true);
-    this.previewType = this.getPreviewType(resource.url || '');
-    this.previewUrl = this.getSafeUrl(resource.url || '', this.previewType);
+    this.previewType = this.getPreviewType(resource.fileUrl || '');
+    this.previewUrl = this.getSafeUrl(resource.fileUrl || '', this.previewType);
 
     // If unsupported, stop loading spinner immediately
     if (this.previewType === 'UNSUPPORTED') {

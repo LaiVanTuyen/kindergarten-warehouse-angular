@@ -2,7 +2,7 @@
   <div *ngIf="{ resource: resource$ | async, breadcrumb: breadcrumbInfo$ | async } as data; else loading">
     <ng-container *ngIf="data.resource as resource">
       <!-- Breadcrumbs -->
-      <nav class="flex mb-8" aria-label="Breadcrumb">
+      <nav class="flex mb-12" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
           <li class="inline-flex items-center">
             <a routerLink="/"
@@ -42,24 +42,32 @@
           <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">
             <!-- Video Player -->
             <ng-container *ngIf="resource.type === 'VIDEO'">
-              <div *ngIf="isYouTube(resource.url); else directVideo" class="w-full h-full min-h-[300px]">
-                <iframe [src]="getSafeVideoUrl(resource.url)" class="w-full h-full rounded-2xl shadow-md aspect-video"
-                  frameborder="0"
+              <div *ngIf="isYouTube(resource.fileUrl); else directVideo" class="w-full h-full min-h-[300px]">
+                <iframe [src]="getSafeVideoUrl(resource.fileUrl)"
+                  class="w-full h-full rounded-2xl shadow-md aspect-video" frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowfullscreen></iframe>
               </div>
               <ng-template #directVideo>
-                <video [src]="getSafeVideoUrl(resource.url)" controls
+                <video [src]="getSafeVideoUrl(resource.fileUrl)" controls
                   class="w-full max-h-[500px] rounded-2xl shadow-md bg-black"></video>
               </ng-template>
             </ng-container>
 
-            <!-- Document/Placeholder Viewer -->
-            <ng-container
-              *ngIf="!['VIDEO', 'AUDIO'].includes(resource.type) || (resource.type === 'AUDIO' && !resource.thumbnail)">
-              <!-- Main Container -->
+            <!-- Document Preview (Google Docs Viewer) -->
+            <ng-container *ngIf="canPreviewDoc(resource)">
               <div
-                class="flex flex-col items-center justify-center w-full aspect-[4/3] rounded-3xl p-8 text-center relative overflow-hidden transition-all duration-500 hover:shadow-xl"
+                class="w-full h-full min-h-[500px] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <iframe [src]="getSafeDocUrl(resource.fileUrl)" class="w-full h-full min-h-[500px]" frameborder="0">
+                </iframe>
+              </div>
+            </ng-container>
+
+            <!-- Fallback / Placeholder (Hidden on Mobile if we want to prioritize download, but 'lg:flex' handles visibility logic) -->
+            <ng-container *ngIf="!['VIDEO', 'AUDIO'].includes(resource.type) && !canPreviewDoc(resource)">
+              <!-- Main Container: Hidden on mobile to save space, visible on large screens -->
+              <div
+                class="hidden lg:flex flex-col items-center justify-center w-full aspect-[4/3] rounded-3xl p-8 text-center relative overflow-hidden transition-all duration-500 hover:shadow-xl"
                 [ngClass]="{
                     'bg-emerald-50': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
                     'bg-blue-50': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
@@ -68,24 +76,23 @@
                     'bg-purple-50': resource.type === 'IMAGE',
                     'bg-gray-100': !['EXCEL','WORD','PPT','POWERPOINT','PDF','IMAGE'].includes(resource.type)
                 }">
-
+                <!-- ... existing content ... -->
                 <!-- Background decoration -->
                 <div class="absolute inset-0 opacity-30 bg-[url('assets/pattern.svg')]"></div>
 
                 <!-- Icon/Thumbnail -->
                 <div class="relative z-10 mb-6 group">
                   <!-- Real Thumbnail if exists -->
-                  <img *ngIf="resource.thumbnail && resource.type !== 'IMAGE'" [src]="resource.thumbnail"
+                  <img *ngIf="resource.thumbnailUrl && resource.type !== 'IMAGE'" [src]="resource.thumbnailUrl"
                     class="w-48 h-64 object-cover rounded shadow-lg transform group-hover:scale-105 transition-transform duration-500"
                     alt="Cover" />
 
                   <!-- Full Image Preview -->
-                  <img *ngIf="resource.type === 'IMAGE' && resource.url" [src]="resource.url"
+                  <img *ngIf="resource.type === 'IMAGE' && resource.fileUrl" [src]="resource.fileUrl"
                     class="w-full h-full max-h-[400px] object-contain rounded-lg shadow-sm" alt="Preview" />
 
                   <!-- Fallback Icon -->
-                  <!-- Use explicit <i> tags to guarantee correct icon and color -->
-                  <div *ngIf="(!resource.thumbnail && resource.type !== 'IMAGE')"
+                  <div *ngIf="(!resource.thumbnailUrl && resource.type !== 'IMAGE')"
                     class="w-32 h-32 flex items-center justify-center animate-bounce-slow">
                     <i *ngIf="resource.type === 'PDF'"
                       class="ph-fill ph-file-pdf text-8xl text-rose-500 drop-shadow-xl"></i>
@@ -118,7 +125,7 @@
                 <i class="ph-fill ph-music-notes text-8xl mb-6 drop-shadow-md animate-pulse"></i>
                 <h3 class="text-2xl font-bold mb-2">{{ resource.title }}</h3>
                 <p class="opacity-80 mb-6">Audio Preview</p>
-                <audio [src]="getSafeVideoUrl(resource.url)" controls
+                <audio [src]="getSafeVideoUrl(resource.fileUrl)" controls
                   class="w-full max-w-sm backdrop-blur-md bg-white/20 rounded-full p-2"></audio>
               </div>
             </ng-container>
@@ -175,26 +182,31 @@
               {{ resource.title }}
             </h1>
 
-            <!-- Author Info (Restored) -->
-            <div class="flex items-center gap-3 mb-6">
+            <!-- Author Info (Restored & Polished) -->
+            <div class="flex items-center gap-4 mb-8">
               <div
-                class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-100">
+                class="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm"
+                [ngClass]="getAvatarColor(resource.uploader || 'A')"> <!-- Updated fallback -->
                 <ng-container *ngIf="!resource.uploaderAvatar; else uploaderAvatar">
-                  <span class="text-sm font-bold text-gray-500">{{ resource.uploader.charAt(0) }}</span>
+                  <span class="text-2xl font-bold">{{ (resource.uploader || 'A').charAt(0) }}</span>
                 </ng-container>
                 <ng-template #uploaderAvatar>
                   <img [src]="resource.uploaderAvatar" class="w-full h-full object-cover" alt="Author">
                 </ng-template>
               </div>
-              <div>
-                <p class="text-xs text-gray-400 font-medium mb-0">Đăng bởi</p>
-                <div class="flex items-center gap-2">
-                  <h4 class="font-bold text-gray-900 text-sm">{{ resource.uploader }}</h4>
-                  <span class="text-gray-300">•</span>
-                  <span class="text-xs text-gray-500">{{ resource.createdAt | date:'mediumDate' }}</span>
-                </div>
+              <div class="flex-1">
+                <p class="text-xs text-gray-400 font-bold mb-0.5 uppercase tracking-wide">Đăng bởi</p>
+                <h4 class="font-bold text-gray-900 text-lg hover:text-primary-pink cursor-pointer transition-colors">{{
+                  resource.uploader || 'Admin' }}</h4>
+                <button (click)="followAuthor(resource.uploader || 'Admin')"
+                  class="px-3 py-1 rounded-full border-2 border-primary-500 text-primary-500 text-xs font-bold hover:bg-primary-50 transition-all flex items-center gap-1">
+                  <i class="ph-bold ph-plus"></i> Follow
+                </button>
               </div>
+              <!-- Optional: Just date below -->
+              <span class="text-xs text-gray-500 mt-1 block">{{ resource.createdAt | date:'mediumDate' }}</span>
             </div>
+
 
             <!-- Highlights Section (V2) -->
             <div *ngIf="resource.highlights && resource.highlights.length > 0"
@@ -251,8 +263,10 @@
               </button>
             </div>
 
-          </div>
-        </div>
+          </div> <!-- Close Right Grid Column -->
+        </div> <!-- Close Grid -->
+
+        <!-- Main Card continues for Comments -->
 
         <!-- Comments Section -->
         <div class="p-8 border-t border-gray-100 bg-gray-50/50">
@@ -325,22 +339,25 @@
         </div>
 
         <!-- Comments List -->
+        <!-- Comments List -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-          *ngIf="resource.comments && resource.comments.length > 0">
+          *ngIf="resource.comments && resource.comments.length > 0; else noComments">
           <div *ngFor="let comment of resource.comments"
             class="flex gap-4 p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors">
             <!-- Avatar (Fixed Width) -->
             <div
-              class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 flex items-center justify-center text-sm font-bold text-gray-500 overflow-hidden ring-2 ring-white shadow-sm">
-              <img *ngIf="comment.avatarUrl" [src]="comment.avatarUrl" class="w-full h-full object-cover">
-              <span *ngIf="!comment.avatarUrl">{{ comment.user.charAt(0) }}</span>
+              class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold overflow-hidden ring-2 ring-white shadow-sm"
+              [ngClass]="getAvatarColor(comment.user.username || 'A')">
+              <img *ngIf="comment.user.avatarUrl" [src]="comment.user.avatarUrl" class="w-full h-full object-cover"
+                [alt]="comment.user.username">
+              <span *ngIf="!comment.user.avatarUrl">{{ comment.user.username?.charAt(0) }}</span>
             </div>
 
             <!-- Content Column -->
             <div class="flex-1">
               <!-- Header Row: Name - Stars - Date -->
               <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="font-bold text-gray-900 text-sm">{{ comment.user }}</span>
+                <span class="font-bold text-gray-900 text-sm">{{ comment.user.username }}</span>
 
                 <!-- Stars -->
                 <div class="flex text-yellow-400 text-xs">
@@ -351,7 +368,8 @@
                 <span class="text-gray-300 text-xs">•</span>
 
                 <span class="text-xs text-gray-400 font-medium">
-                  {{ comment.date | date:'mediumDate':undefined:((translationService.currentLang$ | async) || 'en') }}
+                  {{ comment.createdAt | date:'mediumDate':undefined:((translationService.currentLang$ | async) || 'en')
+                  }}
                 </span>
               </div>
 
@@ -362,10 +380,21 @@
             </div>
           </div>
         </div>
-      </div>
-    </ng-container>
-  </div>
-</div>
+
+        <ng-template #noComments>
+          <div class="text-center py-8 px-4">
+            <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <i class="ph-duotone ph-chat-teardrop-text text-3xl text-gray-400"></i>
+            </div>
+            <h4 class="text-gray-900 font-bold mb-1">Chưa có bình luận nào</h4>
+            <p class="text-gray-500 text-sm">Hãy là người đầu tiên chia sẻ cảm nghĩ về tài liệu này nhé!</p>
+          </div>
+        </ng-template>
+
+      </div> <!-- Close Main Card (L40) -->
+    </ng-container> <!-- Close ngIf resource (L3) -->
+  </div> <!-- Close ngIf data (L2) -->
+</div> <!-- Close Container (L1) -->
 
 
 <!-- Related Resources -->

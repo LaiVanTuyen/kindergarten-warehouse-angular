@@ -5,8 +5,8 @@
         <!-- Enforcing h-48 container height -->
 
         <!-- Real Image / Thumbnail -->
-        <ng-container *ngIf="resource.thumbnail && !hasImageError">
-            <img [src]="resource.thumbnail" (error)="onImageError()" loading="lazy"
+        <ng-container *ngIf="resource.thumbnailUrl && !hasImageError">
+            <img [src]="resource.thumbnailUrl" (error)="onImageError()" loading="lazy"
                 class="w-full h-full transition-transform duration-500 group-hover:scale-105"
                 [ngClass]="{'object-cover': ['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type), 'object-contain p-6': !['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type)}"
                 alt="{{ resource.title }} thumbnail" />
@@ -22,15 +22,15 @@
         </ng-container>
 
         <!-- Fallback / Placeholder -->
-        <div *ngIf="!resource.thumbnail || hasImageError"
+        <div *ngIf="!resource.thumbnailUrl || hasImageError"
             class="w-full h-full flex items-center justify-center relative overflow-hidden transition-transform duration-500 group-hover:scale-105"
             [ngClass]="{
-                'bg-emerald-50': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
-                'bg-blue-50': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
-                'bg-orange-50': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type),
-                'bg-rose-50': resource.type === 'PDF',
-                'bg-purple-50': resource.type === 'IMAGE' || resource.type === 'VIDEO',
-                'bg-indigo-50': resource.type === 'AUDIO',
+                'bg-emerald-100': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
+                'bg-blue-100': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
+                'bg-orange-100': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type),
+                'bg-rose-100': resource.type === 'PDF',
+                'bg-purple-100': resource.type === 'IMAGE' || resource.type === 'VIDEO',
+                'bg-indigo-100': resource.type === 'AUDIO',
                 'bg-gray-100': !['EXCEL','WORD','PPT','PDF','IMAGE','VIDEO','AUDIO'].includes(resource.type)
             }">
 
