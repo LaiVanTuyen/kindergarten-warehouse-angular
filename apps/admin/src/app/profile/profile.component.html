@@ -31,10 +31,10 @@
 
                 <!-- Identity -->
                 <h2 class="mt-4 text-xl font-bold text-gray-900">{{ user.name }}</h2>
-                <div class="mt-2">
-                    <span
+                <div class="mt-2 flex flex-wrap justify-center gap-2">
+                    <span *ngFor="let role of user.role.split(', ')"
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {{ user.role }}
+                        {{ role }}
                     </span>
                 </div>
 

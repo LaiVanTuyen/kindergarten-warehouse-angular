@@ -20,7 +20,7 @@ import {
 } from 'rxjs/operators';
 import { combineLatest, timer } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { ToastService } from '../shared/toast/toast.service';
+import { ToastService } from '@kindergarten-warehouse/data-access';
 
 // Mock Data for Demonstration
 const MOCK_USERS: any[] = [

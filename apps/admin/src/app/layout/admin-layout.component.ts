@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
@@ -12,10 +12,18 @@ import { AuthService } from '@kindergarten-warehouse/data-access';
   styles: [],
 })
 export class AdminLayoutComponent {
+  private authService = inject(AuthService);
+
   isProfileOpen = signal(false);
   isSidebarOpen = signal(false);
 
-  constructor(private authService: AuthService) {}
+  // Expose currentUser for the template
+  currentUser$ = this.authService.currentUser$;
+
+  // Computed initials (or use a pipe/method in template if simpler)
+  // Since we use async pipe in template, we can just use a helper method or *ngIf
+
+  // constructor(private authService: AuthService) {} // Removed constructor injection
 
   toggleProfile() {
     this.isProfileOpen.update((v) => !v);
@@ -26,6 +34,15 @@ export class AdminLayoutComponent {
   }
 
   logout() {
-    this.authService.logout();
+    this.authService.logout('Hẹn gặp lại bạn! 👋');
+  }
+
+  getUserInitials(name: string | undefined): string {
+    if (!name) return 'A';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
 }

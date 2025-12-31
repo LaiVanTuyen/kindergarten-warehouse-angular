@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
@@ -21,13 +21,14 @@ import {
   Topic,
   AuthService,
 } from '@kindergarten-warehouse/data-access';
-import { ToastService } from '../shared/toast/toast.service';
+import { ToastService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-admin-resources',
   standalone: true,
   imports: [
     CommonModule,
+    NgIf,
     ReactiveFormsModule,
     PaginationComponent,
     SkeletonTableComponent,

@@ -1,6 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { ToastService } from '@kindergarten-warehouse/data-access';
@@ -11,42 +16,67 @@ import { finalize } from 'rxjs';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TranslatePipe],
   templateUrl: './login.component.html',
   styles: [],
 })
 export class LoginComponent {
+  private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
 
-  email = '';
-  password = '';
+  loginForm: FormGroup = this.fb.group({
+    email: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'),
+      ],
+    ],
+    password: ['', [Validators.required]],
+    rememberMe: [false],
+  });
+
   isLoading = false;
 
+  get f() {
+    return this.loginForm.controls;
+  }
+
   onSubmit() {
-    if (this.email) {
+    if (this.loginForm.valid) {
       this.isLoading = true;
+      const { email, password } = this.loginForm.value;
       const loginPayload: LoginRequest = {
-        email: this.email,
-        password: this.password,
+        email,
+        password,
       };
+
       this.authService
         .login(loginPayload)
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
-          next: () => {
-            this.toastService.show('Welcome back!', 'success');
-            // Navigate to returnUrl or home
+          next: (response: any) => {
+            this.toastService.show(
+              response.message || 'Welcome back!',
+              'success'
+            );
             const returnUrl =
               this.route.snapshot.queryParams['returnUrl'] || '/';
             this.router.navigate([returnUrl]);
           },
-          error: () => {
-            // Handled by interceptor theoretically, but good to reset state
+          error: (err: any) => {
+            // Error is handled by AuthInterceptor (throws error to here)
+            // Show toast from here as requested/planned
+            const msg = err.message || 'Login failed';
+            this.toastService.show(msg, 'error');
+            console.error('Login failed', err);
           },
         });
+    } else {
+      this.loginForm.markAllAsTouched();
     }
   }
 }

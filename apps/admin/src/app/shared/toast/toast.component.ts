@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ToastService } from './toast.service';
+import { ToastService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-toast',
@@ -11,20 +11,18 @@ import { ToastService } from './toast.service';
       class="fixed top-20 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"
     >
       <div
-        *ngFor="let toast of toastService.toasts()"
+        *ngFor="let toast of toastService.toasts$ | async"
         class="pointer-events-auto transform transition-all duration-300 ease-in-out min-w-[300px] max-w-md p-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in"
         [ngClass]="{
           'bg-green-500 text-white': toast.type === 'success',
           'bg-red-500 text-white': toast.type === 'error',
-          'bg-blue-500 text-white': toast.type === 'info',
-          'bg-yellow-500 text-white': toast.type === 'warning'
+          'bg-blue-500 text-white': toast.type === 'info'
         }"
       >
         <!-- Icons -->
         <span *ngIf="toast.type === 'success'" class="text-xl">✅</span>
         <span *ngIf="toast.type === 'error'" class="text-xl">❌</span>
         <span *ngIf="toast.type === 'info'" class="text-xl">ℹ️</span>
-        <span *ngIf="toast.type === 'warning'" class="text-xl">⚠️</span>
 
         <p class="font-medium text-sm flex-1">{{ toast.message }}</p>
 

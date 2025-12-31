@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-profile',
@@ -9,18 +10,45 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './profile.component.html',
   styles: [],
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
+  private authService = inject(AuthService);
+
   activeTab: 'general' | 'security' = 'general';
 
   user = {
-    name: 'Admin User',
-    email: 'admin@kinderworld.com',
-    role: 'Administrator',
-    phone: '+1 (555) 123-4567',
-    bio: 'Passionate about early childhood education and managing digital resources for the next generation of learners.',
-    joinedDate: new Date('2023-10-15'),
-    avatarUrl: '', // Empty for now to verify fallback
+    name: '',
+    email: '',
+    role: '',
+    phone: '', // Not in User model yet
+    bio: '', // Not in User model yet
+    joinedDate: new Date(),
+    avatarUrl: '',
   };
+
+  ngOnInit() {
+    this.authService.currentUser$.subscribe((currentUser) => {
+      if (currentUser) {
+        this.user = {
+          ...this.user,
+          name: currentUser.fullName,
+          email: currentUser.email,
+          role: currentUser.roles?.length
+            ? currentUser.roles.join(', ')
+            : currentUser.role || 'User',
+          joinedDate: this.parseDate(currentUser.createdAt),
+          avatarUrl: currentUser.avatarUrl || '',
+        };
+        // Update check state
+        this.initialUser = { ...this.user };
+      }
+    });
+  }
+
+  private parseDate(dateStr: string | undefined): Date {
+    if (!dateStr) return new Date();
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
 
   // State for Dirty Checking
   initialUser = { ...this.user };

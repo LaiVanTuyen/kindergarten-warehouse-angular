@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, finalize } from 'rxjs';
 import { Router } from '@angular/router';
 import { User, LoginRequest, AuthResponse } from '../models/auth.model';
-import { RestResponse } from '../models/resource.model';
+import { ApiResponse } from '../models/api-response.model';
 import { API_URL } from '../tokens';
 import { ToastService } from './toast.service';
 
@@ -16,92 +16,105 @@ export class AuthService {
   private apiUrl = inject(API_URL);
   private toastService = inject(ToastService);
 
-  private tokenKey = 'access_token';
-  private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
+  // No longer use access_token in localStorage
+  private userKey = 'user_profile';
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  // Initialize user state from saved profile
+  private currentUserSubject = new BehaviorSubject<User | null>(this.getUser());
   public currentUser$ = this.currentUserSubject.asObservable();
+
+  // LoggedIn state is derived from having a user profile for now (User session is valid)
+  // Or purely rely on cookie presence which we can't check from JS directly if HttpOnly.
+  // We assume if we have a user profile, we are logged in until 401 happens.
+  private loggedIn = new BehaviorSubject<boolean>(!!this.getUser());
 
   get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
 
-  constructor() {
-    // Try to restore user from storage or fetch profile if needed
-    // For now, we rely on login to set it, or could decode JWT
-    if (this.hasToken()) {
-      // Ideally fetch profile here: this.getProfile().subscribe()
-    }
-  }
+  constructor() {}
 
-  login(credentials: LoginRequest): Observable<RestResponse<AuthResponse>> {
+  login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http
-      .post<RestResponse<AuthResponse>>(
-        `${this.apiUrl}/auth/login`,
-        credentials
-      )
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
-        tap<any>((response) => {
-          const token =
-            response.data?.accessToken ||
-            response.accessToken ||
-            response.data?.token ||
-            response.token;
-          const user = response.data?.user || response.user;
+        tap((response) => {
+          // Cookie is set automatically by browser
+          const user = response.result?.user;
 
-          if (token) {
-            this.setToken(token);
+          if (user) {
+            this.setUser(user);
             this.loggedIn.next(true);
-            this.currentUserSubject.next(user || null);
+            this.currentUserSubject.next(user);
           }
         })
       );
   }
 
-  logout(message?: string): void {
-    this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe({
-      next: () => {
-        // success
-      },
-      error: (err) => {
-        console.error('Logout failed', err);
-      },
-      complete: () => {
-        // Session already cleared optimistically
-      },
-    });
-    // Fallback in case API hangs or whatever, we usually want to clear immediately or after response.
-    // For better UX, we clear immediately but fire the request.
-    this.clearSession(message);
+  logout(message?: string, callApi = true): void {
+    // 1. Clear UI state immediately
+    this.clearSession(false);
+
+    if (callApi) {
+      // 2. Fire & Forget API call to clear cookies
+      this.http
+        .post(`${this.apiUrl}/auth/logout`, {})
+        .pipe(
+          finalize(() => {
+            // 3. Ensure we are redirected
+            this.router.navigate(['/login']);
+            if (message) {
+              this.toastService.show(message, 'success');
+            }
+          })
+        )
+        .subscribe({
+          next: () => {},
+          error: (err) =>
+            console.warn('Logout API failed but local session cleared', err),
+        });
+    } else {
+      this.router.navigate(['/login']);
+      if (message) {
+        this.toastService.show(message, 'success');
+      }
+    }
   }
 
-  private clearSession(message?: string): void {
-    localStorage.removeItem(this.tokenKey);
+  private clearSession(redirect = true): void {
+    // Only clear user profile
+    localStorage.removeItem(this.userKey);
+    // Remove legacy tokens if they exist
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('accessToken');
+
     this.loggedIn.next(false);
     this.currentUserSubject.next(null);
-    if (message) {
-      this.toastService.show(message, 'success');
+    if (redirect) {
+      this.router.navigate(['/login']);
     }
-    this.router.navigate(['/login']);
+  }
+
+  // Helper: Get user profile for UI (Avatar, Name)
+  private setUser(user: User): void {
+    localStorage.setItem(this.userKey, JSON.stringify(user));
+  }
+
+  private getUser(): User | null {
+    const userStr = localStorage.getItem(this.userKey);
+    return userStr ? JSON.parse(userStr) : null;
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    // No longer accessible
+    return null;
   }
 
   isLoggedIn(): boolean {
-    return this.hasToken();
+    return !!this.getUser();
   }
 
   get isLoggedIn$(): Observable<boolean> {
     return this.loggedIn.asObservable();
-  }
-
-  private setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-  }
-
-  private hasToken(): boolean {
-    return !!localStorage.getItem(this.tokenKey);
   }
 }

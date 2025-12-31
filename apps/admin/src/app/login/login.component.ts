@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -7,7 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '@kindergarten-warehouse/data-access';
+import { AuthService, ToastService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-login',
@@ -17,19 +17,21 @@ import { AuthService } from '@kindergarten-warehouse/data-access';
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent {
-  loginForm: FormGroup;
-  errorMessage = '';
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toastService = inject(ToastService);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
-    });
-  }
+  loginForm: FormGroup = this.fb.group({
+    email: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'),
+      ],
+    ],
+    password: ['', [Validators.required]],
+  });
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -37,12 +39,25 @@ export class LoginComponent {
     }
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
+      next: (response: any) => {
+        const user = response.user;
+        if (user && user.role !== 'ADMIN') {
+          this.toastService.show(
+            'Access Denied: Admin privileges required.',
+            'error'
+          );
+          this.authService.logout(undefined, false); // Clear local session without API call
+          return;
+        }
+
+        this.toastService.show(response.message || 'Welcome back!', 'success');
         this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
+      error: (err: any) => {
+        // Error is handled by AuthInterceptor (throws error to here)
+        const msg = err.message || 'Login failed';
+        this.toastService.show(msg, 'error');
         console.error('Login failed', err);
-        this.errorMessage = 'Invalid email or password';
       },
     });
   }
