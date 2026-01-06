@@ -56,8 +56,9 @@
       "continuous": true,
       "executor": "@angular/build:dev-server",
       "options": {
+        "proxyConfig": "proxy.conf.json",
         "port": 4201,
-        "browserTarget": "portal:build"
+        "buildTarget": "portal:build"
       },
       "configurations": {
         "production": {

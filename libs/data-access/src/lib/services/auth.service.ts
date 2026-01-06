@@ -100,6 +100,11 @@ export class AuthService {
     localStorage.setItem(this.userKey, JSON.stringify(user));
   }
 
+  updateCurrentUser(user: User): void {
+    this.setUser(user);
+    this.currentUserSubject.next(user);
+  }
+
   private getUser(): User | null {
     const userStr = localStorage.getItem(this.userKey);
     return userStr ? JSON.parse(userStr) : null;
@@ -116,5 +121,16 @@ export class AuthService {
 
   get isLoggedIn$(): Observable<boolean> {
     return this.loggedIn.asObservable();
+  }
+
+  // Helper to fix MinIO URL in Local Dev environment
+  // In a real prod environment, this logic would likely be handled by a proper CDN or relative path strategy,
+  // but this ensures robust display across Docker/Localhost scenarios.
+  formatAvatarUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.includes('minio:9000')) {
+      return url.replace('minio:9000', 'localhost:9000');
+    }
+    return url;
   }
 }

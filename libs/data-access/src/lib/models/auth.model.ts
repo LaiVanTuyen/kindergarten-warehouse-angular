@@ -10,6 +10,8 @@ export interface User {
   avatarUrl?: string;
   createdAt: string;
   lastLogin?: string | Date;
+  phoneNumber?: string;
+  bio?: string;
 }
 
 // Strict Login Request (password required)
@@ -24,4 +26,15 @@ export interface AuthResponse {
   accessToken: string;
   user: User;
   refreshToken?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+  phoneNumber?: string;
+  bio?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }

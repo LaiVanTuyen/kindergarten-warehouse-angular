@@ -38,8 +38,12 @@
 
         <!-- Avatar Button -->
         <button (click)="toggleProfile()"
-          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-          {{ getUserInitials(user.fullName) }}
+          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 overflow-hidden relative">
+
+          <img *ngIf="user.avatarUrl" [src]="getAvatarUrl(user.avatarUrl)" alt="User Avatar"
+            class="w-full h-full object-cover">
+          <span *ngIf="!user.avatarUrl">{{ getUserInitials(user.fullName) }}</span>
+
         </button>
 
         <!-- Profile Popup -->

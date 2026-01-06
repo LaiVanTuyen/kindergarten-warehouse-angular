@@ -7,7 +7,11 @@ import { provideRouter } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptors,
+  withXsrfConfiguration,
+} from '@angular/common/http';
 import {
   authInterceptor,
   API_URL,
@@ -19,7 +23,13 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(
+      withInterceptors([authInterceptor]),
+      withXsrfConfiguration({
+        cookieName: 'XSRF-TOKEN',
+        headerName: 'X-XSRF-TOKEN',
+      })
+    ),
     provideEchartsCore({ echarts }),
     {
       provide: API_URL,

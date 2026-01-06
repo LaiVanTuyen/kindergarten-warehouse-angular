@@ -45,4 +45,8 @@ export class AdminLayoutComponent {
     }
     return name.substring(0, 2).toUpperCase();
   }
+
+  getAvatarUrl(url: string | undefined): string {
+    return this.authService.formatAvatarUrl(url);
+  }
 }
