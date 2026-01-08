@@ -1,58 +1,111 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { BannerService, Banner } from '@kindergarten-warehouse/data-access';
-import { Observable, Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-banner-slider',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './banner-slider.component.html',
   styles: [],
 })
 export class BannerSliderComponent implements OnInit, OnDestroy {
-  bannerService = inject(BannerService);
-  banners$: Observable<Banner[]> = this.bannerService.getBanners();
+  // Slider State
+  activeSlideIndex = 0;
+  private slideInterval: any;
+  private isPaused = false;
+  slides: Banner[] = [];
 
-  currentSlide = 0;
-  totalSlides = 0;
-  slideSubscription?: Subscription;
+  private bannerService = inject(BannerService);
 
   ngOnInit() {
-    this.banners$.subscribe((banners) => {
-      this.totalSlides = banners.length;
-      this.startAutoPlay();
+    this.loadBanners();
+  }
+
+  loadBanners() {
+    this.bannerService.getBanners().subscribe((data) => {
+      // Simulate Backend Logic: Filter active and Sort by displayOrder
+      this.slides = data
+        .filter((slide) => slide.isActive)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+      if (this.slides.length > 0) {
+        this.startAutoSlide();
+      }
     });
   }
 
   ngOnDestroy() {
-    this.stopAutoPlay();
+    this.stopAutoSlide();
   }
 
-  startAutoPlay() {
-    this.slideSubscription = interval(5000).subscribe(() => {
-      this.nextSlide();
-    });
+  startAutoSlide() {
+    this.stopAutoSlide(); // Clear existing if any
+    this.slideInterval = setInterval(() => {
+      if (!this.isPaused) {
+        this.activeSlideIndex =
+          (this.activeSlideIndex + 1) % this.slides.length;
+      }
+    }, 7000); // 7 seconds
   }
 
-  stopAutoPlay() {
-    if (this.slideSubscription) {
-      this.slideSubscription.unsubscribe();
+  stopAutoSlide() {
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
     }
   }
 
-  nextSlide() {
-    this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+  onMouseEnter() {
+    this.isPaused = true;
   }
 
-  prevSlide() {
-    this.currentSlide =
-      (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+  onMouseLeave() {
+    this.isPaused = false;
+    this.isDragging = false; // Reset drag
   }
 
-  goToSlide(index: number) {
-    this.currentSlide = index;
-    this.stopAutoPlay();
-    this.startAutoPlay(); // Restart timer
+  // Swipe Logic
+  private touchStartX = 0;
+  private touchEndX = 0;
+  private minSwipeDistance = 50;
+  private isDragging = false;
+
+  onTouchStart(e: TouchEvent) {
+    this.touchStartX = e.changedTouches[0].screenX;
+  }
+
+  onTouchEnd(e: TouchEvent) {
+    this.touchEndX = e.changedTouches[0].screenX;
+    this.handleSwipe();
+  }
+
+  onMouseDown(e: MouseEvent) {
+    this.isDragging = true;
+    this.touchStartX = e.clientX;
+  }
+
+  onMouseUp(e: MouseEvent) {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    this.touchEndX = e.clientX;
+    this.handleSwipe();
+  }
+
+  private handleSwipe() {
+    const swipeDistance = this.touchEndX - this.touchStartX;
+    if (Math.abs(swipeDistance) > this.minSwipeDistance) {
+      if (swipeDistance < 0) {
+        // Swipe Left -> Next Slide
+        this.activeSlideIndex =
+          (this.activeSlideIndex + 1) % this.slides.length;
+      } else {
+        // Swipe Right -> Prev Slide
+        this.activeSlideIndex =
+          (this.activeSlideIndex - 1 + this.slides.length) % this.slides.length;
+      }
+      // Reset timer on manual interaction
+      this.startAutoSlide();
+    }
   }
 }

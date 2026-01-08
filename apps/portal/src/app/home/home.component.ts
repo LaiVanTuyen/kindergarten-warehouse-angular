@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core'; // Added OnInit, OnDestroy
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
@@ -6,134 +6,23 @@ import { map } from 'rxjs';
 
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
+import { BannerSliderComponent } from '../banner-slider/banner-slider.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe, ResourceCardComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TranslatePipe,
+    ResourceCardComponent,
+    BannerSliderComponent,
+  ],
   templateUrl: './home.component.html',
   styles: [],
 })
-export class HomeComponent implements OnInit, OnDestroy {
-  // Implements OnInit
+export class HomeComponent {
   private resourceService = inject(ResourceService);
-
-  // Slider State
-  activeSlideIndex = 0;
-  private slideInterval: any;
-  private isPaused = false;
-  slides = [
-    {
-      title:
-        'Thế giới <span class="text-primary-500">Vui chơi</span> & <span class="text-secondary-600">Học tập</span>',
-      subtitle: 'Kho tài liệu phong phú, bài hát và câu chuyện hấp dẫn cho bé.',
-      image: '/assets/images/banner_fun_learning.png',
-      bgFrom: 'from-primary-50',
-      bgTo: 'to-secondary-50',
-    },
-    {
-      title:
-        'Đồng hành cùng <span class="text-purple-500">Giáo viên</span> & <span class="text-yellow-500">Phụ huynh</span>',
-      subtitle:
-        'Giáo án và hoạt động sáng tạo giúp khơi dậy tiềm năng của trẻ.',
-      image: '/assets/images/banner_teachers_parents.png',
-      bgFrom: 'from-purple-50',
-      bgTo: 'to-yellow-50',
-    },
-    {
-      title:
-        'Học mà <span class="text-green-500">Chơi</span>, Chơi mà <span class="text-blue-500">Học</span>',
-      subtitle: 'Trò chơi tương tác và video giáo dục thú vị.',
-      image: '/assets/images/banner_games.png',
-      bgFrom: 'from-green-50',
-      bgTo: 'to-blue-50',
-    },
-    {
-      title:
-        'Khơi nguồn <span class="text-pink-500">Sáng tạo</span> với <span class="text-orange-500">Nghệ thuật</span>',
-      subtitle: 'Tranh tô màu và thủ công giúp bé thỏa sức sáng tạo.',
-      image: '/assets/images/banner_art.png',
-      bgFrom: 'from-pink-50',
-      bgTo: 'to-orange-50',
-    },
-  ];
-
-  ngOnInit() {
-    this.startAutoSlide();
-  }
-
-  ngOnDestroy() {
-    this.stopAutoSlide();
-  }
-
-  startAutoSlide() {
-    this.stopAutoSlide(); // Clear existing if any
-    this.slideInterval = setInterval(() => {
-      if (!this.isPaused) {
-        this.activeSlideIndex =
-          (this.activeSlideIndex + 1) % this.slides.length;
-      }
-    }, 7000); // 7 seconds
-  }
-
-  stopAutoSlide() {
-    if (this.slideInterval) {
-      clearInterval(this.slideInterval);
-    }
-  }
-
-  onMouseEnter() {
-    this.isPaused = true;
-  }
-
-  onMouseLeave() {
-    this.isPaused = false;
-    this.isDragging = false; // Reset drag
-  }
-
-  // Swipe Logic
-  private touchStartX = 0;
-  private touchEndX = 0;
-  private minSwipeDistance = 50;
-  private isDragging = false;
-
-  onTouchStart(e: TouchEvent) {
-    this.touchStartX = e.changedTouches[0].screenX;
-  }
-
-  onTouchEnd(e: TouchEvent) {
-    this.touchEndX = e.changedTouches[0].screenX;
-    this.handleSwipe();
-  }
-
-  onMouseDown(e: MouseEvent) {
-    this.isDragging = true;
-    this.touchStartX = e.clientX;
-  }
-
-  onMouseUp(e: MouseEvent) {
-    if (!this.isDragging) return;
-    this.isDragging = false;
-    this.touchEndX = e.clientX;
-    this.handleSwipe();
-  }
-
-  private handleSwipe() {
-    const swipeDistance = this.touchEndX - this.touchStartX;
-    if (Math.abs(swipeDistance) > this.minSwipeDistance) {
-      if (swipeDistance < 0) {
-        // Swipe Left -> Next Slide
-        this.activeSlideIndex =
-          (this.activeSlideIndex + 1) % this.slides.length;
-      } else {
-        // Swipe Right -> Prev Slide
-        this.activeSlideIndex =
-          (this.activeSlideIndex - 1 + this.slides.length) % this.slides.length;
-      }
-      // Reset timer on manual interaction
-      this.startAutoSlide();
-    }
-  }
 
   // Categories for Icon Grid
   categories = [

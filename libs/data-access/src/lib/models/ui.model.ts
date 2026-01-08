@@ -1,6 +1,10 @@
 export interface Banner {
   id: number;
+  title: string;
+  subtitle: string;
   imageUrl: string; // Refactored from image_url
+  bgFrom: string;
+  bgTo: string;
   link: string;
   isActive: boolean; // Refactored from is_active
   displayOrder: number; // Refactored from display_order

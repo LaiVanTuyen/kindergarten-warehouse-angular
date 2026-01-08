@@ -5,7 +5,28 @@ import {
   FormGroup,
   ReactiveFormsModule,
   Validators,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
 } from '@angular/forms';
+
+// Custom Validator for Date Range
+export const dateRangeValidator: ValidatorFn = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const start = control.get('startDate')?.value;
+  const end = control.get('endDate')?.value;
+
+  if (start && end && new Date(start) > new Date(end)) {
+    return { dateRangeInvalid: true };
+  }
+  return null;
+};
+
+// URL Pattern
+const URL_PATTERN =
+  /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+
 import {
   DragDropModule,
   CdkDragDrop,
@@ -47,6 +68,9 @@ import { EmptyStateComponent } from '../shared/components/empty-state/empty-stat
       }
     `,
   ],
+  host: {
+    class: 'block h-full',
+  },
 })
 export class BannersComponent implements OnInit {
   banners = signal<Banner[]>([]);
@@ -64,16 +88,52 @@ export class BannersComponent implements OnInit {
   isDeleteModalOpen = signal(false);
   bannerToDelete = signal<Banner | null>(null);
 
+  // Gradient Themes
+  readonly gradientThemes = [
+    {
+      label: 'Primary (Blue/Cyan)',
+      from: 'from-primary-50',
+      to: 'to-secondary-50',
+      value: 'primary',
+    },
+    {
+      label: 'Creative (Purple/Yellow)',
+      from: 'from-purple-50',
+      to: 'to-yellow-50',
+      value: 'creative',
+    },
+    {
+      label: 'Nature (Green/Blue)',
+      from: 'from-green-50',
+      to: 'to-blue-50',
+      value: 'nature',
+    },
+    {
+      label: 'Artistic (Pink/Orange)',
+      from: 'from-pink-50',
+      to: 'to-orange-50',
+      value: 'artistic',
+    },
+  ];
+
   constructor(private fb: FormBuilder, private bannerService: BannerService) {
-    this.bannerForm = this.fb.group({
-      imageUrl: ['', [Validators.required]],
-      link: [''],
-      displayOrder: [0, [Validators.required, Validators.min(0)]],
-      isActive: [true],
-      startDate: [''],
-      endDate: [''],
-      platform: ['desktop'],
-    });
+    this.bannerForm = this.fb.group(
+      {
+        title: [''],
+        subtitle: [''],
+        theme: ['primary'],
+        bgFrom: ['from-primary-50'],
+        bgTo: ['to-secondary-50'],
+        imageUrl: ['', [Validators.required]],
+        link: ['', [Validators.pattern(URL_PATTERN)]],
+        displayOrder: [0, [Validators.required, Validators.min(0)]],
+        isActive: [true],
+        startDate: [''],
+        endDate: [''],
+        platform: ['desktop'],
+      },
+      { validators: dateRangeValidator }
+    );
   }
 
   ngOnInit() {
@@ -151,6 +211,11 @@ export class BannersComponent implements OnInit {
     this.isEditMode.set(false);
     this.currentBannerId = null;
     this.bannerForm.reset({
+      title: '',
+      subtitle: '',
+      theme: 'primary',
+      bgFrom: 'from-primary-50',
+      bgTo: 'to-secondary-50',
       imageUrl: '',
       link: '',
       displayOrder: this.banners().length + 1, // Default to next order
@@ -163,7 +228,18 @@ export class BannersComponent implements OnInit {
   openEditModal(banner: Banner) {
     this.isEditMode.set(true);
     this.currentBannerId = banner.id;
+
+    // Find matching theme
+    const matchingTheme = this.gradientThemes.find(
+      (t) => t.from === banner.bgFrom && t.to === banner.bgTo
+    );
+
     this.bannerForm.patchValue({
+      title: banner.title,
+      subtitle: banner.subtitle,
+      theme: matchingTheme ? matchingTheme.value : '',
+      bgFrom: banner.bgFrom,
+      bgTo: banner.bgTo,
       imageUrl: banner.imageUrl,
       link: banner.link,
       displayOrder: banner.displayOrder,
@@ -299,6 +375,37 @@ export class BannersComponent implements OnInit {
 
       reader.readAsDataURL(file);
     }
+  }
+
+  onThemeChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const selectedTheme = this.gradientThemes.find(
+      (t) => t.value === select.value
+    );
+
+    if (selectedTheme) {
+      this.bannerForm.patchValue({
+        bgFrom: selectedTheme.from,
+        bgTo: selectedTheme.to,
+      });
+
+      // Mark as dirty so Angular knows value changed (optional but good practice)
+      this.bannerForm.get('bgFrom')?.markAsDirty();
+      this.bannerForm.get('bgTo')?.markAsDirty();
+    }
+  }
+
+  // Text Helper: Insert Color Tag
+  insertColorTag(controlName: string, colorClass: string) {
+    const control = this.bannerForm.get(controlName);
+    if (!control) return;
+
+    const currentValue = control.value || '';
+    // Append at the end for simplicity (or we could use cursor position if we had reference to input)
+    const newValue = currentValue + ` <span class="${colorClass}">TEXT</span> `;
+
+    control.setValue(newValue);
+    control.markAsDirty();
   }
 
   closeDeleteModal() {

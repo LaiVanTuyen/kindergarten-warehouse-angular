@@ -119,11 +119,6 @@ export class ProfileComponent implements OnInit {
           this.toastService.show('Avatar updated successfully!', 'success');
 
           if (response.result) {
-            console.log(
-              'New Avatar URL from Backend:',
-              response.result.avatarUrl
-            ); // DEBUG
-
             // Format URL before saving
             const fixedUrl = this.formatAvatarUrl(response.result.avatarUrl);
 
