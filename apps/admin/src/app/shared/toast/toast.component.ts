@@ -8,7 +8,7 @@ import { ToastService } from '@kindergarten-warehouse/data-access';
   imports: [CommonModule],
   template: `
     <div
-      class="fixed top-20 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"
+      class="fixed top-20 right-4 z-[99999] flex flex-col gap-2 pointer-events-none"
     >
       <div
         *ngFor="let toast of toastService.toasts$ | async"

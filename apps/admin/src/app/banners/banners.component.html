@@ -172,6 +172,8 @@
       </div>
       }
     </div>
+
+
   </div>
 
   <!-- Create/Edit Modal (Advanced) -->
@@ -242,17 +244,37 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
               <div class="flex gap-2">
-                <label class="flex-1 cursor-pointer">
-                  <input type="radio" formControlName="platform" value="desktop" class="sr-only peer">
-                  <div
-                    class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-50 transition-all">
-                    Desktop</div>
+                <label
+                  class="flex-1 cursor-pointer rounded-lg border p-4 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 group">
+                  <input type="radio" formControlName="platform" value="WEB" class="hidden peer" />
+                  <div class="flex items-center justify-center gap-3">
+                    <!-- Monitor Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-6 h-6 text-gray-400 peer-checked:text-blue-600 group-has-[:checked]:text-blue-600"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <div class="font-medium text-gray-700 group-has-[:checked]:text-blue-700">Web</div>
+                  </div>
                 </label>
-                <label class="flex-1 cursor-pointer">
-                  <input type="radio" formControlName="platform" value="mobile" class="sr-only peer">
-                  <div
-                    class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-50 transition-all">
-                    Mobile</div>
+
+                <label
+                  class="flex-1 cursor-pointer rounded-lg border p-4 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 group">
+                  <input type="radio" formControlName="platform" value="MOBILE" class="hidden peer" />
+                  <div class="flex items-center justify-center gap-3">
+                    <!-- Mobile Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-6 h-6 text-gray-400 peer-checked:text-blue-600 group-has-[:checked]:text-blue-600"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                      <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    <div class="font-medium text-gray-700 group-has-[:checked]:text-blue-700">Mobile</div>
+                  </div>
                 </label>
               </div>
             </div>
@@ -264,15 +286,28 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-sm font-medium text-gray-700">Title (HTML Supported)</label>
-                <div class="flex gap-2">
-                  <button type="button" (click)="insertColorTag('title', 'text-primary-500', titleInput)"
-                    class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 cursor-pointer">
-                    + Blue
+                <div class="flex gap-1">
+                  <button *ngFor="let color of textColors" type="button"
+                    (click)="insertColorTag('title', color.class, titleInput)"
+                    [class]="'w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-offset-1 ring-transparent hover:ring-gray-300 ' + color.dotClass"
+                    [title]="'Color: ' + color.label">
                   </button>
-                  <button type="button" (click)="insertColorTag('title', 'text-secondary-600', titleInput)"
-                    class="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 cursor-pointer">
-                    + Orange
-                  </button>
+
+                  <!-- Custom Color Picker -->
+                  <div class="relative flex items-center justify-center w-5 h-5 group cursor-pointer"
+                    title="Custom Color">
+                    <div
+                      class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-orange-400 opacity-80 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <input type="color" #customTitleColor
+                      (change)="insertCustomColor('title', customTitleColor.value, titleInput); customTitleColor.value = '#000000'"
+                      class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                      stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                      class="relative z-0 pointer-events-none drop-shadow-sm">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </div>
                 </div>
               </div>
               <input type="text" formControlName="title" #titleInput placeholder="e.g. <b>Welcome</b> to our site"
@@ -282,7 +317,7 @@
               <div *ngIf="bannerForm.get('title')?.value"
                 class="mt-2 p-3 bg-gray-50 rounded border text-gray-800 text-lg font-bold">
                 <span class="text-xs text-gray-400 block mb-1">Preview:</span>
-                <span [innerHTML]="bannerForm.get('title')?.value"></span>
+                <span [innerHTML]="bannerForm.get('title')?.value | safeHtml"></span>
               </div>
             </div>
 
@@ -290,15 +325,28 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-sm font-medium text-gray-700">Subtitle</label>
-                <div class="flex gap-2">
-                  <button type="button" (click)="insertColorTag('subtitle', 'text-primary-500', subtitleInput)"
-                    class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 cursor-pointer">
-                    + Blue
+                <div class="flex gap-1">
+                  <button *ngFor="let color of textColors" type="button"
+                    (click)="insertColorTag('subtitle', color.class, subtitleInput)"
+                    [class]="'w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-offset-1 ring-transparent hover:ring-gray-300 ' + color.dotClass"
+                    [title]="'Color: ' + color.label">
                   </button>
-                  <button type="button" (click)="insertColorTag('subtitle', 'text-secondary-600', subtitleInput)"
-                    class="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 cursor-pointer">
-                    + Orange
-                  </button>
+
+                  <!-- Custom Color Picker -->
+                  <div class="relative flex items-center justify-center w-5 h-5 group cursor-pointer"
+                    title="Custom Color">
+                    <div
+                      class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-orange-400 opacity-80 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <input type="color" #customSubtitleColor
+                      (change)="insertCustomColor('subtitle', customSubtitleColor.value, subtitleInput); customSubtitleColor.value = '#000000'"
+                      class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                      stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                      class="relative z-0 pointer-events-none drop-shadow-sm">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </div>
                 </div>
               </div>
               <input type="text" formControlName="subtitle" #subtitleInput placeholder="Short description..."
@@ -307,14 +355,14 @@
               <!-- Live Preview -->
               <div *ngIf="bannerForm.get('subtitle')?.value" class="mt-2 p-3 bg-gray-50 rounded border text-gray-600">
                 <span class="text-xs text-gray-400 block mb-1">Preview:</span>
-                <span [innerHTML]="bannerForm.get('subtitle')?.value"></span>
+                <span [innerHTML]="bannerForm.get('subtitle')?.value | safeHtml"></span>
               </div>
             </div>
 
             <!-- Theme Selector -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Banner Theme</label>
-              <select (change)="onThemeChange($event)"
+              <select formControlName="theme" (change)="onThemeChange($event)"
                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
                 <option value="" disabled selected>Select a theme</option>
                 <option *ngFor="let theme of gradientThemes" [value]="theme.value">
@@ -388,13 +436,45 @@
             </div>
           </div>
         </div>
+
+        <!-- Metadata (Edit Mode Only) -->
+        <div *ngIf="isEditMode() && getSelectedBanner() as banner" class="mt-6 pt-4 border-t border-gray-100">
+          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Metadata</h4>
+          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+            <div>
+              <span class="block text-gray-400">ID</span>
+              <span class="font-mono text-gray-700">#{{ banner.id }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Platform</span>
+              <span class="font-medium text-gray-700 uppercase">{{ banner.platform }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created At</span>
+              <span>{{ banner.createdAt ? (banner.createdAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Last Updated</span>
+              <span>{{ banner.updatedAt ? (banner.updatedAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created By</span>
+              <span class="font-medium text-gray-700">{{ banner.createdBy || 'System/Unknown' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Updated By</span>
+              <span class="font-medium text-gray-700">{{ banner.updatedBy || 'System/Unknown' }}</span>
+            </div>
+          </div>
+        </div>
       </form>
 
       <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
         <button (click)="closeModal()"
           class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-        <button (click)="onSubmit()" [disabled]="bannerForm.invalid" type="submit"
-          class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">Save</button>
+        <button (click)="onSubmit()" [disabled]="bannerForm.invalid || (isEditMode() && !bannerForm.dirty)"
+          type="submit"
+          class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
       </div>
     </div>
   </div>

@@ -16,34 +16,45 @@ export class BannerSliderComponent implements OnInit, OnDestroy {
   private slideInterval: any;
   private isPaused = false;
   slides: Banner[] = [];
-
   private bannerService = inject(BannerService);
+  private refreshInterval: any;
 
   ngOnInit() {
     this.loadBanners();
+    // Auto-refresh data every 30 seconds to catch Admin updates
+    this.refreshInterval = setInterval(() => {
+      this.loadBanners();
+    }, 30000);
   }
 
   loadBanners() {
-    this.bannerService.getBanners().subscribe((data) => {
-      // Simulate Backend Logic: Filter active and Sort by displayOrder
-      this.slides = data
-        .filter((slide) => slide.isActive)
-        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    this.bannerService.getActiveBanners('WEB').subscribe({
+      next: (response: any) => {
+        if (response.result) {
+          const data = response.result || [];
+          this.slides = data;
 
-      if (this.slides.length > 0) {
-        this.startAutoSlide();
-      }
+          // Only start slider if not already running (first load)
+          if (this.slides.length > 0 && !this.slideInterval) {
+            this.startAutoSlide();
+          }
+        }
+      },
+      error: (err: any) => console.error('Failed to load portal banners', err),
     });
   }
 
   ngOnDestroy() {
     this.stopAutoSlide();
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   startAutoSlide() {
     this.stopAutoSlide(); // Clear existing if any
     this.slideInterval = setInterval(() => {
-      if (!this.isPaused) {
+      if (!this.isPaused && this.slides.length > 0) {
         this.activeSlideIndex =
           (this.activeSlideIndex + 1) % this.slides.length;
       }
@@ -53,6 +64,7 @@ export class BannerSliderComponent implements OnInit, OnDestroy {
   stopAutoSlide() {
     if (this.slideInterval) {
       clearInterval(this.slideInterval);
+      this.slideInterval = null;
     }
   }
 

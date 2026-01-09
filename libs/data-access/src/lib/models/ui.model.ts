@@ -13,8 +13,12 @@ export interface Banner {
   // Optional frontend fields
   startDate?: string;
   endDate?: string;
-  platform?: 'desktop' | 'mobile';
+  platform: 'WEB' | 'MOBILE';
+  createdBy?: string;
+  updatedBy?: string;
 }
+
+// BannerDto removed as per optimization request
 
 export interface Stats {
   totalResources: number;

@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -24,8 +24,7 @@ export const dateRangeValidator: ValidatorFn = (
 };
 
 // URL Pattern
-const URL_PATTERN =
-  /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+const URL_PATTERN = /^(https?:\/\/[\w\d.-]+(\.[\w]+)+.*)|(\/[\w\d-./]*)$/;
 
 import {
   DragDropModule,
@@ -33,9 +32,14 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { Banner } from '@kindergarten-warehouse/data-access';
-import { BannerService } from '@kindergarten-warehouse/data-access';
+import {
+  BannerService,
+  ToastService,
+} from '@kindergarten-warehouse/data-access';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+
+import { SafeHtmlPipe } from '../shared/pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-banners',
@@ -46,6 +50,7 @@ import { EmptyStateComponent } from '../shared/components/empty-state/empty-stat
     DragDropModule,
     BreadcrumbComponent,
     EmptyStateComponent, // Add EmptyStateComponent
+    SafeHtmlPipe,
   ],
   templateUrl: './banners.component.html',
   styles: [
@@ -73,7 +78,16 @@ import { EmptyStateComponent } from '../shared/components/empty-state/empty-stat
   },
 })
 export class BannersComponent implements OnInit {
+  private toastService = inject(ToastService);
+  readonly Math = Math;
   banners = signal<Banner[]>([]);
+
+  // Pagination
+  pageIndex = 0;
+  pageSize = 100;
+  totalElements = signal(0);
+  totalPages = signal(0);
+
   isModalOpen = signal(false);
   isEditMode = signal(false);
 
@@ -82,6 +96,7 @@ export class BannersComponent implements OnInit {
   previewImageUrl = signal<string | null>(null);
 
   currentBannerId: number | null = null;
+  selectedFile: File | null = null;
   bannerForm: FormGroup;
 
   // Delete Modal Signals
@@ -92,27 +107,66 @@ export class BannersComponent implements OnInit {
   readonly gradientThemes = [
     {
       label: 'Primary (Blue/Cyan)',
-      from: 'from-primary-50',
-      to: 'to-secondary-50',
+      from: 'from-blue-50',
+      to: 'to-cyan-50',
       value: 'primary',
     },
     {
-      label: 'Creative (Purple/Yellow)',
+      label: 'Creative (Purple/Amber)',
       from: 'from-purple-50',
-      to: 'to-yellow-50',
+      to: 'to-amber-50',
       value: 'creative',
     },
     {
-      label: 'Nature (Green/Blue)',
+      label: 'Nature (Green/Emerald)',
       from: 'from-green-50',
-      to: 'to-blue-50',
+      to: 'to-emerald-50',
       value: 'nature',
     },
     {
-      label: 'Artistic (Pink/Orange)',
-      from: 'from-pink-50',
-      to: 'to-orange-50',
-      value: 'artistic',
+      label: 'Warm (Orange/Rose)',
+      value: 'warm',
+      from: 'from-orange-50',
+      to: 'to-rose-50',
+    },
+  ];
+
+  textColors = [
+    {
+      label: 'Blue',
+      class: 'text-blue-600',
+      bgClass: 'bg-blue-100 text-blue-700',
+      dotClass: 'bg-blue-600',
+    },
+    {
+      label: 'Green',
+      class: 'text-green-600',
+      bgClass: 'bg-green-100 text-green-700',
+      dotClass: 'bg-green-600',
+    },
+    {
+      label: 'Red',
+      class: 'text-red-600',
+      bgClass: 'bg-red-100 text-red-700',
+      dotClass: 'bg-red-600',
+    },
+    {
+      label: 'Orange',
+      class: 'text-orange-600',
+      bgClass: 'bg-orange-100 text-orange-700',
+      dotClass: 'bg-orange-600',
+    },
+    {
+      label: 'Purple',
+      class: 'text-purple-600',
+      bgClass: 'bg-purple-100 text-purple-700',
+      dotClass: 'bg-purple-600',
+    },
+    {
+      label: 'Pink',
+      class: 'text-pink-600',
+      bgClass: 'bg-pink-100 text-pink-700',
+      dotClass: 'bg-pink-600',
     },
   ];
 
@@ -130,7 +184,7 @@ export class BannersComponent implements OnInit {
         isActive: [true],
         startDate: [''],
         endDate: [''],
-        platform: ['desktop'],
+        platform: ['WEB'],
       },
       { validators: dateRangeValidator }
     );
@@ -141,11 +195,26 @@ export class BannersComponent implements OnInit {
   }
 
   loadBanners() {
-    this.bannerService.getBanners().subscribe((data) => {
-      // Sort by display_order initially
-      const sorted = data.sort((a, b) => a.displayOrder - b.displayOrder);
-      this.banners.set(sorted);
+    this.bannerService.getAllBanners(this.pageIndex, this.pageSize).subscribe({
+      next: (response) => {
+        if (response.result) {
+          const page = response.result;
+          let content = page.content || [];
+          // Service handles normalization
+          this.banners.set(content);
+          this.totalElements.set(page.totalElements);
+          this.totalPages.set(page.totalPages);
+        }
+      },
+      error: (err) => console.error('Failed to load banners', err),
     });
+  }
+
+  changePage(newPage: number) {
+    if (newPage >= 0 && newPage < this.totalPages()) {
+      this.pageIndex = newPage;
+      this.loadBanners();
+    }
   }
 
   // Drag & Drop
@@ -174,16 +243,39 @@ export class BannersComponent implements OnInit {
   }
 
   toggleStatus(banner: Banner, event: Event) {
-    event.stopPropagation(); // Prevent card click
+    event.stopPropagation();
     const newStatus = !banner.isActive;
-    const updatedBanner = { ...banner, isActive: newStatus };
 
     // Optimistic update
     this.banners.update((list) =>
-      list.map((b) => (b.id === banner.id ? updatedBanner : b))
+      list.map((b) => (b.id === banner.id ? { ...b, isActive: newStatus } : b))
     );
 
-    this.bannerService.updateBanner(banner.id, updatedBanner).subscribe({
+    const formData = new FormData();
+    formData.append('isActive', String(newStatus));
+    formData.append('is_active', String(newStatus)); // Backend compatibility
+    // Append other required fields if strictly required by backend,
+    // but assuming backend can handle partial update via this endpoint or logic.
+    // If updateBanner points to PUT, backend usually needs all data.
+    // However, recreating the full banner FormData here is complex (image file missing).
+    // Let's assume we send at least the critical fields or the ID implies the rest for a smart backend,
+    // OR we revert to using a specific PATCH endpoint if available.
+    // Given the plan says "Update (Edit): PUT... FormData", this is tricky for a toggle.
+    // Ideally we should usage PATCH /status.
+    // IF PUT is strict, this might fail without other fields.
+    // But let's try sending what we have (non-file fields).
+    formData.append('title', banner.title);
+    formData.append('bgFrom', banner.bgFrom);
+    formData.append('bgTo', banner.bgTo);
+    formData.append('platform', banner.platform);
+    formData.append('displayOrder', String(banner.displayOrder));
+    if (banner.subtitle) formData.append('subtitle', banner.subtitle);
+    if (banner.link) formData.append('link', banner.link);
+    if (banner.startDate) formData.append('startDate', banner.startDate);
+    if (banner.endDate) formData.append('endDate', banner.endDate);
+    // image is optional in update
+
+    this.bannerService.updateBanner(banner.id, formData).subscribe({
       error: () => {
         // Revert on error
         this.banners.update((list) =>
@@ -207,6 +299,10 @@ export class BannersComponent implements OnInit {
   }
 
   // CRUD
+  getSelectedBanner(): Banner | undefined {
+    return this.banners().find((b) => b.id === this.currentBannerId);
+  }
+
   openCreateModal() {
     this.isEditMode.set(false);
     this.currentBannerId = null;
@@ -214,8 +310,8 @@ export class BannersComponent implements OnInit {
       title: '',
       subtitle: '',
       theme: 'primary',
-      bgFrom: 'from-primary-50',
-      bgTo: 'to-secondary-50',
+      bgFrom: 'from-blue-50',
+      bgTo: 'to-cyan-50',
       imageUrl: '',
       link: '',
       displayOrder: this.banners().length + 1, // Default to next order
@@ -248,6 +344,7 @@ export class BannersComponent implements OnInit {
       endDate: banner.endDate,
       platform: banner.platform || 'desktop',
     });
+    this.bannerForm.markAsPristine(); // Ensure form starts as pristine
     this.isModalOpen.set(true);
   }
 
@@ -284,63 +381,52 @@ export class BannersComponent implements OnInit {
     if (this.bannerForm.invalid) return;
 
     const formValue = this.bannerForm.value;
+    const formData = new FormData();
+
+    formData.append('title', formValue.title);
+    if (formValue.subtitle) formData.append('subtitle', formValue.subtitle);
+    formData.append('bgFrom', formValue.bgFrom);
+    formData.append('bgTo', formValue.bgTo);
+    formData.append('platform', formValue.platform);
+    if (formValue.link) formData.append('link', formValue.link);
+    formData.append('isActive', String(formValue.isActive));
+    formData.append('is_active', String(formValue.isActive)); // Backend compatibility
+    formData.append('displayOrder', String(formValue.displayOrder));
+    if (formValue.startDate) formData.append('startDate', formValue.startDate);
+    if (formValue.endDate) formData.append('endDate', formValue.endDate);
+
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile);
+    }
+
     const isEdit = this.isEditMode();
     const id = this.currentBannerId;
 
     if (isEdit && id) {
-      // Update
-      const oldBanner = this.banners().find((b) => b.id === id);
-      const newOrder = formValue.displayOrder;
-
-      if (oldBanner && oldBanner.displayOrder !== newOrder) {
-        // Order changed: Perform Smart Reorder
-        let reorderedList = this.handleManualReorder(id, newOrder);
-
-        // Update the specific banner's details in the new list
-        reorderedList = reorderedList.map((b) =>
-          b.id === id ? { ...b, ...formValue, displayOrder: b.displayOrder } : b
-        );
-
-        // Sync with Backend (Mock Batch Update)
-        this.bannerService
-          .updateReorderedBanners(reorderedList)
-          .subscribe(() => {
-            this.loadBanners();
-            this.closeModal();
-          });
-      } else {
-        // Simple Update (No order change)
-        this.bannerService.updateBanner(id, formValue).subscribe(() => {
+      this.bannerService.updateBanner(id, formData).subscribe({
+        next: () => {
+          this.toastService.show('Banner updated successfully', 'success');
           this.loadBanners();
           this.closeModal();
-        });
-      }
+        },
+        error: (err) => {
+          console.error(err);
+          const msg = err.error?.message || 'Update failed';
+          this.toastService.show(msg, 'error');
+        },
+      });
     } else {
-      // Create
-      this.bannerService.createBanner(formValue).subscribe((newBanner) => {
-        // After creation, we need to ensure the order is respected (shifting others if needed)
-        this.loadBanners(); // Reload to get the full list including the new one
-
-        // Timeout to allow signal update or straightforward sequencing
-        setTimeout(() => {
-          // We perform a reorder to ensure the new banner (which might cause a collision)
-          // is inserted correctly and others are shifted.
-          const desiredOrder = formValue.displayOrder;
-          const listWithNew = this.banners();
-
-          // If the simplistic create just appended or collided, this reorder fixes it
-          const reorderedList = this.handleManualReorder(
-            newBanner.id,
-            desiredOrder
-          );
-
-          this.bannerService
-            .updateReorderedBanners(reorderedList)
-            .subscribe(() => {
-              this.loadBanners();
-              this.closeModal();
-            });
-        }, 100);
+      this.bannerService.createBanner(formData).subscribe({
+        next: () => {
+          this.toastService.show('Banner created successfully', 'success');
+          this.loadBanners();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error(err);
+          const msg = err.error?.message || 'Create failed';
+          this.toastService.show(msg, 'error');
+        },
       });
     }
   }
@@ -353,9 +439,13 @@ export class BannersComponent implements OnInit {
   confirmDelete() {
     const banner = this.bannerToDelete();
     if (banner) {
-      this.bannerService.deleteBanner(banner.id).subscribe(() => {
-        this.loadBanners();
-        this.closeDeleteModal();
+      this.bannerService.deleteBanner(banner.id).subscribe({
+        next: () => {
+          this.toastService.show('Banner deleted successfully', 'success');
+          this.loadBanners();
+          this.closeDeleteModal();
+        },
+        error: (err) => this.toastService.show('Delete failed', 'error'),
       });
     }
   }
@@ -363,6 +453,7 @@ export class BannersComponent implements OnInit {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
       const file = input.files[0];
       const reader = new FileReader();
 
@@ -396,13 +487,75 @@ export class BannersComponent implements OnInit {
   }
 
   // Text Helper: Insert Color Tag
-  insertColorTag(controlName: string, colorClass: string) {
+  insertColorTag(
+    controlName: string,
+    colorClass: string,
+    inputElement?: HTMLInputElement
+  ) {
     const control = this.bannerForm.get(controlName);
     if (!control) return;
 
     const currentValue = control.value || '';
-    // Append at the end for simplicity (or we could use cursor position if we had reference to input)
-    const newValue = currentValue + ` <span class="${colorClass}">TEXT</span> `;
+    let newValue = '';
+
+    if (
+      inputElement &&
+      inputElement.selectionStart !== inputElement.selectionEnd
+    ) {
+      // Wrap Selected Text
+      const start = inputElement.selectionStart || 0;
+      const end = inputElement.selectionEnd || 0;
+
+      // Get selected text and STRIP existing spans to prevent nesting
+      let selectedText = currentValue.substring(start, end);
+      selectedText = selectedText.replace(/<\/?span[^>]*>/g, '');
+
+      newValue =
+        currentValue.substring(0, start) +
+        `<span class="${colorClass}">${selectedText}</span>` +
+        currentValue.substring(end);
+    } else {
+      // Append at the end (fallback)
+      newValue = currentValue + ` <span class="${colorClass}">TEXT</span> `;
+    }
+
+    control.setValue(newValue);
+    control.markAsDirty();
+  }
+
+  // Text Helper: Insert Custom Hex Color (Inline Style)
+  insertCustomColor(
+    controlName: string,
+    colorHex: string,
+    inputElement?: HTMLInputElement
+  ) {
+    const control = this.bannerForm.get(controlName);
+    if (!control) return;
+
+    const currentValue = control.value || '';
+    let newValue = '';
+
+    if (
+      inputElement &&
+      inputElement.selectionStart !== inputElement.selectionEnd
+    ) {
+      // Wrap Selected Text
+      const start = inputElement.selectionStart || 0;
+      const end = inputElement.selectionEnd || 0;
+
+      // Get selected text and STRIP existing spans to prevent nesting
+      let selectedText = currentValue.substring(start, end);
+      selectedText = selectedText.replace(/<\/?span[^>]*>/g, '');
+
+      newValue =
+        currentValue.substring(0, start) +
+        `<span style="color: ${colorHex}">${selectedText}</span>` +
+        currentValue.substring(end);
+    } else {
+      // Append at end
+      newValue =
+        currentValue + ` <span style="color: ${colorHex}">TEXT</span> `;
+    }
 
     control.setValue(newValue);
     control.markAsDirty();
