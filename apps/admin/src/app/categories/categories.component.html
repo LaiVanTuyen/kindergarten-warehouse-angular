@@ -57,19 +57,24 @@
         <table class="w-full text-left border-collapse">
           <thead class="bg-slate-50 sticky top-0 z-10">
             <tr class="border-b border-gray-100">
-              <th class="px-8 py-5 pl-8 w-16"></th> <!-- Expand status -->
-              <th class="px-6 py-5 w-24">Icon</th>
-              <th class="px-6 py-5">Name & Description</th>
-              <th class="px-6 py-5">Topics</th>
+              <th class="px-8 py-5 pl-8 w-12"></th> <!-- Expand status -->
+              <th class="px-6 py-5 w-20">Icon</th>
+              <th class="px-6 py-5 w-1/4">Name</th>
+              <th class="px-6 py-5 w-1/3">Description</th>
+              <th class="px-6 py-5 text-center">Topics</th>
               <th class="px-6 py-5 text-right pr-8">Actions</th>
             </tr>
           </thead>
           <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
             <ng-container *ngFor="let cat of categories()">
               <!-- Category Row -->
-              <tr class="hover:bg-slate-50/80 transition-all group cursor-pointer" (click)="toggleExpand(cat.id)">
+              <tr class="hover:bg-slate-50/80 transition-all group cursor-pointer" 
+                  (click)="toggleExpand(cat.id)" 
+                  (keydown.enter)="toggleExpand(cat.id)"
+                  (keydown.space)="toggleExpand(cat.id)"
+                  tabindex="0">
                 <!-- Expand Icon -->
-                <td class="px-8 py-4 pl-8 text-gray-400">
+                <td class="px-8 py-6 pl-8 text-gray-400">
                   <svg [class.rotate-90]="expandedCategoryIds().has(cat.id)"
                     class="transition-transform duration-200 w-5 h-5" xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -78,7 +83,7 @@
                   </svg>
                 </td>
                 <!-- Icon -->
-                <td class="px-6 py-4">
+                <td class="px-6 py-6">
                   <div
                     class="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden text-2xl shadow-sm group-hover:border-blue-200 group-hover:shadow-md transition-all">
                     <img *ngIf="cat.icon.startsWith('data:')" [src]="cat.icon" alt="Category Icon"
@@ -87,19 +92,27 @@
                   </div>
                 </td>
                 <!-- Name -->
-                <td class="px-6 py-4">
-                  <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-base">{{ cat.name
-                    }}</div>
-                  <div class="text-xs text-gray-400 font-mono mt-1">{{ cat.slug }}</div>
+                <td class="px-6 py-6">
+                  <div class="flex flex-col gap-1.5">
+                    <span class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-base">{{ cat.name }}</span>
+                    <span class="w-fit text-[10px] bg-slate-100 text-slate-500 py-0.5 px-2 rounded-full font-mono border border-slate-200">{{ cat.slug }}</span>
+                  </div>
+                </td>
+                <!-- Description -->
+                <td class="px-6 py-6">
+                  <div *ngIf="cat.description" class="text-sm text-gray-500 leading-relaxed line-clamp-2" [title]="cat.description">
+                    {{ cat.description }}
+                  </div>
+                   <div *ngIf="!cat.description" class="text-xs text-gray-300 italic">No description</div>
                 </td>
                 <!-- Topic Count -->
-                <td class="px-6 py-4">
-                  <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-bold">
-                    {{ getTopicsForCategory(cat.id).length }} Topics
+                <td class="px-6 py-6 text-center">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                    {{ cat.topicCount || 0 }}
                   </span>
                 </td>
                 <!-- Actions -->
-                <td class="px-6 py-4 text-right pr-8">
+                <td class="px-6 py-6 text-right pr-8">
                   <div class="flex justify-end gap-2 text-gray-400" (click)="$event.stopPropagation()">
                     <button (click)="openEditCategory(cat)"
                       class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -128,38 +141,52 @@
               <!-- Nested Topics Rows -->
               <tr *ngIf="expandedCategoryIds().has(cat.id)" class="bg-gray-50/50 animate-fade-in-down">
                 <td colspan="5" class="py-0 px-0">
-                  <div class="px-16 py-4 border-b border-gray-100">
-                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <span>Topics in {{ cat.name }}</span>
-                      <!-- Quick Add Topic for this category -->
-                    </h4>
+                  <!-- Loading State -->
+                  <div *ngIf="loadingTopicsState()[cat.id]" class="p-8 flex justify-center items-center text-gray-400">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading topics...
+                  </div>
 
-                    <div *ngIf="getTopicsForCategory(cat.id).length === 0" class="text-gray-400 text-sm italic py-2">
-                      No topics yet.
+                  <!-- Topics Content -->
+                  <div *ngIf="!loadingTopicsState()[cat.id]" class="px-12 py-8 border-b border-gray-100 bg-white">
+                    <div class="flex justify-between items-center mb-6 pl-1">
+                      <h4 class="text-xs font-extrabold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                        Topics in <span class="text-blue-600">{{ cat.name }}</span>
+                      </h4>
+                      <button (click)="openCreateTopic(cat.id)"
+                        class="text-xs font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all shadow-sm hover:shadow flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Topic
+                      </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <div *ngFor="let topic of getTopicsForCategory(cat.id)"
-                        class="bg-white border p-3 rounded-lg flex justify-between items-center group/topic hover:border-blue-300 hover:shadow-sm transition-all">
-                        <span class="font-medium text-gray-700 text-sm">{{ topic.title }}</span>
-                        <div class="flex gap-1 opacity-0 group-hover/topic:opacity-100 transition-opacity">
-                          <button (click)="openEditTopic(topic)"
-                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><svg xmlns="http://www.w3.org/2000/svg"
-                              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg></button>
-                          <button (click)="confirmDeleteTopic(topic.id)"
-                            class="p-1.5 text-red-600 hover:bg-red-50 rounded"><svg xmlns="http://www.w3.org/2000/svg"
-                              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path
-                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-                              <line x1="10" y1="11" x2="10" y2="17" />
-                              <line x1="14" y1="11" x2="14" y2="17" />
-                            </svg></button>
+                    <div *ngIf="getTopicsForCategory(cat.id).length === 0" class="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                      <p class="text-sm text-gray-400 font-medium">No topics yet.</p>
+                      <button (click)="openCreateTopic(cat.id)" class="text-sm font-bold text-blue-600 hover:underline mt-2">Create the first one</button>
+                    </div>
+
+                    <div *ngIf="getTopicsForCategory(cat.id).length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div *ngFor="let topic of getTopicsForCategory(cat.id)" 
+                           class="group flex items-center justify-between p-4 bg-slate-50 hover:bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md rounded-2xl transition-all duration-200 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white"
+                           tabindex="0"
+                           (keydown.enter)="openEditTopic(topic)">
+                        <div class="flex items-center gap-3">
+                           <div class="w-2.5 h-2.5 rounded-full ring-2 ring-white" [ngClass]="topic.isActive ? 'bg-emerald-400' : 'bg-slate-300'"></div>
+                           <div>
+                             <div class="font-bold text-gray-700 text-sm group-hover:text-blue-700 transition-colors">{{ topic.name }}</div>
+                             <div class="text-[10px] text-gray-400 font-mono mt-0.5">{{ topic.slug }}</div>
+                           </div>
+                        </div>
+                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                          <button (click)="openEditTopic(topic)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" title="Edit Topic">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          </button>
+                          <button (click)="confirmDeleteTopic(topic)" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500" title="Delete Topic">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -253,6 +280,14 @@
             class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium">
         </div>
 
+        <div>
+          <label for="categoryDescriptionInput"
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description (Optional)</label>
+          <textarea id="categoryDescriptionInput" formControlName="description" placeholder="Short description of this category"
+            rows="3"
+            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium resize-none"></textarea>
+        </div>
+
         <div class="flex justify-end gap-3 pt-4">
           <button type="button" (click)="closeModals()"
             class="px-6 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">Cancel</button>
@@ -260,6 +295,37 @@
             class="px-6 py-3.5 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 disabled:opacity-50 shadow-lg shadow-slate-200 active:scale-95 transition-all">Save
             Category</button>
         </div>
+        <!-- Metadata (Edit Mode Only) -->
+        <div *ngIf="isEditMode() && getSelectedCategory() as category" class="mt-6 pt-4 border-t border-gray-100">
+          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Metadata</h4>
+          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+            <div>
+              <span class="block text-gray-400">ID</span>
+              <span class="font-mono text-gray-700">#{{ category.id }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Platform</span>
+              <span class="font-medium text-gray-700 uppercase">{{ category.platform || 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created At</span>
+              <span>{{ category.createdAt ? (category.createdAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Last Updated</span>
+              <span>{{ category.updatedAt ? (category.updatedAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created By</span>
+              <span class="font-medium text-gray-700">{{ category.createdBy || 'System' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Updated By</span>
+              <span class="font-medium text-gray-700">{{ category.updatedBy || 'System' }}</span>
+            </div>
+          </div>
+        </div>
+
       </form>
     </div>
   </div>
@@ -289,10 +355,16 @@
 
       <form [formGroup]="topicForm" (ngSubmit)="submitTopic()" class="p-8 space-y-6">
         <div>
-          <label for="topicTitleInput" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topic
-            Title <span class="text-rose-500">*</span></label>
-          <input id="topicTitleInput" type="text" formControlName="title" placeholder="e.g. Alphabet"
+          <label for="topicNameInput" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topic
+            Name <span class="text-rose-500">*</span></label>
+          <input id="topicNameInput" type="text" formControlName="name" placeholder="e.g. Alphabet"
             class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium">
+        </div>
+
+        <div>
+          <label for="topicDescriptionInput" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
+          <textarea id="topicDescriptionInput" formControlName="description" rows="3" placeholder="Enter topic description..."
+            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium resize-none"></textarea>
         </div>
 
         <div>
@@ -312,6 +384,36 @@
           <button type="submit" [disabled]="topicForm.invalid"
             class="px-6 py-3.5 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 disabled:opacity-50 shadow-lg shadow-slate-200 active:scale-95 transition-all">Save
             Topic</button>
+        </div>
+        <!-- Metadata (Edit Mode Only) -->
+        <div *ngIf="isEditMode() && getSelectedTopic() as topic" class="mt-6 pt-4 border-t border-gray-100">
+          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Metadata</h4>
+          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+            <div>
+              <span class="block text-gray-400">ID</span>
+              <span class="font-mono text-gray-700">#{{ topic.id }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Status</span>
+              <span class="font-medium text-gray-700 uppercase">{{ topic.isActive ? 'Active' : 'Inactive' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created At</span>
+              <span>{{ topic.createdAt ? (topic.createdAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Last Updated</span>
+              <span>{{ topic.updatedAt ? (topic.updatedAt | date:'medium') : 'N/A' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Created By</span>
+              <span class="font-medium text-gray-700">{{ topic.createdBy || 'System' }}</span>
+            </div>
+            <div>
+              <span class="block text-gray-400">Updated By</span>
+              <span class="font-medium text-gray-700">{{ topic.updatedBy || 'System' }}</span>
+            </div>
+          </div>
         </div>
       </form>
     </div>

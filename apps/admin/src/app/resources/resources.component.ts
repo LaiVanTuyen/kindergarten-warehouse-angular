@@ -580,6 +580,6 @@ export class ResourcesComponent {
   getTopicTitle(topicId?: string): string {
     if (!topicId) return 'General';
     const topic = this.topics().find((t) => t.id === topicId);
-    return topic ? topic.title : 'General';
+    return topic ? topic.name : 'General';
   }
 }

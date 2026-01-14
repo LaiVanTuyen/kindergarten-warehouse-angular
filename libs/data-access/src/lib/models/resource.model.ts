@@ -93,14 +93,30 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  description?: string;
   icon: string;
+  topicCount?: number;
+  // Metadata
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  platform?: 'WEB' | 'MOBILE' | 'BOTH';
+  isActive?: boolean;
 }
 
 export interface Topic {
   id: string;
-  title: string;
-  categoryId: string;
+  name: string;
   slug: string;
+  description?: string;
+  categoryId: string;
+  // Metadata
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  isActive?: boolean;
 }
 
 export interface AgeGroup {

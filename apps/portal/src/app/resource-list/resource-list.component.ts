@@ -139,7 +139,7 @@ export class ResourceListComponent implements OnInit, OnDestroy {
           const topic = this.topicsCache[catId].find(
             (t) => String(t.id) === String(selectedTopicId)
           );
-          if (topic) return topic.title;
+          if (topic) return topic.name;
         }
       }
 
@@ -188,10 +188,10 @@ export class ResourceListComponent implements OnInit, OnDestroy {
           );
 
           if (parentCat) {
-            return [...base, parentCat.name, foundTopic.title];
+            return [...base, parentCat.name, foundTopic.name];
           } else {
             // Fallback if parent not found but topic exists (shouldn't happen)
-            return [...base, foundTopic.title];
+            return [...base, foundTopic.name];
           }
         }
       }

@@ -17,6 +17,7 @@ import {
 } from '@kindergarten-warehouse/data-access';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import { ToastService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-admin-categories',
@@ -43,10 +44,13 @@ export class CategoriesComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   categoryService = inject(CategoryService);
+  toastService = inject(ToastService);
 
   // Data Signals (Manual refresh pattern since service is mock-mutable)
   categories = signal<Category[]>([]);
   topics = signal<Topic[]>([]);
+  loadingTopicsState = signal<Record<string, boolean>>({});
+  loadedCategoryIds = new Set<string>();
 
   protected Math = Math;
 
@@ -77,11 +81,13 @@ export class CategoriesComponent {
     this.categoryForm = this.fb.group({
       name: ['', Validators.required],
       slug: [''], // Auto-generated if empty
+      description: [''],
       icon: ['', Validators.required],
     });
 
     this.topicForm = this.fb.group({
-      title: ['', Validators.required],
+      name: ['', Validators.required],
+      description: [''],
       categoryId: ['', Validators.required],
     });
 
@@ -99,28 +105,49 @@ export class CategoriesComponent {
 
   loadData() {
     this.loadCategories();
-    this.loadTopics();
+    // Don't load topics initially - lazy load them
   }
 
   loadCategories() {
     const search = this.searchControl.value || '';
     this.categoryService
       .getCategories(this.currentPageCategories(), this.pageSize(), search)
-      .subscribe((response) => {
-        this.categories.set(response.data);
-        this.totalCategories.set(response.total);
+      .subscribe({
+        next: (response) => {
+          this.categories.set(response.data);
+          this.totalCategories.set(response.total);
+        },
+        error: (err: any) => {
+          this.toastService.show('Failed to load categories', 'error');
+          console.error(err);
+        },
       });
   }
 
-  loadTopics() {
-    // Load ALL topics (or a large page) to populate the tree view
-    // In a real app, we would fetch topics per category on expand, or use a specific endpoint
-    // For this mock, we'll fetch a large page of topics
-    this.categoryService
-      .getTopics(undefined, 1, 1000, '')
-      .subscribe((response) => {
-        this.topics.set(response.data);
-      });
+  loadTopicsForCategory(categoryId: string) {
+    this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: true }));
+    
+    // Simulate network delay for realistic lazy loading experience
+    setTimeout(() => {
+        this.categoryService
+        .getTopics(categoryId, 1, 1000, '') // Load all topics for this category
+        .subscribe({
+            next: (response) => {
+            // Merge new topics, avoiding duplicates
+            this.topics.update((current) => {
+                const filtered = current.filter((t) => t.categoryId !== categoryId);
+                return [...filtered, ...response.data];
+            });
+            this.loadedCategoryIds.add(categoryId);
+            this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
+            },
+            error: (err: any) => {
+            this.toastService.show('Failed to load topics', 'error');
+            this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
+            console.error(err);
+            },
+        });
+    }, 500); 
   }
 
   toggleExpand(categoryId: string) {
@@ -130,6 +157,10 @@ export class CategoriesComponent {
         newSet.delete(categoryId);
       } else {
         newSet.add(categoryId);
+        // Trigger lazy load if not loaded
+        if (!this.loadedCategoryIds.has(categoryId)) {
+          this.loadTopicsForCategory(categoryId);
+        }
       }
       return newSet;
     });
@@ -187,6 +218,7 @@ export class CategoriesComponent {
     this.categoryForm.patchValue({
       name: category.name,
       slug: category.slug,
+      description: category.description,
       icon: category.icon,
     });
     this.isCategoryModalOpen.set(true);
@@ -226,17 +258,14 @@ export class CategoriesComponent {
 
   // --- Topic Methods ---
 
-  openCreateTopic() {
+  openCreateTopic(categoryId?: string) {
     this.isEditMode.set(false);
     this.currentId = null;
-    this.topicForm.reset();
-
-    // If viewing topics tab, maybe default? For now clean reset.
-    if (this.categories().length > 0) {
-      // Auto-select first category for convenience
-      this.topicForm.patchValue({ categoryId: this.categories()[0].id });
-    }
-
+    this.topicForm.reset({ 
+      name: '', 
+      description: '',
+      categoryId: categoryId || '' 
+    });
     this.isTopicModalOpen.set(true);
   }
 
@@ -244,7 +273,8 @@ export class CategoriesComponent {
     this.isEditMode.set(true);
     this.currentId = topic.id;
     this.topicForm.patchValue({
-      title: topic.title,
+      name: topic.name,
+      description: topic.description,
       categoryId: topic.categoryId,
     });
     this.isTopicModalOpen.set(true);
@@ -258,14 +288,25 @@ export class CategoriesComponent {
       this.categoryService
         .updateTopic(this.currentId, formValue)
         .subscribe(() => {
+          this.refreshCategoryTopics(formValue.categoryId);
           this.loadData();
           this.closeModals();
         });
     } else {
       this.categoryService.createTopic(formValue).subscribe(() => {
+        this.refreshCategoryTopics(formValue.categoryId);
         this.loadData();
         this.closeModals();
       });
+    }
+  }
+
+  refreshCategoryTopics(categoryId: string) {
+    if (categoryId && this.loadedCategoryIds.has(categoryId)) {
+      this.loadedCategoryIds.delete(categoryId);
+      if (this.expandedCategoryIds().has(categoryId)) {
+        this.loadTopicsForCategory(categoryId);
+      }
     }
   }
 
@@ -276,8 +317,8 @@ export class CategoriesComponent {
     this.isDeleteModalOpen.set(true);
   }
 
-  confirmDeleteTopic(id: string) {
-    this.itemToDelete = { type: 'topic', id };
+  confirmDeleteTopic(topic: Topic) {
+    this.itemToDelete = { type: 'topic', id: topic.id };
     this.isDeleteModalOpen.set(true);
   }
 
@@ -292,7 +333,16 @@ export class CategoriesComponent {
           this.closeModals();
         });
     } else {
+      // For topic deletion, we need to know the categoryId to refresh
+      // Since itemToDelete only has ID, we need to find the topic first to get its categoryId
+      // But mock service deleteTopic doesn't return the deleted item
+      // We'll try to find it in our current list before deleting, or just reload all expanded?
+      // Better: find it in local state
+      const topic = this.topics().find(t => t.id === this.itemToDelete?.id);
+      const catId = topic?.categoryId;
+
       this.categoryService.deleteTopic(this.itemToDelete.id).subscribe(() => {
+        if (catId) this.refreshCategoryTopics(catId);
         this.loadData();
         this.closeModals();
       });
@@ -310,5 +360,13 @@ export class CategoriesComponent {
 
   getCategoryName(id: string): string {
     return this.categories().find((c) => c.id === id)?.name || 'Unknown';
+  }
+
+  getSelectedCategory(): Category | undefined {
+    return this.categories().find((c) => c.id === this.currentId);
+  }
+
+  getSelectedTopic(): Topic | undefined {
+    return this.topics().find((t) => t.id === this.currentId);
   }
 }
