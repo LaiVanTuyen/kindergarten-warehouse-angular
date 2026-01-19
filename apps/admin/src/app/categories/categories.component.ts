@@ -46,7 +46,7 @@ export class CategoriesComponent {
   categoryService = inject(CategoryService);
   toastService = inject(ToastService);
 
-  // Data Signals (Manual refresh pattern since service is mock-mutable)
+  // Data Signals
   categories = signal<Category[]>([]);
   topics = signal<Topic[]>([]);
   loadingTopicsState = signal<Record<string, boolean>>({});
@@ -128,26 +128,24 @@ export class CategoriesComponent {
     this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: true }));
     
     // Simulate network delay for realistic lazy loading experience
-    setTimeout(() => {
-        this.categoryService
-        .getTopics(categoryId, 1, 1000, '') // Load all topics for this category
-        .subscribe({
-            next: (response) => {
-            // Merge new topics, avoiding duplicates
-            this.topics.update((current) => {
-                const filtered = current.filter((t) => t.categoryId !== categoryId);
-                return [...filtered, ...response.data];
-            });
-            this.loadedCategoryIds.add(categoryId);
-            this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
-            },
-            error: (err: any) => {
-            this.toastService.show('Failed to load topics', 'error');
-            this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
-            console.error(err);
-            },
-        });
-    }, 500); 
+    this.categoryService
+      .getTopics(categoryId, 1, 1000, '') // Load all topics for this category
+      .subscribe({
+        next: (response) => {
+          // Merge new topics, avoiding duplicates
+          this.topics.update((current) => {
+            const filtered = current.filter((t) => t.categoryId !== categoryId);
+            return [...filtered, ...response.data];
+          });
+          this.loadedCategoryIds.add(categoryId);
+          this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
+        },
+        error: (err: any) => {
+          this.toastService.show('Failed to load topics', 'error');
+          this.loadingTopicsState.update((s) => ({ ...s, [categoryId]: false }));
+          console.error(err);
+        },
+      }); 
   }
 
   toggleExpand(categoryId: string) {
@@ -364,6 +362,20 @@ export class CategoriesComponent {
 
   getSelectedCategory(): Category | undefined {
     return this.categories().find((c) => c.id === this.currentId);
+  }
+
+  getIconUrl(icon: string | undefined): string {
+    if (!icon) return '';
+    if (icon.startsWith('data:') || icon.startsWith('http') || icon.startsWith('/')) {
+      return icon;
+    }
+    // Assumption: Backend serves files at /api/v1/files/{filename}
+    // Only apply this transformation if it looks like a filename (not emoji)
+    // Simple heuristic: length > 4 (e.g. x.png)
+    if (icon.length > 4) {
+        return `/api/v1/files/${icon}`;
+    }
+    return icon;
   }
 
   getSelectedTopic(): Topic | undefined {

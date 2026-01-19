@@ -58,6 +58,7 @@
       "options": {
         "proxyConfig": "proxy.conf.json",
         "port": 4201,
+
         "buildTarget": "portal:build"
       },
       "configurations": {

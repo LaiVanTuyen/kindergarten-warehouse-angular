@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
-import { map } from 'rxjs';
+import { map, catchError, of } from 'rxjs';
 
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
@@ -67,7 +67,13 @@ export class HomeComponent {
   // Get latest 4 resources
   latestResources$ = this.resourceService
     .getResources({ page: 0, size: 4, status: 'APPROVED' })
-    .pipe(map((res) => res.data.content));
+    .pipe(
+      map((res) => res.data.content),
+      catchError((err) => {
+        console.error('Error fetching latest resources:', err);
+        return of([]);
+      })
+    );
 
   downloadResource(resource: Resource) {
     if (resource.fileUrl) {

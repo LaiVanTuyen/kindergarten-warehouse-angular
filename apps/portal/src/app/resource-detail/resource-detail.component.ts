@@ -63,16 +63,14 @@ export class ResourceDetailComponent {
       const topicId = resource.topicId;
 
       return combineLatest([
-        this.categoryService.getCategories(),
-        this.categoryService.getAllTopicsMock(),
+        this.categoryService.getCategories(1, 100), // Fetch reasonable amount
+        this.categoryService.getTopics(undefined, 1, 1000) // Fetch all (bad practice but needed for client-side join without getTopicById)
       ]).pipe(
-        map(([categories, topics]) => {
-          const topic = topics.find((t) => t.id === topicId);
+        map(([categoriesResp, topicsResp]) => {
+          const topic = topicsResp.data.find((t: any) => t.id === topicId);
           const category = topic
-            ? categories.data.find((c) => c.id === topic.categoryId)
+            ? categoriesResp.data.find((c: any) => c.id === topic.categoryId)
             : null;
-          // Fallback if topic not found but resource has explicit category?
-          // Usually resource only has topicId based on model.
           return { category: category || null, topic: topic || null };
         })
       );

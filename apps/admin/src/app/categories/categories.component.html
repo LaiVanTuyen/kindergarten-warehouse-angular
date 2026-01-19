@@ -86,9 +86,12 @@
                 <td class="px-6 py-6">
                   <div
                     class="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden text-2xl shadow-sm group-hover:border-blue-200 group-hover:shadow-md transition-all">
-                    <img *ngIf="cat.icon.startsWith('data:')" [src]="cat.icon" alt="Category Icon"
-                      class="w-full h-full object-cover">
-                    <span *ngIf="!cat.icon.startsWith('data:')" role="img" aria-label="icon">{{ cat.icon }}</span>
+                    <img *ngIf="getIconUrl(cat.icon).startsWith('data:') || getIconUrl(cat.icon).startsWith('http') || getIconUrl(cat.icon).startsWith('/')" 
+                         [src]="getIconUrl(cat.icon)" 
+                         alt="Category Icon"
+                         class="w-full h-full object-cover">
+                    <span *ngIf="!(getIconUrl(cat.icon).startsWith('data:') || getIconUrl(cat.icon).startsWith('http') || getIconUrl(cat.icon).startsWith('/'))" 
+                          role="img" aria-label="icon">{{ cat.icon || '📁' }}</span>
                   </div>
                 </td>
                 <!-- Name -->
