@@ -16,6 +16,7 @@ import {
   environment,
 } from '@kindergarten-warehouse/data-access';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideToastr } from 'ngx-toastr';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,6 +37,12 @@ export const appConfig: ApplicationConfig = {
       })
     ),
     provideAnimations(),
+    provideToastr({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+      progressBar: true,
+    }),
     { provide: API_URL, useValue: environment.apiUrl },
   ],
 };

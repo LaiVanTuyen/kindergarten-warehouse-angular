@@ -44,14 +44,12 @@
             <div>
                 <h4 class="font-bold text-gray-900 mb-6 text-lg">Danh mục</h4>
                 <ul class="space-y-3 text-sm">
-                    <li><a routerLink="/resources" [queryParams]="{ category: 'c1' }"
-                            class="text-gray-500 hover:text-primary-500 transition-colors">Thủ công & Mỹ thuật</a></li>
-                    <li><a routerLink="/resources" [queryParams]="{ category: 'c2' }"
-                            class="text-gray-500 hover:text-primary-500 transition-colors">Giờ kể chuyện</a></li>
-                    <li><a routerLink="/resources" [queryParams]="{ category: 'c3' }"
-                            class="text-gray-500 hover:text-primary-500 transition-colors">Câu đố toán học</a></li>
-                    <li><a routerLink="/resources" [queryParams]="{ category: 'c4' }"
-                            class="text-gray-500 hover:text-primary-500 transition-colors">Âm nhạc & Bước nhảy</a></li>
+                    <li *ngFor="let cat of categories$ | async">
+                        <a [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
+                            class="text-gray-500 hover:text-primary-500 transition-colors">
+                            {{ cat.name }}
+                        </a>
+                    </li>
                 </ul>
             </div>
 

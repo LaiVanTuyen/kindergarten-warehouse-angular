@@ -43,9 +43,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // Handle other errors (500 etc)
-      if (error.status === 500) {
-        toastService.show('System is busy. Please try again later.', 'error');
-      } else if (error.status !== 401) {
+      // Don't show toast here - let components handle it via their error handlers
+      // This prevents duplicate toasts
+      if (error.status !== 401 && error.status !== 500) {
         const msg =
           error.error?.message ||
           error.message ||

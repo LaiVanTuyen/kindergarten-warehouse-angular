@@ -171,7 +171,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr *ngFor="let user of paginatedUsers()" [class.bg-blue-50]="selectedIds().has(user.id)"
+          <tr *ngFor="let user of users(); trackBy: trackByUser" [class.bg-blue-50]="selectedIds().has(user.id)"
             class="hover:bg-slate-50 transition-colors group">
 
             <!-- Checkbox -->
@@ -200,7 +200,7 @@
                   'bg-blue-100 text-blue-700 border-blue-200': user.role === 'TEACHER',
                   'bg-gray-100 text-gray-700 border-gray-200': user.role === 'USER'
                 }">
-                {{ user.role.toLowerCase() }}
+                {{ user.role?.toLowerCase() }}
               </span>
             </td>
 
@@ -304,7 +304,7 @@
       </table>
 
       <!-- Empty State -->
-      <div *ngIf="paginatedUsers().length === 0" class="p-8">
+      <div *ngIf="users().length === 0" class="p-8">
         <app-empty-state message="No users found"
           subMessage="We couldn't find any users matching your filters. Try clearing them to see all results.">
         </app-empty-state>

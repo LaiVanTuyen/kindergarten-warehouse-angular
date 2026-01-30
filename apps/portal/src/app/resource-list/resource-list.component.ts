@@ -12,6 +12,7 @@ import {
   Resource,
   ResourceService,
   CategoryService,
+  TopicService,
   Topic,
   Category,
   AgeGroup,
@@ -77,13 +78,14 @@ import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-ske
 export class ResourceListComponent implements OnInit, OnDestroy {
   private resourceService = inject(ResourceService);
   private categoryService = inject(CategoryService);
+  private topicService = inject(TopicService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef); // Add CDR
 
   private destroy$ = new Subject<void>();
 
-  categories$ = this.categoryService.getCategories().pipe(
+  categories$ = this.categoryService.getCategories(1, 100).pipe(
     shareReplay(1) // Share the result to avoid multiple API calls
   );
 
@@ -103,7 +105,7 @@ export class ResourceListComponent implements OnInit, OnDestroy {
 
   // Age Groups State
   ageGroups$ = this.resourceService.getAgeGroups().pipe(
-    map((res) => res.data),
+    map((res) => res.result),
     shareReplay(1)
   );
   selectedAgeGroups$ = new BehaviorSubject<AgeGroup[]>([]);
@@ -261,17 +263,17 @@ export class ResourceListComponent implements OnInit, OnDestroy {
             // We need to fetch topics to check if topicSlug exists
             const targetCatId = foundCat.id; // Capture ID for closure safety
             if (!this.topicsCache[targetCatId]) {
-              this.categoryService.getTopics(targetCatId).subscribe((res) => {
+              this.topicService.getTopics(targetCatId).subscribe((res) => {
                 this.topicsCache[targetCatId] = res.data;
                 this.currentTopics$.next(res.data);
                 this.topicsCacheUpdated$.next();
 
-                this.resolveTopicSlug(topicSlug, targetCatId);
+                this.resolveTopic(topicSlug, targetCatId);
               });
             } else {
               // If already cached, just ensure currentTopics is updated (e.g. if switching back)
               this.currentTopics$.next(this.topicsCache[targetCatId]);
-              this.resolveTopicSlug(topicSlug, targetCatId);
+              this.resolveTopic(topicSlug, targetCatId);
             }
           } else {
             // Slug not found in categories? Maybe handle 404 or just reset
@@ -283,11 +285,11 @@ export class ResourceListComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Helper to resolve topic slug after topics are loaded
-  private resolveTopicSlug(topicSlug: string | undefined, catId: string) {
-    if (topicSlug && this.topicsCache[catId]) {
+  // Helper to resolve topic slug/id after topics are loaded
+  private resolveTopic(topicParam: string | undefined, catId: string) {
+    if (topicParam && this.topicsCache[catId]) {
       const foundTopic = this.topicsCache[catId].find(
-        (t) => t.slug === topicSlug
+        (t) => t.slug === topicParam || t.id === topicParam
       );
       if (foundTopic) {
         if (this.selectedTopicId$.value !== foundTopic.id) {
@@ -295,7 +297,7 @@ export class ResourceListComponent implements OnInit, OnDestroy {
         }
       } else {
         console.warn(
-          `Topic slug '${topicSlug}' not found in category ${catId}.`
+          `Topic param '${topicParam}' not found in category ${catId}.`
         );
         this.selectedTopicId$.next(null);
       }
@@ -476,42 +478,24 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   }
 
   // Refactored Single Select Logic
-  selectTopic(topic: Topic, categoryId: string) {
-    // Note: topic.slug might need to be added to Topic interface if not present (Done in Step 1)
-
-    // We already have categoryId logic, but we should find the Category object to get its slug for the URL
-    // Or we rely on the fact that if we are selecting a topic, the category is likely already selected/expanded.
-    // But to be safe and "get the .slug field from the clicked object", we should ensure we have the category slug.
-
-    // We can lookup category slug from our cache if needed, or pass category object.
-    // However, the `Topic` object interface usually has `categoryId`. We can find the category in `categories$` if needed.
-    // Since `selectTopic` is called from the template inside a loop where we have access to the category...
-    // But wait, the template loop is `let topic of currentTopics$`. We don't have the category object readily available in that scope inside the *ngFor of topics,
-    // unless we pass it down or look it up.
-
-    // Better lookup category from `categories$` snapshot or subscription?
-    // We can subscribe to `categories$` once or use a locally stored list if `shareReplay` is used.
-
-    this.categories$.pipe(takeUntil(this.destroy$)).subscribe((cats) => {
-      const cat = cats.data.find((c) => c.id === categoryId);
-      if (cat) {
-        this.router.navigate(['/resources'], {
-          queryParams: {
-            category: cat.slug,
-            topic: topic.slug,
-          },
-          queryParamsHandling: 'merge',
-        });
-      }
-    });
+  selectTopic(topic: Topic, category: Category) {
+    if (category) {
+      this.router.navigate(['/resources'], {
+        queryParams: {
+          category: category.slug, // Use Slug from passed category
+          topic: topic.slug || topic.id,
+        },
+        queryParamsHandling: 'merge',
+      });
+    }
   }
 
   // Helper for Template
-  onTopicClick(topic: Topic, event?: Event) {
+  onTopicClick(topic: Topic, category: Category, event?: Event) {
     if (event) {
       event.stopPropagation();
     }
-    this.selectTopic(topic, topic.categoryId);
+    this.selectTopic(topic, category);
   }
 
   // Deprecated/Removed: toggleTopic for multi-select

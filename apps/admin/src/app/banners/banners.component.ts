@@ -276,12 +276,15 @@ export class BannersComponent implements OnInit {
     // image is optional in update
 
     this.bannerService.updateBanner(banner.id, formData).subscribe({
+      next: (res) => {
+        this.toastService.showResponse(res);
+      },
       error: () => {
         // Revert on error
         this.banners.update((list) =>
           list.map((b) => (b.id === banner.id ? banner : b))
         );
-        alert('Failed to update status');
+        this.toastService.show('Failed to update status', 'error');
       },
     });
   }
@@ -404,28 +407,28 @@ export class BannersComponent implements OnInit {
 
     if (isEdit && id) {
       this.bannerService.updateBanner(id, formData).subscribe({
-        next: () => {
-          this.toastService.show('Banner updated successfully', 'success');
+        next: (res) => {
+          this.toastService.showResponse(res);
           this.loadBanners();
           this.closeModal();
         },
         error: (err) => {
           console.error(err);
-          const msg = err.error?.message || 'Update failed';
-          this.toastService.show(msg, 'error');
+          // showResponse might handle error if Backend sends structured error
+          // or we can fallback. Usually error comes in err.error
+          this.toastService.show('Failed to update banner', 'error');
         },
       });
     } else {
       this.bannerService.createBanner(formData).subscribe({
-        next: () => {
-          this.toastService.show('Banner created successfully', 'success');
+        next: (res) => {
+          this.toastService.showResponse(res);
           this.loadBanners();
           this.closeModal();
         },
         error: (err) => {
           console.error(err);
-          const msg = err.error?.message || 'Create failed';
-          this.toastService.show(msg, 'error');
+          this.toastService.show('Failed to create banner', 'error');
         },
       });
     }
@@ -440,8 +443,8 @@ export class BannersComponent implements OnInit {
     const banner = this.bannerToDelete();
     if (banner) {
       this.bannerService.deleteBanner(banner.id).subscribe({
-        next: () => {
-          this.toastService.show('Banner deleted successfully', 'success');
+        next: (res) => {
+          this.toastService.showResponse(res);
           this.loadBanners();
           this.closeDeleteModal();
         },

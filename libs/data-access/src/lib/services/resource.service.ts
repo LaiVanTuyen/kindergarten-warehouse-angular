@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { API_URL } from '../tokens';
-import { Observable, catchError, throwError, map } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import {
   Resource,
   RestResponse,
@@ -9,6 +9,7 @@ import {
   ResourceFilterParams,
 } from '../models/resource.model';
 import { AgeGroup } from '../models/models';
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root',
@@ -79,9 +80,9 @@ export class ResourceService {
    * Delete Resource
    * DELETE /resources/:id
    */
-  deleteResource(id: string): Observable<void> {
+  deleteResource(id: string): Observable<RestResponse<void>> {
     return this.http
-      .delete<void>(`${this.apiUrl}/resources/${id}`)
+      .delete<RestResponse<void>>(`${this.apiUrl}/resources/${id}`)
       .pipe(catchError(this.handleError));
   }
 
@@ -109,9 +110,9 @@ export class ResourceService {
    * Get Age Groups
    * GET /age-groups
    */
-  getAgeGroups(): Observable<RestResponse<AgeGroup[]>> {
+  getAgeGroups(): Observable<ApiResponse<AgeGroup[]>> {
     return this.http
-      .get<RestResponse<AgeGroup[]>>(`${this.apiUrl}/age-groups`)
+      .get<ApiResponse<AgeGroup[]>>(`${this.apiUrl}/age-groups`)
       .pipe(catchError(this.handleError));
   }
 
@@ -119,35 +120,29 @@ export class ResourceService {
    * Create Resource (Metadata)
    * POST /resources/json
    */
-  createResource(data: any): Observable<Resource> {
+  createResource(data: any): Observable<RestResponse<Resource>> {
     return this.http
       .post<RestResponse<Resource>>(`${this.apiUrl}/resources/json`, data)
-      .pipe(
-        map((res) => res.data),
-        catchError(this.handleError)
-      );
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Update Resource
    * PUT /resources/:id
    */
-  updateResource(id: string, data: any): Observable<Resource> {
+  updateResource(id: string, data: any): Observable<RestResponse<Resource>> {
     return this.http
       .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, data)
-      .pipe(
-        map((res) => res.data),
-        catchError(this.handleError)
-      );
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Approve Resource
    * PUT /resources/:id/approve
    */
-  approveResource(id: string): Observable<void> {
+  approveResource(id: string): Observable<RestResponse<void>> {
     return this.http
-      .put<void>(`${this.apiUrl}/resources/${id}/approve`, {})
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/approve`, {})
       .pipe(catchError(this.handleError));
   }
 
@@ -155,9 +150,9 @@ export class ResourceService {
    * Reject Resource
    * PUT /resources/:id/reject
    */
-  rejectResource(id: string): Observable<void> {
+  rejectResource(id: string): Observable<RestResponse<void>> {
     return this.http
-      .put<void>(`${this.apiUrl}/resources/${id}/reject`, {})
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/reject`, {})
       .pipe(catchError(this.handleError));
   }
 
@@ -165,9 +160,15 @@ export class ResourceService {
    * Move Resources
    * PUT /resources/move
    */
-  moveResources(ids: string[], topicId: string): Observable<void> {
+  moveResources(
+    ids: string[],
+    topicId: string
+  ): Observable<RestResponse<void>> {
     return this.http
-      .put<void>(`${this.apiUrl}/resources/move`, { ids, topicId })
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/move`, {
+        ids,
+        topicId,
+      })
       .pipe(catchError(this.handleError));
   }
 

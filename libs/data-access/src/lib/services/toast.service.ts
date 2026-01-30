@@ -13,6 +13,26 @@ export interface Toast {
 export class ToastService {
   toasts$ = new BehaviorSubject<Toast[]>([]);
 
+  showResponse(response: any) {
+    if (response) {
+      // Handle ApiResponse (code 1000) or RestResponse (status 'OK'/'SUCCESS')
+      const isSuccess =
+        response.code === 1000 ||
+        response.status === 'OK' ||
+        response.status === 'SUCCESS';
+
+      if (response.message) {
+        this.show(response.message, isSuccess ? 'success' : 'error');
+      } else if (isSuccess) {
+        this.show('Operation completed successfully', 'success');
+      } else {
+        this.show('Operation completed', 'info');
+      }
+    } else {
+      this.show('Operation completed', 'info');
+    }
+  }
+
   show(message: string, type: 'success' | 'error' | 'info' = 'info') {
     const id = Math.random().toString(36).substr(2, 9);
     const toast: Toast = { id, message, type };

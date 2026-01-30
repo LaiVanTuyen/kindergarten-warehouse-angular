@@ -16,6 +16,7 @@ import { debounceTime, distinctUntilChanged, delay } from 'rxjs/operators';
 import {
   ResourceService,
   CategoryService,
+  TopicService,
   Resource,
   Category,
   Topic,
@@ -49,6 +50,7 @@ export class ResourcesComponent {
   private fb = inject(FormBuilder);
   resourceService = inject(ResourceService);
   categoryService = inject(CategoryService);
+  topicService = inject(TopicService);
   toastService = inject(ToastService);
   authService = inject(AuthService);
   sanitizer = inject(DomSanitizer);
@@ -252,7 +254,7 @@ export class ResourcesComponent {
     this.categoryService
       .getCategories(1, 100)
       .subscribe((res) => this.categories.set(res.data));
-    this.categoryService.getTopics(undefined, 1, 100).subscribe((res) => {
+    this.topicService.getTopics(undefined, 1, 100).subscribe((res) => {
       this.topics.set(res.data);
       this.filteredTopics.set(res.data);
     });
@@ -300,8 +302,8 @@ export class ResourcesComponent {
   }
 
   executeApprove(id: string) {
-    this.resourceService.approveResource(id).subscribe(() => {
-      this.toastService.show('Resource approved successfully', 'success');
+    this.resourceService.approveResource(id).subscribe((res) => {
+      this.toastService.showResponse(res);
       this.loadData();
     });
   }
@@ -316,8 +318,8 @@ export class ResourcesComponent {
   }
 
   executeReject(id: string) {
-    this.resourceService.rejectResource(id).subscribe(() => {
-      this.toastService.show('Resource rejected', 'info');
+    this.resourceService.rejectResource(id).subscribe((res) => {
+      this.toastService.showResponse(res);
       this.loadData();
     });
   }
@@ -333,11 +335,11 @@ export class ResourcesComponent {
   }
 
   executeDeleteSingle(id: string) {
-    this.resourceService.deleteResource(id).subscribe(() => {
+    this.resourceService.deleteResource(id).subscribe((res) => {
       if (this.currentResourceId === id) {
         this.cancelEdit();
       }
-      this.toastService.show('Resource deleted successfully', 'success');
+      this.toastService.showResponse(res);
       this.loadData();
     });
   }
@@ -358,10 +360,24 @@ export class ResourcesComponent {
     const ids = Array.from(this.selectedIds());
     let count = 0;
     ids.forEach((id) => {
-      this.resourceService.approveResource(id).subscribe(() => {
+      this.resourceService.approveResource(id).subscribe((res) => {
         count++;
+        // Ideally we only show one toast or a summary, but for now using last one's message or a generic one?
+        // showResponse() calls show() which debounces? No it doesn't.
+        // If we call showResponse for each bulk item, we flood.
+        // We should probably NOT use showResponse in loop.
+        // But the requirement is "showResponse".
+        // Let's stick to "Selected resources approved" manually if loop?
+        // But user asked to use notification from service message.
+        // If service returns successful message for each, we might spam.
+        // I will keep the loop logic as is but use showResponse ONLY on the LAST one to confirm completion?
+        // Or keep the manual message for Bulk.
+        // The original code loop:
+        // if (count === ids.length) { this.toastService.show('Selected resources approved', 'success'); ... }
+        // I will modify it to use showResponse on the LAST response only for the batch.
         if (count === ids.length) {
-          this.toastService.show('Selected resources approved', 'success');
+          // Using the response from the last item
+          this.toastService.showResponse(res);
           this.selectedIds.set(new Set());
           this.loadData();
         }
@@ -384,10 +400,10 @@ export class ResourcesComponent {
     const ids = Array.from(this.selectedIds());
     let count = 0;
     ids.forEach((id) => {
-      this.resourceService.deleteResource(id).subscribe(() => {
+      this.resourceService.deleteResource(id).subscribe((res) => {
         count++;
         if (count === ids.length) {
-          this.toastService.show('Selected resources deleted', 'success');
+          this.toastService.showResponse(res);
           this.selectedIds.set(new Set());
           this.loadData();
         }
@@ -418,11 +434,8 @@ export class ResourcesComponent {
 
     if (ids.length === 0 || !topicId) return;
 
-    this.resourceService.moveResources(ids, topicId).subscribe(() => {
-      this.toastService.show(
-        `Moved ${ids.length} resources to new topic`,
-        'success'
-      );
+    this.resourceService.moveResources(ids, topicId).subscribe((res) => {
+      this.toastService.showResponse(res);
       this.selectedIds.set(new Set());
       this.closeMoveModal();
       this.loadData();
@@ -487,8 +500,8 @@ export class ResourcesComponent {
     if (this.isEditMode() && this.currentResourceId) {
       this.resourceService
         .updateResource(this.currentResourceId, resourceData)
-        .subscribe(() => {
-          this.toastService.show('Resource updated successfully', 'success');
+        .subscribe((res) => {
+          this.toastService.showResponse(res);
           this.loadData();
           this.closeUploadModal();
         });
@@ -502,13 +515,9 @@ export class ResourcesComponent {
           ...resourceData,
           status: status,
         })
-        .subscribe(() => {
+        .subscribe((res) => {
           this.uploadForm.reset({ type: 'VIDEO' });
-          const msg = isAdmin
-            ? 'Resource uploaded and automatically approved!'
-            : 'Resource uploaded and pending approval.';
-
-          this.toastService.show(msg, 'success');
+          this.toastService.showResponse(res);
           this.loadData();
           this.closeUploadModal();
         });
@@ -517,7 +526,6 @@ export class ResourcesComponent {
 
   // PREVIEW LOGIC
   openPreview(resource: Resource) {
-    console.log('Clicked Preview:', resource); // Debugging
     this.previewResource.set(resource);
     this.isLoading.set(true);
     this.previewType = this.getPreviewType(resource.fileUrl || '');

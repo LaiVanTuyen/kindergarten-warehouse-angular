@@ -79,8 +79,8 @@ export class BannerService {
     );
   }
 
-  deleteBanner(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/${id}`);
+  deleteBanner(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.API_URL}/${id}`);
   }
 
   updateReorderedBanners(banners: Banner[]): Observable<ApiResponse<void>> {

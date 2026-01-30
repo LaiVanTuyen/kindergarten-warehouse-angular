@@ -6,25 +6,53 @@
 
   <!-- Featured Categories -->
   <div class="container mx-auto px-4 mb-16">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-gray-800">Khám phá danh mục</h2>
       <!-- <a routerLink="/resources" class="text-secondary-600 font-bold hover:text-primary-pink transition-colors">View All</a> -->
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-      <a *ngFor="let cat of categories" [routerLink]="['/resources']" [queryParams]="{ category: cat.id }"
-        class="group flex flex-col items-center justify-center p-6 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden">
-        <!-- Floating Block Background -->
-        <div
-          [class]="'absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ' + cat.color.replace('text', 'bg').split(' ')[1]">
-        </div>
+    <!-- Horizontal Scrollable Categories -->
+    <div class="relative group">
+      <!-- Scroll Container -->
+      <!-- Scroll Container -->
+      <div #categoryScroll
+        class="flex gap-6 overflow-x-auto scroll-smooth px-4 pb-8 pt-4 scrollbar-hide snap-x snap-mandatory w-fit mx-auto max-w-full"
+        style="scrollbar-width: none; -ms-overflow-style: none;">
+        <a *ngFor="let cat of categories$ | async" [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
+          class="flex-shrink-0 w-[240px] group/card flex flex-col items-center justify-start p-6 rounded-xl bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-primary-pink transition-all duration-300 ease-out cursor-pointer snap-start hover:-translate-y-2 h-[220px]">
 
-        <div
-          [class]="'w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-transform group-hover:scale-110 shadow-sm z-10 ' + cat.color">
-          <i [class]="'ph ' + cat.icon + ' text-3xl'"></i>
-        </div>
-        <span class="font-bold text-gray-800 z-10">{{ cat.name }}</span>
-      </a>
+          <!-- Icon Container (Fixed Size for Alignment) -->
+          <div
+            class="h-24 w-full mb-4 flex items-center justify-center transition-transform group-hover/card:scale-110 duration-500 ease-out">
+            <img [src]="cat.icon" [alt]="cat.name"
+              class="max-w-[96px] max-h-[96px] w-auto h-auto object-contain drop-shadow-sm group-hover/card:drop-shadow-md transition-all duration-300 contrast-[1.05] saturate-[1.05]"
+              onerror="this.src='https://img.icons8.com/fluency/96/folder-invoices--v1.png'" />
+          </div>
+
+          <!-- Category Name (Fixed Height for Alignment) -->
+          <div class="h-[3.5rem] w-full flex items-center justify-center">
+            <span
+              class="font-bold text-gray-900 text-lg group-hover/card:text-primary-pink text-center leading-snug line-clamp-2 transition-colors duration-300 select-none">{{
+              cat.name }}</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Navigation Arrows (Positioned Outside & Safe) -->
+      <button (click)="scrollCategories('left')"
+        class="hidden md:flex absolute top-1/2 -translate-y-1/2 -left-8 bg-white hover:bg-white text-gray-500 hover:text-primary-pink shadow-lg rounded-full w-12 h-12 items-center justify-center transition-all duration-200 z-30 border border-gray-100 hover:border-primary-pink/30 hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button (click)="scrollCategories('right')"
+        class="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-8 bg-white hover:bg-white text-gray-500 hover:text-primary-pink shadow-lg rounded-full w-12 h-12 items-center justify-center transition-all duration-200 z-30 border border-gray-100 hover:border-primary-pink/30 hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
     </div>
   </div>
 

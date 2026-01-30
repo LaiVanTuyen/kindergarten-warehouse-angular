@@ -63,6 +63,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
           this.userInitials = names[0].substring(0, 2).toUpperCase();
         }
         this.userName = user.fullName;
+        this.userAvatar = user.avatarUrl || '';
+        this.userRole = user.roles?.[0] || user.role || 'User'; // Fallback logic
       } else {
         this.userInitials = 'ME';
         this.userName = '';
@@ -107,7 +109,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Auth State
   isLoggedIn = false;
   userInitials = '';
+  userAvatar = '';
   userName = '';
+  userRole = '';
   isUserMenuOpen = false;
   private authService = inject(AuthService);
   private eRef = inject(ElementRef);

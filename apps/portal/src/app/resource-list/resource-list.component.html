@@ -37,7 +37,7 @@
 
       <!-- Main Sticky Sidebar Container -->
       <div
-        class="bg-white md:rounded-3xl md:p-6 md:shadow-sm md:border md:border-gray-100 sticky top-0 h-screen overflow-hidden flex flex-col">
+        class="bg-white md:rounded-3xl md:p-6 md:shadow-sm md:border md:border-gray-100 sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col transition-all duration-300">
 
         <!-- Part 1: Header (Fixed) -->
         <div class="flex-none mb-4">
@@ -57,7 +57,7 @@
             class="w-full text-left px-4 py-3.5 transition-all duration-300 flex items-center justify-between group border mb-1"
             [ngClass]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null
                 ? 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm' 
-                : 'bg-white border-gray-100 rounded-2xl border'">
+                : 'bg-white border-gray-100 rounded-2xl border hover:border-pink-200 hover:shadow-sm'">
             <span
               [class]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null ? 'font-bold text-pink-600' : 'text-gray-600 group-hover:text-pink-600'">Tất
               cả</span>
@@ -72,18 +72,18 @@
         </div>
 
         <!-- Part 2: Category List (Scrollable) -->
-        <div class="flex-grow overflow-y-auto pr-2 -mr-2 space-y-3 custom-scrollbar" style="max-height: 50vh;"
+        <div class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 custom-scrollbar min-h-0"
           *ngIf="categories$ | async as categoriesRes">
           <!-- Dynamic Categories -->
           <div *ngFor="let cat of categoriesRes.data" class="flex flex-col">
             <button (click)="toggleCategory(cat)"
               class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border mb-1"
               [ngClass]="{
-                 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm': (expandedCategory$ | async) === cat.id,
-                 'bg-white border-gray-100': (expandedCategory$ | async) !== cat.id
+                 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm shadow-sm': (expandedCategory$ | async) === cat.id,
+                 'bg-white border-gray-100 hover:border-pink-200 hover:shadow-sm': (expandedCategory$ | async) !== cat.id
               }">
               <div class="flex items-center gap-3">
-                <span class="text-xl">{{ cat.icon }}</span>
+                <img [src]="cat.icon" alt="" class="w-6 h-6 object-contain">
                 <span [class.font-bold]="isCategoryActive(cat.id)" [class.text-pink-600]="isCategoryActive(cat.id)"
                   [class.text-gray-900]="!isCategoryActive(cat.id) && (expandedCategory$ | async) === cat.id"
                   [class.text-gray-600]="!isCategoryActive(cat.id) && (expandedCategory$ | async) !== cat.id">
@@ -106,11 +106,11 @@
               </div>
 
               <button *ngFor="let topic of currentTopics$ | async"
-                (click)="$event.stopPropagation(); onTopicClick(topic, $event)"
+                (click)="$event.stopPropagation(); onTopicClick(topic, cat, $event)"
                 class="w-full text-left px-4 py-3 text-sm transition-all flex items-center justify-between relative group/topic"
                 [ngClass]="isTopicSelected(topic.id) 
-                            ? 'text-pink-600 font-bold bg-pink-50 border-l-4 border-l-pink-500' 
-                            : 'text-gray-500 hover:text-pink-600 hover:bg-pink-50 hover:font-semibold border-l-4 border-l-transparent'">
+                            ? 'text-pink-600 font-bold bg-pink-50 border-l-4 border-l-pink-500 rounded-r-xl' 
+                            : 'text-gray-500 hover:text-pink-600 hover:bg-pink-50 hover:font-semibold border-l-4 border-l-transparent rounded-r-xl'">
                 <span>{{ topic.name }}</span>
                 <!-- Radio Dot Logic -->
                 <div
@@ -126,7 +126,10 @@
 
         <!-- Part 3: Age Filters (Fixed Bottom) -->
         <div class="flex-none pt-4 mt-4 border-t border-dashed border-pink-100 bg-white z-10">
-          <h4 class="font-bold text-gray-900 mb-4 text-lg">Độ tuổi</h4>
+          <h4 class="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
+            <i class="ph-bold ph-plant text-primary-500 text-xl"></i>
+            Độ tuổi
+          </h4>
           <div class="space-y-2">
             <label *ngFor="let age of ageGroups$ | async"
               class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-pink-50 group">

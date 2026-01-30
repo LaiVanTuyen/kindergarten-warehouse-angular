@@ -123,5 +123,15 @@ export interface AgeGroup {
   id: string;
   name: string;
   slug: string;
-  range?: string; // Optional description like "3-4 years"
+  minAge: number;
+  maxAge: number;
+  description?: string;
 }
+
+export type CategoryViewMode = 'list' | 'trash';
+export type CategoryAction =
+  | 'delete'
+  | 'restore'
+  | 'bulk-delete'
+  | 'bulk-restore';
+export type CategoryItemType = 'category' | 'topic';

@@ -2,7 +2,8 @@
   (mouseenter)="onMouseEnter()" (mouseleave)="onMouseLeave()" (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)" (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)">
   <div *ngFor="let slide of slides; let i = index" [class.hidden]="i !== activeSlideIndex"
-    class="bg-gradient-to-r {{ slide.bgFrom }} {{ slide.bgTo }} rounded-[2.5rem] p-8 lg:p-12 flex flex-col md:flex-row items-center gap-8 shadow-sm relative overflow-hidden transition-opacity duration-500 animate-fade-in-up min-h-[500px]">
+    class="rounded-[2.5rem] p-8 lg:p-12 flex flex-col md:flex-row items-center gap-8 shadow-sm relative overflow-hidden transition-opacity duration-500 animate-fade-in-up min-h-[500px] bg-gradient-to-r"
+    [ngClass]="[slide.bgFrom, slide.bgTo]">
 
     <!-- Text Content -->
     <div class="md:w-1/2 z-10 text-center md:text-left space-y-6">

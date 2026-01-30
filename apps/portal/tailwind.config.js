@@ -7,6 +7,17 @@ module.exports = {
     join(__dirname, 'src/**/!(*.stories|*.spec).{ts,html}'),
     ...createGlobPatternsForDependencies(__dirname),
   ],
+  safelist: [
+    // Safelist gradient color classes for dynamic banner backgrounds
+    {
+      pattern:
+        /^from-(pink|rose|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|slate|gray)-(50|100|200|300|400|500|600|700|800|900)$/,
+    },
+    {
+      pattern:
+        /^to-(pink|rose|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|slate|gray)-(50|100|200|300|400|500|600|700|800|900)$/,
+    },
+  ],
   theme: {
     extend: {
       colors: {

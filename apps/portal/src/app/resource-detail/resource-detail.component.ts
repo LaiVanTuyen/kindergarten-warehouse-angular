@@ -11,6 +11,7 @@ import { ResourceCardComponent } from '../resource-card/resource-card.component'
 import {
   AuthService,
   CategoryService,
+  TopicService,
   Comment,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
@@ -37,6 +38,7 @@ export class ResourceDetailComponent {
   private route = inject(ActivatedRoute);
   private resourceService = inject(ResourceService);
   private categoryService = inject(CategoryService);
+  private topicService = inject(TopicService);
   private sanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
   public translationService = inject(TranslationService);
@@ -64,7 +66,7 @@ export class ResourceDetailComponent {
 
       return combineLatest([
         this.categoryService.getCategories(1, 100), // Fetch reasonable amount
-        this.categoryService.getTopics(undefined, 1, 1000) // Fetch all (bad practice but needed for client-side join without getTopicById)
+        this.topicService.getTopics(undefined, 1, 1000), // Fetch all (bad practice but needed for client-side join without getTopicById)
       ]).pipe(
         map(([categoriesResp, topicsResp]) => {
           const topic = topicsResp.data.find((t: any) => t.id === topicId);
