@@ -38,19 +38,36 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 class="text-3xl font-black text-gray-900">{{ user.fullName }}</h1>
-                        <div class="flex items-center gap-2 mt-2">
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <!-- Roles Loop -->
                             <ng-container *ngIf="user.roles && user.roles.length > 0; else singleRole">
-                                <span *ngFor="let role of user.roles"
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-primary-50 text-primary-600">
-                                    {{ role === 'ADMIN' ? 'Quản trị viên' : (role === 'TEACHER' ? 'Giáo viên' : 'Người
-                                    dùng') }}
+                                <span *ngFor="let role of user.roles" [ngSwitch]="role"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-primary-50 text-primary-600 border border-primary-100 shadow-sm hover:shadow-md transition-all select-none cursor-default">
+                                    <!-- Icons -->
+                                    <i *ngSwitchCase="'ADMIN'" class="ph-duotone ph-crown text-lg text-primary-500"></i>
+                                    <i *ngSwitchCase="'TEACHER'"
+                                        class="ph-duotone ph-chalkboard-teacher text-lg text-primary-500"></i>
+                                    <i *ngSwitchDefault class="ph-duotone ph-smiley text-lg text-primary-500"></i>
+
+                                    <!-- Label -->
+                                    <span *ngSwitchCase="'ADMIN'">Quản trị viên</span>
+                                    <span *ngSwitchCase="'TEACHER'">Giáo viên</span>
+                                    <span *ngSwitchDefault>Người dùng</span>
                                 </span>
                             </ng-container>
+
+                            <!-- Fallback Single Role -->
                             <ng-template #singleRole>
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-primary-50 text-primary-600">
-                                    {{ (user.role || 'User') === 'ADMIN' ? 'Quản trị viên' : ((user.role || 'User') ===
-                                    'TEACHER' ? 'Giáo viên' : 'Người dùng') }}
+                                <span [ngSwitch]="user.role || 'User'"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-primary-50 text-primary-600 border border-primary-100 shadow-sm hover:shadow-md transition-all select-none cursor-default">
+                                    <i *ngSwitchCase="'ADMIN'" class="ph-duotone ph-crown text-lg text-primary-500"></i>
+                                    <i *ngSwitchCase="'TEACHER'"
+                                        class="ph-duotone ph-chalkboard-teacher text-lg text-primary-500"></i>
+                                    <i *ngSwitchDefault class="ph-duotone ph-smiley text-lg text-primary-500"></i>
+
+                                    <span *ngSwitchCase="'ADMIN'">Quản trị viên</span>
+                                    <span *ngSwitchCase="'TEACHER'">Giáo viên</span>
+                                    <span *ngSwitchDefault>Người dùng</span>
                                 </span>
                             </ng-template>
                         </div>
