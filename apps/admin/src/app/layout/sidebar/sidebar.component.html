@@ -1,0 +1,158 @@
+<aside
+    class="bg-[#1E293B] text-white flex-shrink-0 flex flex-col h-full transition-all duration-300 relative border-r border-white/10"
+    [class.w-64]="!isCollapsed()" [class.w-20]="isCollapsed()">
+    <!-- Branding & Toggle -->
+    <div class="h-16 flex items-center border-b border-white/10 transition-all duration-300"
+        [class.justify-between]="!isCollapsed()" [class.px-6]="!isCollapsed()" [class.justify-center]="isCollapsed()"
+        [class.px-0]="isCollapsed()">
+        <h1 *ngIf="!isCollapsed()"
+            class="text-2xl font-bold tracking-wider text-white whitespace-nowrap overflow-hidden transition-opacity duration-300">
+            K-Admin
+        </h1>
+
+        <button (click)="toggleSidebar()"
+            class="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            [title]="isCollapsed() ? 'Expand' : 'Collapse'">
+            <!-- Chevron Left (Collapse) -->
+            <svg *ngIf="!isCollapsed()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6" />
+            </svg>
+            <!-- Chevron Right (Expand) -->
+            <svg *ngIf="isCollapsed()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 mt-6 overflow-y-auto w-full overflow-x-hidden">
+        <ul class="space-y-1">
+            <!-- Dashboard -->
+            <li>
+                <a routerLink="/dashboard" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Dashboard">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="7" x="3" y="3" rx="1" />
+                            <rect width="7" height="7" x="14" y="3" rx="1" />
+                            <rect width="7" height="7" x="14" y="14" rx="1" />
+                            <rect width="7" height="7" x="3" y="14" rx="1" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Banners -->
+            <li>
+                <a routerLink="/banners" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Banners">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                            <circle cx="9" cy="9" r="2" />
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Banners</span>
+                </a>
+            </li>
+
+            <!-- Categories -->
+            <li>
+                <a routerLink="/categories" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Categories">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+                            <path d="M7 7h.01" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Categories</span>
+                </a>
+            </li>
+
+            <!-- Resources -->
+            <li>
+                <a routerLink="/resources" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Resources">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Resources</span>
+                </a>
+            </li>
+
+            <!-- Users -->
+            <li>
+                <a routerLink="/users" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Users">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Users</span>
+                </a>
+            </li>
+
+            <!-- Audit Logs -->
+            <li>
+                <a routerLink="/audit-logs" routerLinkActive="bg-white/10 border-l-4 border-primary-pink text-white"
+                    class="flex items-center py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
+                    [class.px-6]="!isCollapsed()" [class.justify-start]="!isCollapsed()"
+                    [class.justify-center]="isCollapsed()" [class.px-0]="isCollapsed()" title="Audit Logs">
+                    <div class="relative flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6" />
+                            <path d="M16 13H8" />
+                            <path d="M16 17H8" />
+                            <path d="M10 9H8" />
+                        </svg>
+                    </div>
+                    <span *ngIf="!isCollapsed()"
+                        class="font-medium ml-3 whitespace-nowrap overflow-hidden transition-all duration-300">Audit
+                        Logs</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Footer / Version -->
+    <div class="border-t border-white/10 text-xs text-gray-500 whitespace-nowrap overflow-hidden transition-all duration-300"
+        [class.p-6]="!isCollapsed()" [class.p-4]="isCollapsed()" [class.text-center]="isCollapsed()">
+        <p *ngIf="!isCollapsed()">v1.0.0</p>
+        <p *ngIf="isCollapsed()">v1</p>
+    </div>
+</aside>

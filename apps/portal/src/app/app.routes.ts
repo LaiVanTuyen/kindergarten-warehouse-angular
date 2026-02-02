@@ -1,6 +1,5 @@
 import { Route } from '@angular/router';
 
-
 export const appRoutes: Route[] = [
   {
     path: '',
@@ -8,7 +7,7 @@ export const appRoutes: Route[] = [
       import('./home/home.component').then((m) => m.HomeComponent),
   },
   {
-    path: 'resources/:id',
+    path: 'resources/:slug',
     loadComponent: () =>
       import('./resource-detail/resource-detail.component').then(
         (m) => m.ResourceDetailComponent
@@ -30,5 +29,25 @@ export const appRoutes: Route[] = [
     path: 'about',
     loadComponent: () =>
       import('./about/about.component').then((m) => m.AboutComponent),
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./profile/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./settings/settings.component').then((m) => m.SettingsComponent),
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./profile/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./settings/settings.component').then((m) => m.SettingsComponent),
   },
 ];

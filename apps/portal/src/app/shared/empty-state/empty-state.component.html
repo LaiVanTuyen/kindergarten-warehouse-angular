@@ -1,0 +1,16 @@
+<div class="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
+    <div class="mb-6 relative">
+        <div class="absolute inset-0 bg-blue-100 rounded-full scale-125 opacity-20 animate-pulse"></div>
+        <img [src]="imageSrc || 'assets/images/empty-state.svg'" class="w-48 h-48 object-contain relative z-10"
+            alt="Empty State" onerror="this.src='https://cdn-icons-png.flaticon.com/512/7486/7486777.png'">
+        <!-- Fallback icon -->
+    </div>
+
+    <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ title || ('empty.title' | translate) }}</h3>
+    <p class="text-gray-500 max-w-sm mx-auto mb-8">{{ message || ('empty.message' | translate) }}</p>
+
+    <button *ngIf="actionLabel" (click)="action.emit()"
+        class="px-8 py-3 rounded-full bg-primary-blue text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+        {{ actionLabel }}
+    </button>
+</div>

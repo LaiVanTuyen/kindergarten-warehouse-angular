@@ -1,181 +1,723 @@
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Upload Area -->
-  <div class="lg:col-span-1">
-    <div
-      class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6"
-    >
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">
-        Upload Resource
-      </h3>
+<div class="h-full flex flex-col">
 
-      <div
-        class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer mb-4"
-      >
-        <div class="text-4xl mb-2">☁️</div>
-        <p class="text-sm text-gray-600 font-medium">
-          Click to upload or drag & drop
-        </p>
-        <p class="text-xs text-gray-400 mt-1">
-          PDF, Word, Excel, Video (Max 50MB)
-        </p>
-      </div>
+  <!-- Detached Dark Banner -->
+  <div
+    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 flex justify-between items-center relative overflow-hidden">
+    <!-- Decorative -->
+    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
-      <form class="space-y-4">
-        <div>
-          <label
-            for="res-title"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Title</label
-          >
-          <input
-            id="res-title"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            placeholder="e.g. Alphabet Song"
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              for="res-category"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Category</label
-            >
-            <select
-              id="res-category"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            >
-              <option>Language</option>
-            </select>
-          </div>
-          <div>
-            <label
-              for="res-topic"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Topic</label
-            >
-            <select
-              id="res-topic"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
-            >
-              <option>Songs</option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          class="w-full bg-admin-navy text-white font-bold py-3 rounded-md hover:opacity-90 transition-opacity"
-        >
-          Save Resource
-        </button>
-      </form>
+    <div class="flex flex-col gap-1">
+      <app-breadcrumb></app-breadcrumb>
+      <h1 class="text-2xl font-bold tracking-tight">Resource Management</h1>
+      <p class="text-slate-400 mt-1 text-sm">Curate, approve, and manage educational content.</p>
     </div>
   </div>
 
-  <!-- Resource List -->
-  <div class="lg:col-span-2">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div
-        class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
-      >
-        <h3 class="text-lg font-semibold text-gray-800">
-          Resources Library
-        </h3>
-        <div class="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            class="pl-8 pr-4 py-1.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:border-primary-blue"
-          />
-          <span class="absolute left-2.5 top-2 text-gray-400 text-xs"
-            >🔍</span
-          >
+  <!-- Toolbar Section -->
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+
+    <!-- Left: Tabs -->
+    <div class="flex space-x-1 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 w-full sm:w-auto">
+      <button (click)="setActiveTab('pending')" class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+        [ngClass]="activeTab() === 'pending' ? 'bg-slate-100 text-slate-800 ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        Pending Review
+      </button>
+      <button (click)="setActiveTab('list')" class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+        [ngClass]="activeTab() === 'list' ? 'bg-slate-100 text-slate-800 ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+        All Repository
+      </button>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <!-- Search -->
+      <div class="relative w-full sm:w-72">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
         </div>
+        <input [formControl]="searchControl" type="text" placeholder="Search resources or uploader..."
+          class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm" />
+        <button *ngIf="searchControl.value" (click)="searchControl.setValue('')"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none focus:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
-            <tr>
-              <th class="px-4 py-3">Resource</th>
-              <th class="px-4 py-3">Type</th>
-              <th class="px-4 py-3">Category</th>
-              <th class="px-4 py-3 text-center">Views</th>
-              <th class="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="text-gray-700 text-sm">
-            <tr
-              *ngFor="let res of resources$ | async"
-              class="border-b border-gray-100 hover:bg-gray-50 group"
-            >
-              <td class="px-4 py-4">
-                <div class="flex items-center">
-                  <div
-                    class="h-10 w-10 bg-gray-100 rounded-md flex-shrink-0 mr-3 flex items-center justify-center text-lg"
-                  >
-                    {{ res.type === 'VIDEO' ? '🎬' : '📄' }}
-                  </div>
-                  <div>
-                    <div
-                      class="font-medium text-gray-900 group-hover:text-primary-blue"
-                    >
-                      {{ res.title }}
-                    </div>
-                    <div class="text-xs text-gray-500">
-                      Added: 2024-03-20
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-4">
-                <span
-                  class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600"
-                  >{{ res.type }}</span
-                >
-              </td>
-              <td class="px-4 py-4 text-gray-500">Language</td>
-              <td class="px-4 py-4 text-center font-medium">
-                {{ res.viewsCount }}
-              </td>
-              <td class="px-4 py-4 text-right">
-                <button
-                  class="text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- New Resource Button -->
+      <button (click)="openUploadModal()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95">
+        <span class="text-lg leading-none">+</span> New Resource
+      </button>
+    </div>
+  </div>
 
-      <!-- Pagination Mock -->
-      <div
-        class="px-6 py-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500"
-      >
-        <span>Showing 1-10 of 324</span>
-        <div class="flex space-x-1">
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            Prev
-          </button>
-          <button
-            class="px-3 py-1 border rounded bg-primary-pink text-white border-primary-pink"
-          >
-            1
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            2
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            3
-          </button>
-          <button class="px-3 py-1 border rounded hover:bg-gray-50">
-            Next
-          </button>
-        </div>
+  <!-- Filters Section -->
+  <div class="flex flex-col sm:flex-row gap-4 mb-4" *ngIf="activeTab() === 'list'">
+    <!-- Category Filter -->
+    <div class="relative w-full sm:w-56">
+      <select [formControl]="categoryFilter"
+        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+        <option value="">All Categories</option>
+        <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
     </div>
+
+    <!-- Topic Filter -->
+    <div class="relative w-full sm:w-56">
+      <select [formControl]="topicFilter"
+        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+        <option value="">All Topics</option>
+        <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Type Filter -->
+    <div class="relative w-full sm:w-56">
+      <select [formControl]="typeFilter"
+        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+        <option value="">All Types</option>
+        <option value="VIDEO">Video</option>
+        <option value="DOCUMENT">Document</option>
+        <option value="PDF">PDF</option>
+        <option value="EXCEL">Excel</option>
+        <option value="WORD">Word</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Reset Filters -->
+    <button (click)="resetFilters()" title="Reset Filters"
+      class="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+        <path d="M21 3v5h-5"></path>
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+        <path d="M8 16H3v5"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Bulk Actions Toolbar -->
+  <div *ngIf="selectedIds().size > 0"
+    class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 flex justify-between items-center shadow-sm animate-fade-in-down">
+    <div class="flex items-center gap-3">
+      <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+        {{ selectedIds().size }}
+      </div>
+      <span class="font-bold text-blue-900">items selected</span>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="approveSelected()"
+        class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        Approve Selected
+      </button>
+      <button (click)="openMoveModal()"
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 9l7-7 7 7"></path>
+          <path d="M12 2v20"></path>
+        </svg>
+        Move to Topic
+      </button>
+      <button (click)="deleteSelected()"
+        class="bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+        </svg>
+        Delete Selected
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Card -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
+
+    <!-- Skeleton Loading -->
+    <div *ngIf="isTableLoading()" class="p-6">
+      <app-skeleton-table [rows]="10" [cols]="8"
+        [template]="['checkbox', 'resource', 'text-sm', 'badge', 'text-sm', 'badge', 'text-sm', 'actions']">
+      </app-skeleton-table>
+    </div>
+
+    <div class="overflow-auto flex-1" *ngIf="!isTableLoading()">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 sticky top-0 z-10">
+          <tr class="border-b border-gray-100">
+            <th class="pl-8 py-5 w-10">
+              <input type="checkbox" (change)="toggleAll($any($event.target).checked)"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer h-4 w-4">
+            </th>
+            <th class="px-6 py-5 pl-2 w-1/3">Resource Detail</th>
+            <th class="px-6 py-5">Type & Size</th>
+            <th class="px-6 py-5">Status</th>
+            <th class="px-6 py-5">Topic</th>
+            <th class="px-6 py-5">Category</th>
+            <th class="px-6 py-5 text-center">Views</th>
+            <th class="px-6 py-5 text-right pr-8">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
+          <tr *ngFor="let res of resources()" class="hover:bg-slate-50/80 transition-all group"
+            [class.bg-blue-50]="selectedIds().has(res.id)">
+            <!-- Checkbox -->
+            <td class="pl-8 py-4 w-10">
+              <input type="checkbox" [checked]="selectedIds().has(res.id)" (change)="toggleSelection(res.id)"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer h-4 w-4">
+            </td>
+
+            <!-- Resource Info -->
+            <td class="px-6 py-4 pl-2">
+              <div class="flex items-center">
+                <!-- Thumbnail with Hover Zoom -->
+                <div
+                  class="h-12 w-12 bg-white rounded-xl flex-shrink-0 mr-4 flex items-center justify-center text-2xl shadow-sm border border-gray-100 group-hover:border-blue-200 group-hover:shadow-md transition-all duration-300 hover:scale-150 hover:z-20 hover:shadow-lg hover:border-blue-300 relative cursor-zoom-in">
+                  {{ res.thumbnailUrl }}
+                </div>
+                <div>
+                  <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 text-[15px]">{{
+                    res.title }}</div>
+                  <div class="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
+                    <span class="bg-gray-100 px-1.5 rounded text-[10px]">{{ res.createdAt | date:'MMM d' }}</span>
+                    <span class="text-gray-300">•</span>
+                    <span>{{ res.uploader }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Type & Size (New Column/Refined) -->
+            <td class="px-6 py-4">
+              <div class="flex flex-col gap-1">
+                <!-- Icon Badge -->
+                <ng-container [ngSwitch]="res.type">
+                  <!-- VIDEO = Red/Rose with bg -->
+                  <span *ngSwitchCase="'VIDEO'"
+                    class="text-rose-700 bg-rose-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-rose-100">
+                    <div class="p-1 bg-white rounded-md shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="w-4 h-4 text-rose-600">
+                        <path
+                          d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.94-.94 2.56-.27 2.56 1.07v11.36c0 1.34-1.62 2.01-2.56 1.07Z" />
+                      </svg>
+                    </div>
+                    VIDEO
+                  </span>
+                  <!-- PDF = Red with bg -->
+                  <span *ngSwitchCase="'PDF'"
+                    class="text-red-700 bg-red-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-red-100">
+                    <div class="p-1 bg-white rounded-md shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="w-4 h-4 text-red-600">
+                        <path fill-rule="evenodd"
+                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                          clip-rule="evenodd" />
+                        <path
+                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                      </svg>
+                    </div>
+                    PDF
+                  </span>
+                  <!-- EXCEL = Green/Emerald with bg -->
+                  <span *ngSwitchCase="'EXCEL'"
+                    class="text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-emerald-100">
+                    <div class="p-1 bg-white rounded-md shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="w-4 h-4 text-emerald-600">
+                        <path fill-rule="evenodd"
+                          d="M4.5 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5h16.5a.75.75 0 0 0 0-1.5h-.75V3.75a.75.75 0 0 0 0-1.5H4.5ZM9 6a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 6Zm.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5ZM9 13.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5Z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    XLS
+                  </span>
+                  <!-- WORD = Blue with bg -->
+                  <span *ngSwitchCase="'WORD'"
+                    class="text-blue-700 bg-blue-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-blue-100">
+                    <div class="p-1 bg-white rounded-md shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="w-4 h-4 text-blue-600">
+                        <path fill-rule="evenodd"
+                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                          clip-rule="evenodd" />
+                        <path
+                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                      </svg>
+                    </div>
+                    DOC
+                  </span>
+                  <!-- DEFAULT = Gray with bg -->
+                  <span *ngSwitchDefault
+                    class="text-gray-700 bg-gray-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-gray-200">
+                    <div class="p-1 bg-white rounded-md shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="w-4 h-4 text-gray-500">
+                        <path
+                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
+                        <path
+                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                      </svg>
+                    </div>
+                    FILE
+                  </span>
+                </ng-container>
+
+                <!-- File Size text -->
+                <span class="text-xs text-gray-500 font-medium pl-6">{{ res.fileSize || 'Unknown' }}</span>
+              </div>
+            </td>
+
+
+            <!-- Status -->
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
+                [ngClass]="{
+                  'bg-amber-50 text-amber-700 border-amber-100': res.status === 'PENDING',
+                  'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'APPROVED',
+                  'bg-rose-50 text-rose-700 border-rose-100': res.status === 'REJECTED'
+                }">
+                {{ res.status }}
+              </span>
+            </td>
+
+            <!-- Topic (New Column) -->
+            <td class="px-6 py-4">
+              <span class="text-sm font-medium text-gray-700">{{ getTopicTitle(res.topicId) }}</span>
+            </td>
+
+            <!-- Category -->
+            <td class="px-6 py-4">
+              <span
+                class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 group-hover:border-blue-200 transition-colors">{{
+                getCategoryName(res.topicId) }}</span>
+            </td>
+
+            <!-- Views -->
+            <td class="px-6 py-4 text-center font-bold text-gray-700">{{ res.viewsCount }}</td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4 text-right pr-8">
+              <div class="flex justify-end gap-2 text-gray-400">
+
+                <!-- PENDING TAB QUICK ACTIONS -->
+                <ng-container *ngIf="activeTab() === 'pending'">
+                  <!-- Approve -->
+                  <button (click)="approveResource(res.id)" title="Quick Approve"
+                    class="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors shadow-sm border border-emerald-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </button>
+                  <!-- Reject -->
+                  <button (click)="rejectResource(res.id)" title="Quick Reject"
+                    class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors shadow-sm border border-red-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                  <!-- Preview -->
+                  <button (click)="openPreview(res)" title="Preview"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </ng-container>
+
+                <!-- REPOSITORY TAB ACTIONS -->
+                <ng-container *ngIf="activeTab() === 'list'">
+                  <!-- Preview -->
+                  <button (click)="openPreview(res)" title="Preview"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                  <!-- Edit -->
+                  <button (click)="editResource(res)" title="Edit"
+                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  <!-- Delete -->
+                  <button (click)="confirmDelete(res.id)" title="Delete"
+                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
+                  </button>
+                </ng-container>
+
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="resources().length === 0">
+            <td colspan="8" class="p-0">
+              <div class="p-8">
+                <app-empty-state message="No resources found"
+                  subMessage="We couldn't find any resources matching your search or filters.">
+                </app-empty-state>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <app-pagination class="mt-auto block" [currentPage]="currentPage()" [totalItems]="totalResources()"
+      [pageSize]="pageSize()" itemName="resources" (pageChange)="onPageChange($event)">
+    </app-pagination>
+  </div>
+</div>
+
+<!-- UPLOAD / EDIT MODAL -->
+<div *ngIf="isUploadModalOpen()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col border border-white/10 ring-1 ring-black/5">
+    <div
+      class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+      <div>
+        <h3 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Edit Resource' : 'Upload New
+          Resource' }}</h3>
+        <p class="text-xs text-gray-500 mt-1.5 font-medium">Fill in the details below.</p>
+      </div>
+      <button (click)="closeUploadModal()"
+        class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-8 pt-6">
+      <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-6">
+
+        <!-- File Upload Area (Hidden in Edit Mode) -->
+        <div *ngIf="!isEditMode()" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0"
+          class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+          <div
+            class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
+            ☁️</div>
+          <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Click to upload or drag & drop</p>
+          <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Max 50MB)</p>
+        </div>
+
+        <!-- Edit Mode Notice -->
+        <div *ngIf="isEditMode()" class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
+          <div class="text-blue-500 mt-0.5 text-lg">ℹ️</div>
+          <div>
+            <h4 class="text-sm font-bold text-blue-900">Restricted Edit Mode</h4>
+            <p class="text-sm text-blue-700 mt-1 font-medium">You are editing resource metadata. To change the file,
+              please delete and re-upload.</p>
+          </div>
+        </div>
+
+        <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,video/*" [disabled]="isEditMode()">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2 group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Title
+              <span class="text-rose-500">*</span></label>
+            <input type="text" formControlName="title" placeholder="e.g. The Alphabet Song"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
+          </div>
+
+          <div class="md:col-span-2 group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Description</label>
+            <textarea formControlName="description" rows="3" placeholder="Brief description of the content..."
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white resize-none text-gray-900 font-medium"></textarea>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Category
+              <span class="text-rose-500">*</span></label>
+            <select formControlName="categoryId"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="">Select Category</option>
+              <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Topic
+              <span class="text-rose-500">*</span></label>
+            <select formControlName="topicId"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="">Select Topic</option>
+              <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Resource
+              Type</label>
+            <select formControlName="type"
+              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+              <option value="VIDEO">Video</option>
+              <option value="DOCUMENT">Document</option>
+              <option value="PDF">PDF</option>
+              <option value="EXCEL">Excel</option>
+              <option value="WORD">Word</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-8 flex gap-4">
+          <button type="button" (click)="closeUploadModal()"
+            class="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="uploadForm.invalid"
+            class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-200 active:scale-95 transition-all">
+            {{ isEditMode() ? 'Update Changes' : 'Upload Resource' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Confirmation Modal -->
+<div *ngIf="isConfirmModalOpen()"
+  class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-all">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
+    <!-- Dynamic Icon -->
+    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
+      [ngClass]="{
+        'bg-emerald-100 text-emerald-600': confirmConfig()?.action?.includes('APPROVE'),
+        'bg-rose-100 text-rose-600': confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')
+      }">
+
+      <!-- Approve Icon -->
+      <svg *ngIf="confirmConfig()?.action?.includes('APPROVE')" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+
+      <!-- Delete/Reject Icon -->
+      <svg *ngIf="confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')"
+        xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ confirmConfig()?.title }}</h3>
+    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2">
+      {{ confirmConfig()?.message }}
+    </p>
+
+    <div class="flex justify-center gap-3">
+      <button (click)="closeConfirmModal()"
+        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+
+      <!-- Approve Button -->
+      <button *ngIf="confirmConfig()?.action?.includes('APPROVE')" (click)="onConfirmAction()"
+        class="flex-1 px-4 py-3.5 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 active:scale-95 transition-all">
+        Approve
+      </button>
+
+      <!-- Delete/Reject Button -->
+      <button *ngIf="confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')"
+        (click)="onConfirmAction()"
+        class="flex-1 px-4 py-3.5 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all">
+        {{ confirmConfig()?.action?.includes('REJECT') ? 'Reject' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div *ngIf="previewResource()"
+  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl transition-opacity">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/80 backdrop-blur-md">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900 line-clamp-1 pr-4">{{ previewResource()?.title }}</h3>
+        <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">Preview Mode</p>
+      </div>
+      <button (click)="closePreview()"
+        class="text-gray-400 hover:text-gray-700 transition-colors p-2 hover:bg-gray-200 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-1 bg-neutral-950 relative flex items-center justify-center min-h-[500px]">
+
+      <!-- Spinner -->
+      <div *ngIf="isLoading()"
+        class="absolute inset-0 flex items-center justify-center z-10 bg-neutral-950/80 backdrop-blur-sm">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+
+      <!-- Viewer Switch -->
+      <ng-container [ngSwitch]="previewType">
+
+        <!-- VIDEO -->
+        <video *ngSwitchCase="'VIDEO'" controls class="max-h-[75vh] w-full bg-black shadow-2xl" (loadeddata)="onLoad()">
+          <source [src]="previewUrl" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+
+        <!-- AUDIO -->
+        <div *ngSwitchCase="'AUDIO'"
+          class="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-12">
+          <div class="text-6xl mb-6 opacity-80">🎵</div>
+          <audio controls class="w-full max-w-xl scale-110 shadow-xl rounded-full" (loadeddata)="onLoad()">
+            <source [src]="previewUrl" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+
+        <!-- IMAGE -->
+        <img *ngSwitchCase="'IMAGE'" [src]="previewUrl" alt="Preview"
+          class="max-h-[75vh] max-w-full object-contain shadow-2xl" (load)="onLoad()">
+
+        <!-- DOCUMENTS (Google Viewer) -->
+        <iframe *ngSwitchCase="'DOC'" [src]="previewUrl" class="w-full h-[75vh] border-0 bg-white"
+          (load)="onLoad()"></iframe>
+
+        <!-- UNSUPPORTED -->
+        <div *ngSwitchDefault class="text-center p-12 text-white/50">
+          <div class="text-8xl mb-6 opacity-30">📦</div>
+          <h4 class="text-2xl font-bold mb-3 text-white">Preview Not Available</h4>
+          <p class="text-gray-400 mb-8 max-w-md mx-auto">This file type/url format cannot be previewed directly in the
+            browser.</p>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">👤</span>
+        <span class="text-xs text-gray-500 font-bold">Uploaded by {{ previewResource()?.uploader }}</span>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="closePreview()"
+          class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm">
+          Close Preview
+        </button>
+        <a [href]="previewResource()?.fileUrl" target="_blank" download
+          class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Original
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Move to Topic Modal -->
+<div *ngIf="isMoveModalOpen()"
+  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
+
+    <h3 class="text-xl font-bold text-gray-900 mb-2">Move Resources</h3>
+    <p class="text-sm text-gray-500 mb-6">Select the destination category and topic for the selected resources.</p>
+
+    <div class="space-y-4 mb-6">
+      <div class="group">
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+        <select [formControl]="moveTargetCategoryId"
+          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium">
+          <option value="">Select Category</option>
+          <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topic</label>
+        <select [formControl]="moveTargetTopicId"
+          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium">
+          <option value="">Select Topic</option>
+          <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button (click)="closeMoveModal()"
+        class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+      <button (click)="executeBulkMove()" [disabled]="!moveTargetTopicId.value"
+        class="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+        Move Items
+      </button>
+    </div>
+
   </div>
 </div>
