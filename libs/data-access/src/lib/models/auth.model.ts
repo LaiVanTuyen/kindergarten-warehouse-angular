@@ -8,11 +8,15 @@ export interface User {
   fullName: string;
   role?: UserRole; // Deprecated in favor of roles
   roles?: string[];
-  isActive: boolean;
+  isActive?: boolean; // Derived or legacy
+  status?: string; // "ACTIVE" | "BLOCKED" | "DELETED" (From API)
   avatarUrl?: string; // Backend field
   avatar?: string; // Frontend alias or potential future field
   createdAt: string;
-  lastLogin?: string | Date;
+  updatedAt?: string; // Added for Metadata
+  createdBy?: string; // Added for Metadata
+  updatedBy?: string; // Added for Metadata
+  lastActive?: string | Date; // Replaces lastLogin
   phoneNumber?: string;
   bio?: string;
   isDeleted?: boolean;
@@ -55,4 +59,13 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
   confirmNewPassword?: string;
+}
+
+export interface UserCreationRequest {
+  fullName: string;
+  username: string;
+  email: string;
+  password?: string;
+  roles?: string[];
+  status?: string; // 'ACTIVE' | 'BLOCKED'
 }

@@ -5,6 +5,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
@@ -27,7 +28,7 @@ import {
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { ToastService } from '@kindergarten-warehouse/data-access';
+import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-admin-users',
@@ -53,10 +54,14 @@ import { ToastService } from '@kindergarten-warehouse/data-access';
 })
 export class UsersComponent {
   private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   toastService = inject(ToastService);
   userService = inject(UserService);
+  authService = inject(AuthService);
 
   // -- State Signals --
+  loggedInUser = toSignal(this.authService.currentUser$);
   users = signal<User[]>([]);
   isLoading = signal(false);
 
@@ -81,8 +86,102 @@ export class UsersComponent {
   );
 
   // Sorting
-  sortColumn = signal<'fullName' | 'createdAt'>('createdAt');
+  sortColumn = signal<'fullName' | 'createdAt' | 'lastActive'>('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
+
+  constructor() {
+    /* Form initialized inline */
+    this.initFromUrl();
+
+    // -- Filter Subscriptions --
+    this.searchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((val) => {
+        this.searchQuery.set(val || '');
+        this.currentPage.set(1);
+        this.updateUrl();
+        this.loadUsers();
+      });
+
+    this.roleControl.valueChanges.subscribe((val) => {
+      this.roleFilter.set((val as any) || 'ALL');
+      this.currentPage.set(1);
+      this.updateUrl();
+      this.loadUsers();
+    });
+
+    this.statusControl.valueChanges.subscribe((val) => {
+      this.statusFilter.set((val as any) || 'ALL');
+      this.currentPage.set(1);
+      this.updateUrl();
+      this.loadUsers();
+    });
+
+    // Initial load is triggered by initFromUrl if needed, or explicitly here if no params
+    // But loadUsers() updates URL, so let's call it to sync everything.
+    this.loadUsers();
+  }
+
+  private initFromUrl() {
+    const params = this.route.snapshot.queryParams;
+
+    if (params['page']) this.currentPage.set(Number(params['page']));
+    if (params['size']) this.pageSize.set(Number(params['size']));
+
+    if (params['sort']) this.sortColumn.set(params['sort']);
+    if (params['dir']) this.sortDirection.set(params['dir']);
+
+    if (params['q']) {
+      this.searchQuery.set(params['q']);
+      this.searchControl.setValue(params['q'], { emitEvent: false });
+    }
+
+    if (params['role']) {
+      const role = params['role'];
+      this.roleFilter.set(role);
+      this.roleControl.setValue(role, { emitEvent: false });
+    }
+
+    if (params['status']) {
+      const status = params['status'];
+      this.statusFilter.set(status);
+      this.statusControl.setValue(status, { emitEvent: false });
+    }
+  }
+
+  private updateUrl() {
+    const queryParams: any = {
+      page: this.currentPage(),
+      size: this.pageSize(),
+      sort: this.sortColumn(),
+      dir: this.sortDirection(),
+    };
+
+    if (this.searchQuery()) {
+      queryParams['search'] = this.searchQuery();
+    } else {
+      queryParams['search'] = null;
+    }
+
+    if (this.roleFilter() !== 'ALL') {
+      queryParams['role'] = this.roleFilter();
+    } else {
+      queryParams['role'] = null;
+    }
+
+    if (this.statusFilter() !== 'ALL') {
+      queryParams['status'] = this.statusFilter();
+    } else {
+      queryParams['status'] = null;
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   loadUsers() {
     this.isLoading.set(true);
@@ -115,8 +214,6 @@ export class UsersComponent {
   );
 
   // Helper for UI
-
-  // Helper for UI
   Math = Math;
 
   // -- Modal State --
@@ -139,7 +236,7 @@ export class UsersComponent {
       validators: [Validators.required],
     }),
     password: new FormControl<string>(''), // Optional in edit mode
-    role: new FormControl<UserRole>('USER', {
+    roles: new FormControl<string[]>(['USER'], {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -150,56 +247,44 @@ export class UsersComponent {
   showPassword = signal(false);
   currentUser = signal<User | null>(null);
 
-  constructor() {
-    /* Form initialized inline */
-
-    // -- Filter Subscriptions --
-    this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe((val) => {
-        this.searchQuery.set(val || '');
-        this.currentPage.set(1);
-        this.loadUsers();
-      });
-
-    this.roleControl.valueChanges.subscribe((val) => {
-      this.roleFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.loadUsers();
-    });
-
-    this.statusControl.valueChanges.subscribe((val) => {
-      this.statusFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.loadUsers();
-    });
-
-    this.loadUsers();
-  }
-
   resetFilters() {
-    this.searchControl.setValue('');
-    this.roleControl.setValue('ALL');
-    this.statusControl.setValue('ALL');
+    this.searchControl.setValue('', { emitEvent: false });
+    this.roleControl.setValue('ALL', { emitEvent: false });
+    this.statusControl.setValue('ALL', { emitEvent: false });
+
+    // Update signals manually since events are suppressed
+    this.searchQuery.set('');
+    this.roleFilter.set('ALL');
+    this.statusFilter.set('ALL');
+
     this.currentPage.set(1);
+    this.updateUrl();
     this.loadUsers();
   }
 
-  toggleSort(column: 'fullName' | 'createdAt') {
+  toggleSort(column: 'fullName' | 'createdAt' | 'lastActive') {
     if (this.sortColumn() === column) {
       this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       this.sortColumn.set(column);
       this.sortDirection.set('desc');
     }
+    this.updateUrl();
+    this.loadUsers();
   }
 
   // -- Bulk Selection --
-  // -- Bulk Selection --
+  clearSelection() {
+    this.selectedIds.set(new Set());
+  }
+
   toggleSelectAll(checked: boolean) {
     if (checked) {
-      // Select all ON CURRENT PAGE
-      const ids = this.users().map((u) => u.id);
+      // Select all ON CURRENT PAGE except logged in user
+      const loggedInId = this.loggedInUser()?.id;
+      const ids = this.users()
+        .filter((u) => u.id !== loggedInId)
+        .map((u) => u.id);
       this.selectedIds.set(new Set(ids));
     } else {
       this.selectedIds.set(new Set());
@@ -220,9 +305,13 @@ export class UsersComponent {
 
   isAllSelected() {
     const visible = this.users();
-    if (visible.length === 0) return false;
+    const loggedInId = this.loggedInUser()?.id;
+    // Filter out logged in user from "Select All" check
+    const eligible = visible.filter((u) => u.id !== loggedInId);
+
+    if (eligible.length === 0) return false;
     const selected = this.selectedIds();
-    return visible.every((u) => selected.has(u.id));
+    return eligible.every((u) => selected.has(u.id));
   }
 
   // -- Bulk Actions --
@@ -336,7 +425,7 @@ export class UsersComponent {
     this.isEditMode.set(false);
     this.currentUser.set(null);
     this.userForm.reset({
-      role: 'USER',
+      roles: ['USER'],
       isActive: true,
       isDeleted: false,
     });
@@ -351,13 +440,26 @@ export class UsersComponent {
   onEditUser(user: User) {
     this.isEditMode.set(true);
     this.currentUser.set(user);
+
+    // Determine Roles
+    let roles = user.roles || [];
+    if (roles.length === 0 && user.role) {
+      roles = [user.role];
+    }
+
+    // Determine Active Status
+    let isActive = user.isActive;
+    if (user.status) {
+      isActive = user.status === 'ACTIVE';
+    }
+
     this.userForm.patchValue({
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       username: user.username,
-      role: user.role,
-      isActive: user.isActive,
+      roles: roles,
+      isActive: isActive,
       // isDeleted property might be optional in User but we need it for form
       isDeleted: user.isDeleted ?? false,
       password: '',
@@ -377,13 +479,8 @@ export class UsersComponent {
     this.userForm.patchValue({ password: pwd });
   }
 
-  // -- Role Confirmation Modal --
-  isRoleConfirmModalOpen = signal(false);
-  pendingUserUpdate: typeof this.userForm.value | null = null;
-  pendingRoleChange = {
-    oldRole: '' as UserRole | undefined,
-    newRole: '' as UserRole | undefined,
-  };
+  // -- Role Confirmation Modal (Deprecated / Removed) --
+  // isRoleConfirmModalOpen = signal(false); // Removed
 
   submitUserForm() {
     if (this.userForm.invalid) {
@@ -393,85 +490,150 @@ export class UsersComponent {
 
     const formVal = this.userForm.value;
 
+    const requestData: any = {
+      fullName: formVal.fullName,
+      email: formVal.email,
+      username: formVal.username,
+      roles: formVal.roles,
+      status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
+    };
+
     if (this.isEditMode()) {
-      const currentUser = this.currentUser();
-      // Check for Role Change
-      if (currentUser && currentUser.role !== formVal.role) {
-        this.pendingUserUpdate = formVal;
-        this.pendingRoleChange = {
-          oldRole: currentUser.role,
-          newRole: formVal.role,
-        };
-        this.isRoleConfirmModalOpen.set(true);
-        this.closeUserModal(); // Close edit modal temporarily
+      // Update User
+      // Prepare request object matching AdminUpdateUserRequest
+      this.userService.updateUser(String(formVal.id), requestData).subscribe({
+        next: (res) => {
+          if (res.code === 200 || res.result) {
+            this.toastService.show('User updated successfully', 'success');
+            this.loadUsers();
+            this.closeUserModal();
+          } else {
+            this.toastService.show(res.message || 'Update failed', 'error');
+          }
+        },
+        error: (err) => {
+          this.toastService.show(
+            err.error?.message || 'Failed to update user',
+            'error'
+          );
+        },
+      });
+    } else {
+      // Create new user
+      // Pass password for creation
+      requestData.password = formVal.password;
+
+      this.userService.createUser(requestData).subscribe({
+        next: (res) => {
+          this.toastService.show('User created successfully', 'success');
+          this.loadUsers();
+          this.closeUserModal();
+        },
+        error: (err) => {
+          this.toastService.show(
+            err.error?.message || 'Failed to create user',
+            'error'
+          );
+        },
+      });
+    }
+  }
+
+  // Remove deprecated confirmRoleChange methods if they exist
+
+  closeResetModal() {
+    this.isResetModalOpen.set(false);
+    this.userToReset.set(null);
+    this.resetStep.set('INIT');
+    this.otpControl.reset();
+    this.stopOtpTimer();
+  }
+
+  // Update Reset Password
+  // Update Reset Password
+  // Renamed to onResetPassword to match template usage
+  // Note: duplicate declaration of onResetPassword was removed below
+  /*
+  onResetPassword(user: User) {
+     this.userToReset.set(user);
+     this.resetStep.set('INIT');
+     this.otpControl.reset();
+     this.isResetModalOpen.set(true);
+  }
+  */
+  // Actually, I should remove this block and keep the one I added below, or vice versa.
+  // The block below is where `onResetPassword` normally lives (Row Actions).
+  // But I put the logic here in the previous step.
+  // I will KEEP this block but remove the method name if I moved it.
+
+  // Wait, I just modified the block below (526-574) to have the logic.
+  // So I should REMOVE the methods here to avoid duplicates.
+
+  // Removing openResetModal and closeResetModal from this location as they are now consolidated below.
+
+  // confirmResetPassword uses variables that are defined below (otpControl was redefined?).
+  // Let's check where signals are defined.
+  // Signals were duplicated in the previous view:
+  // Line 500: isResetModalOpen... added in recent edit.
+  // Line 531: isResetModalOpen... existing.
+
+  // I need to clean up the duplicates deeply.
+
+  confirmResetPassword() {
+    const user = this.userToReset();
+    if (!user) return;
+
+    // Step 1: Initiate (Send OTP)
+    if (this.resetStep() === 'INIT') {
+      this.userService.initiatePasswordReset(user.id).subscribe({
+        next: (res) => {
+          this.toastService.show('OTP sent to user email', 'success');
+          this.resetStep.set('OTP');
+          this.startOtpTimer();
+        },
+        error: (err) => {
+          this.toastService.show(
+            err.error?.message || 'Failed to send OTP',
+            'error'
+          );
+        },
+      });
+      return;
+    }
+
+    // Step 2: Confirm (Verify OTP)
+    if (this.resetStep() === 'OTP') {
+      if (this.otpControl.invalid) {
+        this.otpControl.markAsTouched();
         return;
       }
 
-      // Proceed directly if no role change
-      this.forceUpdateUser(formVal);
-      this.closeUserModal();
-    } else {
-      // Create new user (no confirmation needed)
-      // NOTE: Create User Endpoint needed in Service
-      // For now, showing toast but not calling API until Endpoint is added
-      // Or we can assume it exists? UserService didn't have create method in previous file view
-      // Just showing error or implementing fake success for now to avoid build error with allUsers?
-      // Wait, I should add createUser to Service too if I want this to work.
-      // But for build fix:
-      this.toastService.show(
-        'Feature not implemented yet (Create User)',
-        'info'
-      );
-      this.closeUserModal();
-      /*
-      this.userService.createUser(formVal).subscribe((res) => {
-        this.toastService.showResponse(res);
-        this.loadUsers();
-        this.closeUserModal();
+      const otp = this.otpControl.value || '';
+      this.userService.completePasswordReset(user.id, otp).subscribe({
+        next: (res) => {
+          const newPass = res.result;
+
+          if (newPass) {
+            this.toastService.show(
+              `Success! New Password: ${newPass}`,
+              'success'
+            );
+          } else {
+            this.toastService.show(
+              'Success! New password sent to user email.',
+              'success'
+            );
+          }
+
+          this.closeResetModal();
+        },
+        error: (err) => {
+          this.toastService.show(
+            err.error?.message || 'Invalid OTP or Reset Failed',
+            'error'
+          );
+        },
       });
-      */
-    }
-  }
-
-  confirmRoleChange() {
-    if (this.pendingUserUpdate) {
-      this.forceUpdateUser(this.pendingUserUpdate);
-      this.toastService.show(
-        `Role changed to ${this.pendingRoleChange.newRole}`,
-        'success'
-      );
-      this.closeRoleConfirmModal();
-    }
-  }
-
-  closeRoleConfirmModal() {
-    this.isRoleConfirmModalOpen.set(false);
-    this.pendingUserUpdate = null;
-    // Re-open edit modal if cancelled? Or just close everything.
-    // UX: If cancel, maybe we should just go back to edit modal?
-    // For now, let's just close confirmation.
-  }
-
-  private forceUpdateUser(formVal: typeof this.userForm.value) {
-    this.userService.updateProfile(formVal as any).subscribe({
-      // Cast to any momentarily because updateProfile might expect a specific request type
-      // differing slightly from the form value (which has nulls),
-      // but ideally UserService should take Partial<User> or strict request type.
-      // Given I cannot see UserService definition right now, using 'as any'
-      // is safer than breaking build, but the method generic ensures safety internal to this component.
-      next: (res) => {
-        this.toastService.showResponse(res);
-        this.loadUsers();
-      },
-      error: (err) => {
-        this.toastService.show('Failed to update user', 'error');
-        console.error(err);
-      },
-    });
-
-    if (!this.pendingUserUpdate) {
-      // Only show toast if not coming from confirm modal (avoids double toast)
-      // Handled in subscribe above
     }
   }
 
@@ -479,44 +641,33 @@ export class UsersComponent {
   isBlockModalOpen = signal(false);
   userToBlock = signal<User | null>(null);
 
-  // -- Reset Password Modal State --
-  isResetModalOpen = signal(false);
-  userToReset = signal<User | null>(null);
-
   // -- Row Actions (Open Modals) --
   onToggleStatus(user: User) {
     this.userToBlock.set(user);
     this.isBlockModalOpen.set(true);
   }
 
+  // Renamed from openResetModal to match HTML template
   onResetPassword(user: User) {
     this.userToReset.set(user);
+    this.resetStep.set('INIT');
+    this.otpControl.reset();
     this.isResetModalOpen.set(true);
   }
 
-  // -- Confirm Actions --
   confirmBlockUser() {
     const user = this.userToBlock();
     if (!user) return;
 
     this.userService.blockUser(String(user.id)).subscribe((res) => {
-      this.toastService.showResponse(res);
-      // Optimistic update or reload? Reload is safer for "Dynamic Message" flow
+      // Assuming showResponse or show handles generic ApiResponse
+      this.toastService.show(
+        res.message || 'Updated status successfully',
+        'success'
+      );
       this.loadUsers();
       this.closeBlockModal();
     });
-  }
-
-  confirmResetPassword() {
-    const user = this.userToReset();
-    if (!user) return;
-
-    // Mock API call
-    this.toastService.show(
-      `Password reset email sent to ${user.email}`,
-      'success'
-    );
-    this.closeResetModal();
   }
 
   // -- Close Modals --
@@ -525,10 +676,7 @@ export class UsersComponent {
     this.userToBlock.set(null);
   }
 
-  closeResetModal() {
-    this.isResetModalOpen.set(false);
-    this.userToReset.set(null);
-  }
+  // closeResetModal is already defined above at line 470, removing duplicate here
 
   // -- Delete Modal State --
   isDeleteModalOpen = signal(false);
@@ -555,6 +703,38 @@ export class UsersComponent {
     this.userToDelete.set(null);
   }
 
+  // -- Reset Password Modal State --
+  // -- Reset Password Modal State --
+  isResetModalOpen = signal(false);
+  userToReset = signal<User | null>(null);
+  resetStep = signal<'INIT' | 'OTP'>('INIT');
+  otpControl = new FormControl('', [
+    Validators.required,
+    Validators.minLength(6),
+  ]);
+
+  // OTP Timer
+  otpCountdown = signal(0);
+  private timerSub: any;
+
+  startOtpTimer() {
+    this.otpCountdown.set(300); // 5 minutes
+    this.timerSub = setInterval(() => {
+      const current = this.otpCountdown();
+      if (current > 0) {
+        this.otpCountdown.set(current - 1);
+      } else {
+        this.stopOtpTimer();
+      }
+    }, 1000);
+  }
+
+  stopOtpTimer() {
+    if (this.timerSub) {
+      clearInterval(this.timerSub);
+      this.timerSub = null;
+    }
+  }
   // -- Restore Modal State --
   isRestoreModalOpen = signal(false);
   userToRestore = signal<User | null>(null);
@@ -567,10 +747,16 @@ export class UsersComponent {
   confirmRestoreUser() {
     const user = this.userToRestore();
     if (user) {
-      // API call for Restore? Not in UserService yet.
-      // Mocking for now to fix build error
-      this.toastService.show('Restore not implemented yet', 'info');
-      this.closeRestoreModal();
+      this.userService.restoreUser(String(user.id)).subscribe({
+        next: (res) => {
+          this.toastService.show('User restored successfully', 'success');
+          this.loadUsers();
+          this.closeRestoreModal();
+        },
+        error: (err) => {
+          this.toastService.show('Failed to restore user', 'error');
+        },
+      });
     }
   }
 
@@ -581,10 +767,26 @@ export class UsersComponent {
 
   onPageChange(page: number) {
     this.currentPage.set(page);
+    this.updateUrl();
     this.loadUsers();
   }
 
   trackByUser(index: number, item: User): number {
     return item.id;
+  }
+
+  // -- Helper for Checkbox Group --
+  toggleRole(role: string, checked: boolean) {
+    const currentRoles = this.userForm.value.roles || [];
+    let newRoles = [...currentRoles];
+
+    if (checked) {
+      if (!newRoles.includes(role)) newRoles.push(role);
+    } else {
+      newRoles = newRoles.filter((r) => r !== role);
+    }
+
+    this.userForm.patchValue({ roles: newRoles });
+    this.userForm.get('roles')?.markAsTouched();
   }
 }
