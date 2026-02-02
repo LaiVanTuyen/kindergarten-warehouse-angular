@@ -1,5 +1,6 @@
 // Public API for Data Access
 export * from './lib/models/models';
+export * from './lib/models/audit-log.model';
 export * from './lib/models/resource.model';
 export * from './lib/services/resource.service';
 export * from './lib/services/category.service';

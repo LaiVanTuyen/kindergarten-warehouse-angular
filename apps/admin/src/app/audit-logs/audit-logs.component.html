@@ -1,120 +1,170 @@
 <div class="h-full flex flex-col">
 
-    <!-- Detached Dark Banner -->
+    <!-- Header Section -->
     <div
-        class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 flex justify-between items-center relative overflow-hidden">
+        class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 relative overflow-hidden flex justify-between items-center">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="flex flex-col gap-1">
-            <app-breadcrumb></app-breadcrumb>
             <h1 class="text-2xl font-bold tracking-tight">Audit Logs</h1>
-            <p class="text-slate-400 mt-1 text-sm">Track system activities and ensure security.</p>
+            <p class="text-slate-400 mt-1 text-sm">System activity history</p>
         </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="flex flex-col xl:flex-row justify-between items-center gap-4 mb-4">
-        <!-- Filters -->
-        <div class="flex items-center gap-3 w-full xl:w-auto">
-            <div class="relative w-full sm:w-56">
-                <select [formControl]="actionControl"
-                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+    <!-- Filters Toolbar -->
+    <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row gap-4 items-center justify-between"
+        [formGroup]="filterForm">
+        <!-- Left: Filters -->
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+
+            <!-- Action Select -->
+            <div class="relative">
+                <select formControlName="action"
+                    class="appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-slate-100 transition-colors cursor-pointer">
                     <option value="ALL">All Actions</option>
+                    <option value="LOGIN">Login</option>
                     <option value="CREATE">Create</option>
                     <option value="UPDATE">Update</option>
                     <option value="DELETE">Delete</option>
-                    <option value="LOGIN">Login</option>
+                    <option value="RESTORE">Restore</option>
                 </select>
-                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m6 9 6 6 6-6" />
                     </svg>
                 </div>
             </div>
 
-            <!-- Reset Button -->
-            <button (click)="resetFilters()" title="Reset Filters"
-                class="px-3 py-2.5 border border-gray-200 rounded-xl text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-sm active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-            </button>
+            <!-- Username Search -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <input formControlName="username" type="text" placeholder="Filter by username..."
+                    class="pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 transition-all">
+            </div>
+
+            <!-- Date Range -->
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <input formControlName="startDate" type="date"
+                    class="bg-transparent text-sm text-slate-600 focus:outline-none w-32">
+                <span class="text-slate-400">→</span>
+                <input formControlName="endDate" type="date"
+                    class="bg-transparent text-sm text-slate-600 focus:outline-none w-32">
+            </div>
+
+            <!-- Page Size -->
+            <div class="relative">
+                <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)"
+                    [ngModelOptions]="{standalone: true}"
+                    class="appearance-none pl-4 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-slate-100 transition-colors cursor-pointer">
+                    <option [value]="5">5 per page</option>
+                    <option [value]="10">10 per page</option>
+                    <option [value]="20">20 per page</option>
+                    <option [value]="50">50 per page</option>
+                </select>
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+                </div>
+            </div>
         </div>
 
-        <!-- Search -->
-        <div class="relative w-full sm:w-72">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20"
-                    fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                        clip-rule="evenodd" />
-                </svg>
-            </div>
-            <input [formControl]="searchControl" type="text" placeholder="Search logs..."
-                class="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm" />
+        <!-- Right: Loading Indicator -->
+        <div *ngIf="loading()" class="text-blue-600 text-sm font-medium animate-pulse">
+            Syncing...
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-
-        <!-- Skeleton Loading -->
-        <div *ngIf="isLoading()" class="p-6">
-            <app-skeleton-table [rows]="10" [cols]="5" [template]="['text-sm', 'text', 'badge', 'text', 'text']">
-            </app-skeleton-table>
-        </div>
-
-        <div *ngIf="!isLoading()" class="overflow-auto flex-1">
+    <!-- Table Card -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
+        <div class="flex-1 overflow-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 sticky top-0 z-10">
-                    <tr>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Time</th>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Performer
+                <thead class="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500 uppercase tracking-wider">
+                    <tr class="border-b border-gray-100">
+                        <th class="px-6 py-4 font-bold cursor-pointer hover:text-blue-600 transition-colors"
+                            (click)="toggleSort()">
+                            Timestamp
+                            <span class="ml-1">{{ sortDir() === 'desc' ? '↓' : '↑' }}</span>
                         </th>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Action</th>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Object</th>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Details</th>
+                        <th class="px-6 py-4 font-bold">Action</th>
+                        <th class="px-6 py-4 font-bold">Username</th>
+                        <th class="px-6 py-4 font-bold w-1/4">Target</th>
+                        <th class="px-6 py-4 font-bold w-1/3">Detail</th>
+                        <th class="px-6 py-4 text-right"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <tr *ngFor="let log of paginatedLogs()" class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap font-mono">
-                            {{ log.timestamp | date:'short' }}
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    <tr *ngFor="let log of auditLogs()" class="hover:bg-slate-50/80 transition-colors group">
+                        <!-- Timestamp -->
+                        <td class="px-6 py-4 font-mono text-slate-500 whitespace-nowrap">
+                            {{ log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-slate-700">{{ log.username }}</div>
-                        </td>
+
+                        <!-- Action -->
                         <td class="px-6 py-4">
                             <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset"
-                                [ngClass]="{
-                  'bg-emerald-50 text-emerald-700 ring-emerald-600/20': log.action === 'CREATE',
-                  'bg-amber-50 text-amber-700 ring-amber-600/20': log.action === 'UPDATE',
-                  'bg-rose-50 text-rose-700 ring-rose-600/20': log.action === 'DELETE',
-                  'bg-blue-50 text-blue-700 ring-blue-600/20': log.action === 'LOGIN'
-                }">
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border capitalize"
+                                [ngClass]="getActionColor(log.action)">
                                 {{ log.action }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">
+
+                        <!-- Username -->
+                        <td class="px-6 py-4 font-bold text-slate-700">
+                            {{ log.username }}
+                        </td>
+
+                        <!-- Target -->
+                        <td class="px-6 py-4 text-slate-600 truncate max-w-xs" [title]="log.target">
                             {{ log.target }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-500">
+
+                        <!-- Detail -->
+                        <td class="px-6 py-4 text-slate-500 truncate max-w-sm" [title]="log.detail">
                             {{ log.detail }}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 text-right">
+                            <button (click)="openDetail(log)"
+                                class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="View Details">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
 
                     <!-- Empty State -->
-                    <tr *ngIf="paginatedLogs().length === 0">
-                        <td colspan="5" class="p-0">
-                            <div class="p-8">
-                                <app-empty-state message="No audit logs found"
-                                    subMessage="We couldn't find any activities matching your filters.">
-                                </app-empty-state>
+                    <tr *ngIf="auditLogs().length === 0 && !loading()">
+                        <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-slate-50 p-4 rounded-full mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="text-slate-300">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                </div>
+                                <p class="font-medium text-slate-500">No logs found</p>
+                                <p class="text-xs mt-1">Try adjusting your filters.</p>
                             </div>
                         </td>
                     </tr>
@@ -123,9 +173,117 @@
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="!isLoading()" class="border-t border-slate-100 bg-white p-4">
-            <app-pagination [currentPage]="currentPage()" [pageSize]="pageSize()" [totalItems]="totalLogs()"
-                (pageChange)="onPageChange($event)"></app-pagination>
+        <app-pagination class="mt-auto border-t border-gray-100" [currentPage]="currentPage()"
+            [totalItems]="totalLogs()" [pageSize]="pageSize()" itemName="logs" (pageChange)="onPageChange($event)">
+        </app-pagination>
+    </div>
+
+    <!-- Detail Modal -->
+    <div *ngIf="isModalOpen()"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Log Details</h3>
+                    <p class="text-xs text-slate-500 font-mono mt-0.5">ID: #{{ selectedLog()?.id }}</p>
+                </div>
+                <button (click)="closeModal()"
+                    class="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-5" *ngIf="selectedLog() as log">
+
+                <!-- Primary Info -->
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg shadow-sm"
+                        [ngClass]="getActionColor(log.action)">
+                        <ng-container [ngSwitch]="log.action">
+                            <span *ngSwitchCase="'LOGIN'">🔑</span>
+                            <span *ngSwitchCase="'CREATE'">✨</span>
+                            <span *ngSwitchCase="'UPDATE'">✏️</span>
+                            <span *ngSwitchCase="'DELETE'">🗑️</span>
+                            <span *ngSwitchCase="'RESTORE'">♻️</span>
+                            <span *ngSwitchDefault>📝</span>
+                        </ng-container>
+                    </div>
+                    <div>
+                        <div class="text-sm text-slate-500 font-medium">Action Performed</div>
+                        <div class="font-bold text-slate-900 text-lg">{{ log.action }}</div>
+                    </div>
+                    <div class="ml-auto text-right">
+                        <div class="text-sm text-slate-500 font-medium">Timestamp</div>
+                        <div class="font-mono text-slate-700 text-sm bg-slate-100 px-2 py-1 rounded-lg">{{ log.timestamp
+                            | date:'medium' }}</div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-slate-100 w-full"></div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">User</div>
+                        <div class="font-bold text-slate-700 flex items-center gap-2">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
+                                {{ log.username.charAt(0).toUpperCase() }}
+                            </div>
+                            {{ log.username }}
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Target</div>
+                        <div class="font-medium text-slate-700 truncate" [title]="log.target">{{ log.target }}</div>
+                    </div>
+                </div>
+
+                <!-- Technical Info -->
+                <div class="space-y-3">
+                    <div>
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Detail Message</div>
+                        <div
+                            class="bg-slate-900 text-slate-300 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-700 shadow-inner">
+                            {{ log.detail }}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">IP Address</div>
+                            <div
+                                class="font-mono text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg truncate">
+                                {{ log.ipAddress || 'Unknown' }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">User Agent</div>
+                            <div class="font-mono text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg truncate"
+                                [title]="log.userAgent">
+                                {{ formatUserAgent(log.userAgent) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-gray-100 text-right">
+                <button (click)="closeModal()"
+                    class="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors shadow-sm">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
+
 </div>
