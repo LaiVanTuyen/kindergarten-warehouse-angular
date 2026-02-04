@@ -12,6 +12,7 @@ import { SkeletonTableComponent } from '../shared/components/skeleton-table/skel
 import {
   FormBuilder,
   ReactiveFormsModule,
+  FormsModule,
   Validators,
   FormControl,
 } from '@angular/forms';
@@ -36,6 +37,7 @@ import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     PaginationComponent,
     SkeletonTableComponent,
     BreadcrumbComponent,
@@ -187,7 +189,7 @@ export class UsersComponent {
     this.isLoading.set(true);
     this.userService
       .getUsers(
-        this.currentPage() - 1,
+        this.currentPage(),
         this.pageSize(),
         this.searchQuery(),
         this.roleFilter(),
@@ -763,6 +765,13 @@ export class UsersComponent {
   closeRestoreModal() {
     this.isRestoreModalOpen.set(false);
     this.userToRestore.set(null);
+  }
+
+  onPageSizeChange(newSize: number) {
+    this.pageSize.set(Number(newSize));
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
   }
 
   onPageChange(page: number) {

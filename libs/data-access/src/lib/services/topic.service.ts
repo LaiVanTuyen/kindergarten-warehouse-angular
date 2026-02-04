@@ -58,6 +58,16 @@ export class TopicService {
   }
 
   /**
+   * Get functionality for single topic
+   * GET /topics/:id
+   */
+  getTopic(id: string): Observable<ApiResponse<Topic>> {
+    return this.http
+      .get<ApiResponse<Topic>>(`${this.apiUrl}/topics/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Create Topic
    * POST /topics
    */

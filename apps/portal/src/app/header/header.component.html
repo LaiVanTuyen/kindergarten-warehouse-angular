@@ -128,6 +128,11 @@
                   <i class="ph ph-user text-lg"></i>
                   My Profile
                 </a>
+                <a routerLink="/favorites" (click)="closeUserMenu()"
+                  class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors cursor-pointer">
+                  <i class="ph ph-heart text-lg"></i>
+                  Favorites
+                </a>
                 <a routerLink="/settings" (click)="closeUserMenu()"
                   class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors cursor-pointer">
                   <i class="ph ph-gear text-lg"></i>

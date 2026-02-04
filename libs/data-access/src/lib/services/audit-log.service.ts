@@ -19,7 +19,7 @@ export class AuditLogService {
     sortDir: 'asc' | 'desc' = 'desc'
   ): Observable<ApiResponse<Page<AuditLog>>> {
     let params = new HttpParams()
-      .set('page', page)
+      .set('page', page - 1)
       .set('size', limit)
       .set('sortDir', sortDir);
 

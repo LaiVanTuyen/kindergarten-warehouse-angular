@@ -83,7 +83,7 @@ export class BannersComponent implements OnInit {
   banners = signal<Banner[]>([]);
 
   // Pagination
-  pageIndex = 0;
+  pageIndex = 1;
   pageSize = 100;
   totalElements = signal(0);
   totalPages = signal(0);
@@ -211,7 +211,7 @@ export class BannersComponent implements OnInit {
   }
 
   changePage(newPage: number) {
-    if (newPage >= 0 && newPage < this.totalPages()) {
+    if (newPage >= 1 && newPage <= this.totalPages()) {
       this.pageIndex = newPage;
       this.loadBanners();
     }

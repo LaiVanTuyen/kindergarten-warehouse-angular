@@ -46,6 +46,13 @@ export const appRoutes: Route[] = [
       import('./profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
+    path: 'favorites',
+    loadComponent: () =>
+      import('./favorites/favorites.component').then(
+        (m) => m.FavoritesComponent
+      ),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./settings/settings.component').then((m) => m.SettingsComponent),

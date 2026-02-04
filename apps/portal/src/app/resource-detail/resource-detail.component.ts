@@ -84,7 +84,7 @@ export class ResourceDetailComponent {
   // I will add `getAllTopicsMock` to `general.service.ts` first.
 
   relatedResources$ = this.resourceService
-    .getResources({ page: 0, size: 4 })
+    .getResources({ page: 1, size: 4 })
     .pipe(map((res) => res.data.content));
 
   isYouTube(url: string | undefined): boolean {

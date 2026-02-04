@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 
 import { Resource } from '@kindergarten-warehouse/data-access';
-import { ToastService } from '@kindergarten-warehouse/data-access';
+import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -30,6 +30,7 @@ export class ResourceCardComponent implements OnInit {
   hasImageError = false;
 
   private toastService = inject(ToastService);
+  private authService = inject(AuthService); // Inject AuthService
 
   ngOnInit() {
     this.checkFavorite();
@@ -46,17 +47,14 @@ export class ResourceCardComponent implements OnInit {
 
   onImageError() {
     this.hasImageError = true;
-    // Optional: set a default src if needed, but we used *ngIf in HTML
   }
 
   toggleFavorite(event: Event) {
     event.stopPropagation();
 
-    // Check if user is logged in (mock)
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // simple mock
-
-    if (!isLoggedIn) {
-      this.toastService.show('Please login to save favorites', 'info');
+    // Check if user is logged in using AuthService
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.show('Vui lòng đăng nhập để lưu yêu thích', 'info');
       return;
     }
 
@@ -64,11 +62,18 @@ export class ResourceCardComponent implements OnInit {
 
     // Save to localStorage (MVP)
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+
     if (this.isFavorite) {
-      favorites.push(this.resource.id);
-      this.toastService.show('Added to favorites', 'success');
+      if (!favorites.includes(this.resource.id)) {
+        favorites.push(this.resource.id);
+        this.toastService.show('Đã thêm vào danh sách yêu thích', 'success');
+      }
     } else {
-      // alert('Added to favorites!');
+      const index = favorites.indexOf(this.resource.id);
+      if (index > -1) {
+        favorites.splice(index, 1);
+        this.toastService.show('Đã xóa khỏi danh sách yêu thích', 'info');
+      }
     }
     localStorage.setItem('favorites', JSON.stringify(favorites));
   }

@@ -13,7 +13,9 @@ import {
   FormBuilder,
   FormControl,
   ReactiveFormsModule,
+  FormsModule,
   Validators,
+  FormGroup,
 } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
@@ -34,6 +36,7 @@ import { ToastService } from '@kindergarten-warehouse/data-access';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     PaginationComponent,
     BreadcrumbComponent,
   ],
@@ -359,6 +362,13 @@ export class CategoriesComponent {
 
   getTopicsForCategory(categoryId: string): Topic[] {
     return this.topics().filter((t) => t.categoryId === categoryId);
+  }
+
+  onPageSizeChange(newSize: number) {
+    this.pageSize.set(Number(newSize));
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadCategories();
   }
 
   onCategoryPageChange(page: number) {

@@ -54,12 +54,7 @@ export class UserService {
     dir: 'asc' | 'desc' = 'desc'
   ): Observable<ApiResponse<Page<User>>> {
     let params = new HttpParams()
-      .set('page', (page - 1).toString())
-      .set('size', limit) // Note: Backend usually 0-indexed for page? UserService in previous view used raw page. Category used page-1. Check UserService original.
-      // Original UserService: .set('page', page)
-      // I should verify if I need to change page to page-1 or keep as is.
-      // UserService original used 'page'. Let's stick to original 'page' but fix syntax.
-      .set('page', page)
+      .set('page', (page - 1).toString()) // Backend expects 0-indexed
       .set('size', limit)
       .set('keyword', query)
       .set('sortBy', sort)

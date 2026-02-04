@@ -15,13 +15,15 @@ export interface Resource {
   createdById?: number; // User Id assumed number based on Users table
   isActive: boolean;
   isDeleted: boolean;
+  isFavorited?: boolean; // New field from spec
   createdAt: string;
   updatedAt?: string;
   slug: string;
   highlights?: string[]; // JSON mapped to string array
+  ageGroups?: AgeGroup[]; // New field from spec
 
   // Enums or Union types
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
   type:
     | 'VIDEO'
     | 'DOCUMENT'
@@ -30,14 +32,20 @@ export interface Resource {
     | 'WORD'
     | 'AUDIO'
     | 'IMAGE'
-    | 'PPT'
-    | 'POWERPOINT';
+    | 'POWERPOINT'
+    | 'YOUTUBE';
 
   // Relations (optional depending on API response depth)
   comments?: Comment[];
   rating?: number; // Calculated or from View
   uploader?: string; // Helpers
   uploaderAvatar?: string; // Helpers
+  topic?: {
+    id: string | number;
+    name: string;
+    categoryId: string | number;
+    categoryName?: string;
+  };
 }
 
 // ResourceComment merged into Comment in interaction.model.ts
@@ -49,21 +57,25 @@ export interface CreateResourceRequest {
   description: string;
   topicId: string;
   ageGroupIds: string; // Comma separated
+  username: string; // Required by spec
 }
 
 export interface UpdateResourceRequest {
   title?: string;
   description?: string;
   topicId?: string;
-  ageGroupIds?: string;
-  file?: File; // If re-uploading
+  ageGroupIds?: string; // List<Long> but sent as query params usually string or multi-value
+  status?: 'APPROVED' | 'REJECTED' | 'HIDDEN';
+  file?: File; // If re-uploading (not in update spec but good to keep if needed)
 }
 
 // Response Wrappers
 export interface RestResponse<T> {
-  status?: string; // 'OK', etc. if your API sends this
+  code?: number; // Spec uses 'code': 1000
+  status?: string;
   message?: string;
-  data: T;
+  result?: T; // Spec uses 'result' instead of 'data'
+  data: T; // Keep for backward compatibility if needed
 }
 
 export interface PaginatedResponse<T> {
@@ -85,8 +97,9 @@ export interface ResourceFilterParams {
   topic?: string; // slug
   category?: string; // slug
   ages?: string; // slugs
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
   type?: string;
+  sort?: string; // Added sort
 }
 
 export interface Category {

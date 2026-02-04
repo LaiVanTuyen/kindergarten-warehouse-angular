@@ -124,12 +124,17 @@
 
                         <!-- Target -->
                         <td class="px-6 py-4 text-slate-600 truncate max-w-xs" [title]="log.target">
-                            {{ log.target }}
+                            {{ log.target | formatTarget }}
                         </td>
 
                         <!-- Detail -->
                         <td class="px-6 py-4 text-slate-500 truncate max-w-sm" [title]="log.detail">
-                            {{ log.detail }}
+                            <ng-container *ngIf="log.detail | formatDetail as formatted">
+                                <span class="font-medium text-slate-700">{{ formatted.description }}</span>
+                                <span *ngIf="formatted.args" class="text-xs text-slate-400 ml-1">
+                                    ({{ formatted.args | slice:0:30 }}{{ formatted.args.length > 30 ? '...' : '' }})
+                                </span>
+                            </ng-container>
                         </td>
 
                         <!-- Actions -->
@@ -242,7 +247,9 @@
 
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Target</div>
-                        <div class="font-medium text-slate-700 truncate" [title]="log.target">{{ log.target }}</div>
+                        <div class="font-medium text-slate-700 truncate" [title]="log.target">
+                            {{ log.target | formatTarget }}
+                        </div>
                     </div>
                 </div>
 
@@ -251,8 +258,16 @@
                     <div>
                         <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Detail Message</div>
                         <div
-                            class="bg-slate-900 text-slate-300 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-700 shadow-inner">
-                            {{ log.detail }}
+                            class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm overflow-x-auto text-slate-700">
+                            <ng-container *ngIf="log.detail | formatDetail as formatted">
+                                <div class="font-bold text-slate-800 mb-1">
+                                    {{ formatted.description }}
+                                </div>
+                                <div *ngIf="formatted.args"
+                                    class="text-xs text-slate-500 font-mono bg-slate-100 p-2 rounded border border-slate-200">
+                                    Args: {{ formatted.args }}
+                                </div>
+                            </ng-container>
                         </div>
                     </div>
 

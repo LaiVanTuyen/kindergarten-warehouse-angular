@@ -1,24 +1,22 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { API_URL } from '../tokens';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, throwError, map } from 'rxjs';
 import {
   Resource,
   RestResponse,
   PaginatedResponse,
   ResourceFilterParams,
+  AgeGroup,
 } from '../models/resource.model';
-import { AgeGroup } from '../models/models';
 import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ResourceService {
-  constructor(
-    private http: HttpClient,
-    @Inject(API_URL) private apiUrl: string
-  ) {}
+  private http = inject(HttpClient);
+  private apiUrl = inject(API_URL);
 
   /**
    * Get Public Resources with Filters and Pagination
@@ -30,7 +28,7 @@ export class ResourceService {
     let httpParams = new HttpParams();
 
     if (params.page !== undefined)
-      httpParams = httpParams.set('page', params.page);
+      httpParams = httpParams.set('page', params.page - 1); // Backend is 0-indexed
     if (params.size !== undefined)
       httpParams = httpParams.set('size', params.size);
     if (params.topicId) httpParams = httpParams.set('topicId', params.topicId);
@@ -44,6 +42,7 @@ export class ResourceService {
       httpParams = httpParams.set('category', params.category);
     if (params.ages) httpParams = httpParams.set('ages', params.ages);
     if (params.status) httpParams = httpParams.set('status', params.status);
+    if (params.type) httpParams = httpParams.set('type', params.type);
 
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
@@ -52,7 +51,15 @@ export class ResourceService {
           params: httpParams,
         }
       )
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) {
+            res.data = res.result;
+          }
+          return res;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -62,7 +69,13 @@ export class ResourceService {
   getResource(slug: string): Observable<RestResponse<Resource>> {
     return this.http
       .get<RestResponse<Resource>>(`${this.apiUrl}/resources/${slug}`)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -71,9 +84,16 @@ export class ResourceService {
    * Payload: FormData
    */
   uploadResource(formData: FormData): Observable<RestResponse<Resource>> {
+    // Username should be appended by the component before calling this
     return this.http
       .post<RestResponse<Resource>>(`${this.apiUrl}/resources`, formData)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -123,26 +143,51 @@ export class ResourceService {
   createResource(data: any): Observable<RestResponse<Resource>> {
     return this.http
       .post<RestResponse<Resource>>(`${this.apiUrl}/resources/json`, data)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
    * Update Resource
    * PUT /resources/:id
+   * Content-Type: Query Params
    */
   updateResource(id: string, data: any): Observable<RestResponse<Resource>> {
     return this.http
-      .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, data)
+      .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, data) // Send data as JSON body
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Toggle Favorite
+   * POST /resources/:id/favorite
+   */
+  toggleFavorite(id: string): Observable<RestResponse<null>> {
+    return this.http
+      .post<RestResponse<null>>(`${this.apiUrl}/resources/${id}/favorite`, {})
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Approve Resource
-   * PUT /resources/:id/approve
+   * PUT /resources/:id/approve (Or Update Status)
    */
   approveResource(id: string): Observable<RestResponse<void>> {
+    // Based on spec, Admin calls Update with status=APPROVED
+    const params = new HttpParams().set('status', 'APPROVED');
     return this.http
-      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/approve`, {})
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}`, {}, { params })
       .pipe(catchError(this.handleError));
   }
 
@@ -181,5 +226,24 @@ export class ResourceService {
             'Something went wrong while communicating with the server.'
         )
     );
+  }
+  /**
+   * Update Resource Thumbnail
+   * POST /resources/:id/thumbnail
+   * Payload: FormData (thumbnail: File)
+   */
+  updateThumbnail(
+    id: string,
+    thumbnail: File
+  ): Observable<RestResponse<{ thumbnailUrl: string }>> {
+    const formData = new FormData();
+    formData.append('thumbnail', thumbnail);
+
+    return this.http
+      .post<RestResponse<{ thumbnailUrl: string }>>(
+        `${this.apiUrl}/resources/${id}/thumbnail`,
+        formData
+      )
+      .pipe(catchError(this.handleError));
   }
 }

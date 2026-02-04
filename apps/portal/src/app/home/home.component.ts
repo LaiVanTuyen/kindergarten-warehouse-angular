@@ -45,7 +45,7 @@ export class HomeComponent {
 
   // Get latest 4 resources
   latestResources$ = this.resourceService
-    .getResources({ page: 0, size: 4, status: 'APPROVED' })
+    .getResources({ page: 1, size: 4, status: 'APPROVED' })
     .pipe(
       map((res) => res.data.content),
       catchError((err) => {

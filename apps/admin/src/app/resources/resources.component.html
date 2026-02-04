@@ -61,6 +61,21 @@
 
   <!-- Filters Section -->
   <div class="flex flex-col sm:flex-row gap-4 mb-4" *ngIf="activeTab() === 'list'">
+    <!-- Page Size Selector -->
+    <div class="relative w-full sm:w-auto min-w-[130px]">
+      <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)"
+        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+        <option [value]="5">5 per page</option>
+        <option [value]="10">10 per page</option>
+        <option [value]="20">20 per page</option>
+        <option [value]="50">50 per page</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
     <!-- Category Filter -->
     <div class="relative w-full sm:w-56">
       <select [formControl]="categoryFilter"
@@ -81,6 +96,20 @@
         class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
         <option value="">All Topics</option>
         <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Age Group Filter -->
+    <div class="relative w-full sm:w-56">
+      <select [formControl]="ageGroupFilter"
+        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
+        <option value="">All Ages</option>
+        <option *ngFor="let ag of ageGroups()" [value]="ag.id">{{ ag.name }}</option>
       </select>
       <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,9 +229,94 @@
             <td class="px-6 py-4 pl-2">
               <div class="flex items-center">
                 <!-- Thumbnail with Hover Zoom -->
+                <!-- Thumbnail: Real Image or Fallback Icon -->
                 <div
-                  class="h-12 w-12 bg-white rounded-xl flex-shrink-0 mr-4 flex items-center justify-center text-2xl shadow-sm border border-gray-100 group-hover:border-blue-200 group-hover:shadow-md transition-all duration-300 hover:scale-150 hover:z-20 hover:shadow-lg hover:border-blue-300 relative cursor-zoom-in">
-                  {{ res.thumbnailUrl }}
+                  class="h-12 w-12 bg-gray-50 rounded-xl flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden border border-gray-100 relative group-hover:border-blue-200 transition-all">
+                  <img *ngIf="res.thumbnailUrl" [src]="res.thumbnailUrl" alt="Thumbnail"
+                    class="w-full h-full object-cover">
+                  <!-- Fallback if no thumbnail -->
+                  <span *ngIf="!res.thumbnailUrl" class="text-2xl">
+                    <ng-container [ngSwitch]="res.type">
+                      <!-- YOUTUBE -->
+                      <div *ngSwitchCase="'YOUTUBE'" class="p-2 bg-red-100 rounded-lg">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-red-600">
+                          <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                        </svg>
+                      </div>
+
+                      <!-- VIDEO -->
+                      <div *ngSwitchCase="'VIDEO'" class="p-2 bg-rose-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-rose-600">
+                          <path
+                            d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.94-.94 2.56-.27 2.56 1.07v11.36c0 1.34-1.62 2.01-2.56 1.07Z" />
+                        </svg>
+                      </div>
+
+                      <!-- PDF -->
+                      <div *ngSwitchCase="'PDF'" class="p-2 bg-red-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-red-600">
+                          <path fill-rule="evenodd"
+                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+
+                      <!-- WORD -->
+                      <div *ngSwitchCase="'WORD'" class="p-2 bg-blue-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-blue-600">
+                          <path fill-rule="evenodd"
+                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                            clip-rule="evenodd" />
+                          <path d="M9.5 7h5v2h-5zM9.5 11h5v2h-5z" opacity="0.5" />
+                        </svg>
+                      </div>
+
+                      <!-- EXCEL -->
+                      <div *ngSwitchCase="'EXCEL'" class="p-2 bg-emerald-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-emerald-600">
+                          <path fill-rule="evenodd"
+                            d="M3 4.5A1.5 1.5 0 0 1 4.5 3h12.384c.399 0 .78.158 1.06.44l3.616 3.616c.282.28.44.662.44 1.06V21a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 3 21V4.5Zm6.75 4.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+
+                      <!-- IMAGE -->
+                      <div *ngSwitchCase="'IMAGE'" class="p-2 bg-purple-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-purple-600">
+                          <path fill-rule="evenodd"
+                            d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+
+                      <!-- AUDIO -->
+                      <div *ngSwitchCase="'AUDIO'" class="p-2 bg-amber-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-amber-600">
+                          <path fill-rule="evenodd"
+                            d="M19.952 1.651a.75.75 0 0 1 .298.599V16.303a3 3 0 0 1-2.176 5.947H13.65a3 3 0 0 1-2.176-5.947h.056v-9.15l-4.14 1.655v10.997a3 3 0 0 1-2.176 5.947H4.35a3 3 0 0 1-2.176-5.947h.056V6.052a.75.75 0 0 1 .453-.7l8.25-3.3a.75.75 0 0 1 1.022.69V10.25l6-2.4V2.25a.75.75 0 0 1 1.022-.693l.977.094Z"
+                            clip-rule="evenodd" />
+                        </svg>
+                      </div>
+
+                      <!-- DEFAULT -->
+                      <div *ngSwitchDefault class="p-2 bg-gray-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                          class="w-6 h-6 text-gray-500">
+                          <path
+                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
+                          <path
+                            d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                        </svg>
+                      </div>
+                    </ng-container>
+                  </span>
                 </div>
                 <div>
                   <div class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 text-[15px]">{{
@@ -220,80 +334,134 @@
             <td class="px-6 py-4">
               <div class="flex flex-col gap-1">
                 <!-- Icon Badge -->
-                <ng-container [ngSwitch]="res.type">
-                  <!-- VIDEO = Red/Rose with bg -->
+                <ng-container [ngSwitch]="getDisplayType(res)">
+                  <!-- YOUTUBE -->
+                  <span *ngSwitchCase="'YOUTUBE'"
+                    class="text-red-700 bg-red-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-red-100 w-fit">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-red-600">
+                      <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || 'YOUTUBE'
+                      }}</span>
+                  </span>
+
+                  <!-- VIDEO -->
                   <span *ngSwitchCase="'VIDEO'"
-                    class="text-rose-700 bg-rose-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-rose-100">
-                    <div class="p-1 bg-white rounded-md shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-4 h-4 text-rose-600">
-                        <path
-                          d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.94-.94 2.56-.27 2.56 1.07v11.36c0 1.34-1.62 2.01-2.56 1.07Z" />
-                      </svg>
-                    </div>
-                    VIDEO
+                    class="text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-rose-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-rose-600">
+                      <path
+                        d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || 'VIDEO'
+                      }}</span>
                   </span>
-                  <!-- PDF = Red with bg -->
+
+                  <!-- PDF -->
                   <span *ngSwitchCase="'PDF'"
-                    class="text-red-700 bg-red-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-red-100">
-                    <div class="p-1 bg-white rounded-md shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-4 h-4 text-red-600">
-                        <path fill-rule="evenodd"
-                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                          clip-rule="evenodd" />
-                        <path
-                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                      </svg>
-                    </div>
-                    PDF
+                    class="text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-rose-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-rose-500">
+                      <path fill-rule="evenodd"
+                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                        clip-rule="evenodd" />
+                      <path
+                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">PDF</span>
                   </span>
-                  <!-- EXCEL = Green/Emerald with bg -->
-                  <span *ngSwitchCase="'EXCEL'"
-                    class="text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-emerald-100">
-                    <div class="p-1 bg-white rounded-md shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-4 h-4 text-emerald-600">
-                        <path fill-rule="evenodd"
-                          d="M4.5 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5h16.5a.75.75 0 0 0 0-1.5h-.75V3.75a.75.75 0 0 0 0-1.5H4.5ZM9 6a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 6Zm.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5ZM9 13.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5Z"
-                          clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                    XLS
-                  </span>
-                  <!-- WORD = Blue with bg -->
+
+                  <!-- WORD -->
                   <span *ngSwitchCase="'WORD'"
-                    class="text-blue-700 bg-blue-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-blue-100">
-                    <div class="p-1 bg-white rounded-md shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-4 h-4 text-blue-600">
-                        <path fill-rule="evenodd"
-                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                          clip-rule="evenodd" />
-                        <path
-                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                      </svg>
-                    </div>
-                    DOC
+                    class="text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-blue-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-blue-600">
+                      <path fill-rule="evenodd"
+                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                        clip-rule="evenodd" />
+                      <path
+                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">WORD</span>
                   </span>
-                  <!-- DEFAULT = Gray with bg -->
+
+                  <!-- EXCEL -->
+                  <span *ngSwitchCase="'EXCEL'"
+                    class="text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-emerald-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-emerald-600">
+                      <path fill-rule="evenodd"
+                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                        clip-rule="evenodd" />
+                      <path
+                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">EXCEL</span>
+                  </span>
+
+                  <!-- POWERPOINT -->
+                  <span *ngSwitchCase="'POWERPOINT'"
+                    class="text-orange-700 bg-orange-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-orange-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-orange-600">
+                      <path fill-rule="evenodd"
+                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
+                        clip-rule="evenodd" />
+                      <path
+                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">POWERPOINT</span>
+                  </span>
+
+                  <!-- IMAGE -->
+                  <span *ngSwitchCase="'IMAGE'"
+                    class="text-purple-700 bg-purple-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-purple-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-purple-600">
+                      <path fill-rule="evenodd"
+                        d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">IMAGE</span>
+                  </span>
+
+                  <!-- AUDIO -->
+                  <span *ngSwitchCase="'AUDIO'"
+                    class="text-amber-800 bg-amber-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-amber-100 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-amber-600">
+                      <path fill-rule="evenodd"
+                        d="M19.952 1.651a.75.75 0 0 1 .298.599V16.303a3 3 0 0 1-2.176 5.947H13.65a3 3 0 0 1-2.176-5.947h.056v-9.15l-4.14 1.655v10.997a3 3 0 0 1-2.176 5.947H4.35a3 3 0 0 1-2.176-5.947h.056V6.052a.75.75 0 0 1 .453-.7l8.25-3.3a.75.75 0 0 1 1.022.69V10.25l6-2.4V2.25a.75.75 0 0 1 1.022-.693l.977.094Z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">AUDIO</span>
+                  </span>
+
+                  <!-- DEFAULT / FILE EXTENSION -->
                   <span *ngSwitchDefault
-                    class="text-gray-700 bg-gray-50 px-2 py-1 rounded-md flex items-center gap-1.5 border border-gray-200">
-                    <div class="p-1 bg-white rounded-md shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-4 h-4 text-gray-500">
-                        <path
-                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
-                        <path
-                          d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                      </svg>
-                    </div>
-                    FILE
+                    class="text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-gray-200 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                      class="w-5 h-5 text-gray-500">
+                      <path
+                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
+                      <path
+                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || res.type
+                      }}</span>
                   </span>
                 </ng-container>
 
                 <!-- File Size text -->
-                <span class="text-xs text-gray-500 font-medium pl-6">{{ res.fileSize || 'Unknown' }}</span>
+                <span class="text-xs text-gray-500 font-medium pl-6">
+                  <ng-container *ngIf="getDisplayType(res) === 'YOUTUBE'; else sizeInfo">
+                    <span class="text-red-500 font-semibold opacity-80">Stream</span>
+                  </ng-container>
+                  <ng-template #sizeInfo>
+                    {{ res.fileSize || 'Pending' }}
+                  </ng-template>
+                </span>
               </div>
             </td>
 
@@ -313,14 +481,14 @@
 
             <!-- Topic (New Column) -->
             <td class="px-6 py-4">
-              <span class="text-sm font-medium text-gray-700">{{ getTopicTitle(res.topicId) }}</span>
+              <span class="text-sm font-medium text-gray-700">{{ getTopicTitle(res) }}</span>
             </td>
 
             <!-- Category -->
             <td class="px-6 py-4">
               <span
                 class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 group-hover:border-blue-200 transition-colors">{{
-                getCategoryName(res.topicId) }}</span>
+                getCategoryName(res) }}</span>
             </td>
 
             <!-- Views -->
@@ -442,23 +610,127 @@
     <div class="p-8 pt-6">
       <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-6">
 
+        <!-- Upload Type Toggle -->
+        <div *ngIf="!isEditMode()" class="flex mb-6 bg-gray-100 p-1 rounded-xl">
+          <button type="button" (click)="setUploadMode('FILE')"
+            class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+            [ngClass]="uploadMode() === 'FILE' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+            📤 Upload File
+          </button>
+          <button type="button" (click)="setUploadMode('YOUTUBE')"
+            class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+            [ngClass]="uploadMode() === 'YOUTUBE' ? 'bg-red-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+            🎥 YouTube Link
+          </button>
+        </div>
+
         <!-- File Upload Area (Hidden in Edit Mode) -->
-        <div *ngIf="!isEditMode()" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0"
-          class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
-          <div
-            class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
-            ☁️</div>
-          <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Click to upload or drag & drop</p>
-          <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Max 50MB)</p>
+        <div *ngIf="!isEditMode()">
+
+          <!-- MODE: FILE -->
+          <ng-container *ngIf="uploadMode() === 'FILE'">
+            <!-- Drop Zone (Show when NO file selected) -->
+            <div *ngIf="!selectedFile" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0"
+              class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+              <div
+                class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
+                ☁️</div>
+              <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Click to upload or drag & drop</p>
+              <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Max 50MB)</p>
+            </div>
+
+            <!-- Selected File View (Show when file IS selected) -->
+            <div *ngIf="selectedFile"
+              class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-center justify-between animate-fade-in-up">
+              <div class="flex items-center gap-4">
+                <div class="h-12 w-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                  📄
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs">{{ selectedFile.name }}
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-0.5 font-medium">{{ (selectedFile.size / 1024 / 1024) |
+                    number:'1.1-2' }} MB</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" (click)="fileInput.click()"
+                  class="text-sm text-blue-600 font-bold hover:text-blue-700 px-3 py-1.5 hover:bg-white rounded-lg transition-colors">
+                  Change
+                </button>
+                <button type="button" (click)="selectedFile = null; uploadForm.patchValue({title: ''})"
+                  class="text-sm text-red-500 font-bold hover:text-red-600 px-3 py-1.5 hover:bg-white rounded-lg transition-colors">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- MODE: YOUTUBE -->
+          <ng-container *ngIf="uploadMode() === 'YOUTUBE'">
+            <div class="group">
+              <label
+                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-red-600 transition-colors">
+                YouTube Video URL <span class="text-red-500">*</span>
+              </label>
+              <input type="text" formControlName="url" placeholder="https://www.youtube.com/watch?v=..."
+                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
+              <p class="text-xs text-gray-400 mt-2 ml-1">Thumbnail will be automatically fetched.</p>
+            </div>
+          </ng-container>
+
         </div>
 
         <!-- Edit Mode Notice -->
-        <div *ngIf="isEditMode()" class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
-          <div class="text-blue-500 mt-0.5 text-lg">ℹ️</div>
-          <div>
-            <h4 class="text-sm font-bold text-blue-900">Restricted Edit Mode</h4>
-            <p class="text-sm text-blue-700 mt-1 font-medium">You are editing resource metadata. To change the file,
-              please delete and re-upload.</p>
+        <!-- Edit Mode Notice & Thumbnail Update -->
+        <div *ngIf="isEditMode()" class="space-y-4">
+          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
+            <div class="text-blue-500 mt-0.5 text-lg">ℹ️</div>
+            <div>
+              <h4 class="text-sm font-bold text-blue-900">Restricted Edit Mode</h4>
+              <p class="text-sm text-blue-700 mt-1 font-medium">You are editing resource metadata. To change the file,
+                please delete and re-upload.</p>
+            </div>
+          </div>
+
+          <div
+            class="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-center justify-between transition-all hover:bg-white hover:shadow-sm">
+            <div class="flex items-center gap-4">
+              <!-- Current Thumbnail Preview -->
+              <div
+                class="h-16 w-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative shrink-0">
+                <!-- Show current thumbnail if editing and exists -->
+                <img *ngIf="currentThumbnailUrl()" [src]="currentThumbnailUrl()" class="w-full h-full object-cover"
+                  alt="Current Thumbnail">
+
+                <div *ngIf="!currentThumbnailUrl()"
+                  class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
+                    <path fill-rule="evenodd"
+                      d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-gray-900">Cover Image</h4>
+                <p class="text-xs text-gray-500 font-medium">Update the display image for this resource.</p>
+              </div>
+            </div>
+            <div>
+              <input #thumbInput type="file" class="hidden"
+                (change)="currentResourceId && onThumbnailSelected($event, currentResourceId)" accept="image/*">
+              <button type="button" (click)="thumbInput.click()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-xs uppercase tracking-wide font-bold rounded-xl transition-all shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                  class="w-4 h-4 text-gray-500">
+                  <path fill-rule="evenodd"
+                    d="M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 0 0 .75-.75v-2.69l-2.22-2.219a.75.75 0 0 0-1.06 0l-1.91 1.909.47.47a.75.75 0 1 1-1.06 1.06L6.53 8.091a.75.75 0 0 0-1.06 0l-2.97 2.97ZM12 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
+                    clip-rule="evenodd" />
+                </svg>
+                Upload New
+              </button>
+            </div>
           </div>
         </div>
 
@@ -499,7 +771,7 @@
             <select formControlName="topicId"
               class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
               <option value="">Select Topic</option>
-              <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+              <option *ngFor="let topic of uploadTopics()" [value]="topic.id">{{ topic.name }}</option>
             </select>
           </div>
 
@@ -507,14 +779,49 @@
             <label
               class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Resource
               Type</label>
-            <select formControlName="type"
+            <select formControlName="type" [class.pointer-events-none]="uploadMode() === 'YOUTUBE'"
+              [class.bg-gray-100]="uploadMode() === 'YOUTUBE'"
               class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
               <option value="VIDEO">Video</option>
               <option value="DOCUMENT">Document</option>
               <option value="PDF">PDF</option>
               <option value="EXCEL">Excel</option>
               <option value="WORD">Word</option>
+              <option value="POWERPOINT">PowerPoint</option>
+              <option value="AUDIO">Audio</option>
+              <option value="IMAGE">Image</option>
             </select>
+          </div>
+
+          <div class="md:col-span-2 group">
+            <label
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 group-focus-within:text-blue-600 transition-colors">
+              Age Groups <span class="text-rose-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <label *ngFor="let ag of ageGroups()"
+                class="cursor-pointer relative min-h-[50px] flex items-center justify-center text-center px-4 py-3 rounded-2xl border-2 transition-all duration-200"
+                [ngClass]="{
+                  'border-blue-500 bg-blue-50 text-blue-700 shadow-md shadow-blue-100 scale-[1.02]': uploadForm.get('ageGroupIds')?.value?.includes(ag.id),
+                  'border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-gray-50': !uploadForm.get('ageGroupIds')?.value?.includes(ag.id)
+                }">
+                <input type="checkbox" [value]="ag.id" class="hidden"
+                  [checked]="uploadForm.get('ageGroupIds')?.value?.includes(ag.id)" (change)="toggleAgeGroup(ag.id)">
+                <span class="text-sm font-bold">{{ ag.name }}</span>
+                <!-- Checkmark Badge -->
+                <div *ngIf="uploadForm.get('ageGroupIds')?.value?.includes(ag.id)"
+                  class="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </label>
+            </div>
+            <p *ngIf="uploadForm.get('ageGroupIds')?.touched && uploadForm.get('ageGroupIds')?.invalid"
+              class="text-rose-500 text-xs mt-2 font-bold ml-1">
+              Please select at least one age group.
+            </p>
           </div>
         </div>
 
@@ -638,6 +945,11 @@
         <img *ngSwitchCase="'IMAGE'" [src]="previewUrl" alt="Preview"
           class="max-h-[75vh] max-w-full object-contain shadow-2xl" (load)="onLoad()">
 
+        <!-- YOUTUBE -->
+        <iframe *ngSwitchCase="'YOUTUBE'" [src]="previewUrl"
+          class="w-full h-full max-w-4xl aspect-video shadow-2xl rounded-xl" frameborder="0"
+          allow="autoplay; encrypted-media" allowfullscreen (load)="onLoad()"></iframe>
+
         <!-- DOCUMENTS (Google Viewer) -->
         <iframe *ngSwitchCase="'DOC'" [src]="previewUrl" class="w-full h-[75vh] border-0 bg-white"
           (load)="onLoad()"></iframe>
@@ -656,8 +968,18 @@
     <!-- Footer -->
     <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <span class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">👤</span>
-        <span class="text-xs text-gray-500 font-bold">Uploaded by {{ previewResource()?.uploader }}</span>
+        <!-- Avatar: Real Image -->
+        <img *ngIf="previewResource()?.uploaderAvatar" [src]="previewResource()?.uploaderAvatar" alt="Avatar"
+          class="h-8 w-8 rounded-full object-cover border border-gray-100">
+
+        <!-- Avatar: Fallback -->
+        <div *ngIf="!previewResource()?.uploaderAvatar"
+          class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold uppercase border border-blue-50">
+          {{ (previewResource()?.uploader || '?').charAt(0) }}
+        </div>
+
+        <span class="text-xs text-gray-500 font-bold">Uploaded by {{ previewResource()?.uploader || 'Unknown User'
+          }}</span>
       </div>
       <div class="flex gap-3">
         <button (click)="closePreview()"
@@ -700,10 +1022,10 @@
 
       <div class="group">
         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topic</label>
-        <select [formControl]="moveTargetTopicId"
+        <select [formControl]="moveTargetTopicId" [disabled]="!moveTargetCategoryId.value"
           class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium">
           <option value="">Select Topic</option>
-          <option *ngFor="let topic of filteredTopics()" [value]="topic.id">{{ topic.name }}</option>
+          <option *ngFor="let topic of moveTopics()" [value]="topic.id">{{ topic.name }}</option>
         </select>
       </div>
     </div>

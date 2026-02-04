@@ -2,23 +2,12 @@ import { HttpInterceptorFn } from '@angular/common/http';
 
 export const csrfInterceptor: HttpInterceptorFn = (req, next) => {
   const token = getCookie('XSRF-TOKEN');
-  console.log('CSRF Interceptor - Cookie Token:', token); // Debug log
-
   if (token) {
     req = req.clone({
       setHeaders: {
         'X-XSRF-TOKEN': token,
       },
-      setParams: {
-        _csrf: token,
-      },
     });
-    console.log(
-      'CSRF Interceptor - Header & Param Added:',
-      req.headers.get('X-XSRF-TOKEN')
-    ); // Debug log
-  } else {
-    console.warn('CSRF Interceptor - No XSRF-TOKEN cookie found!');
   }
 
   return next(req);

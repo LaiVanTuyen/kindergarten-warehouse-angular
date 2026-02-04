@@ -11,6 +11,8 @@ import { AuditLogService } from '@kindergarten-warehouse/data-access';
 import { AuditLog, AuditLogFilter } from '@kindergarten-warehouse/data-access';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { FormatTargetPipe } from '../shared/pipes/format-target.pipe';
+import { FormatDetailPipe } from '../shared/pipes/format-detail.pipe';
 
 @Component({
   selector: 'app-audit-logs',
@@ -21,6 +23,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
     ReactiveFormsModule,
     HttpClientModule,
     PaginationComponent,
+    FormatTargetPipe,
+    FormatDetailPipe,
   ],
   templateUrl: './audit-logs.component.html',
   styles: [
@@ -86,7 +90,7 @@ export class AuditLogsComponent implements OnInit {
 
     this.auditLogService
       .getAuditLogs(
-        this.currentPage() - 1,
+        this.currentPage(),
         this.pageSize(),
         filters,
         this.sortDir()
@@ -130,11 +134,11 @@ export class AuditLogsComponent implements OnInit {
   getActionColor(action: string): string {
     switch (action) {
       case 'LOGIN':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'CREATE':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-green-100 text-green-700 border-green-200';
       case 'UPDATE':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+        return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'DELETE':
         return 'bg-red-100 text-red-700 border-red-200';
       case 'RESTORE':
