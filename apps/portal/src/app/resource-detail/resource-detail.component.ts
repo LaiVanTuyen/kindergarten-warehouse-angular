@@ -117,8 +117,18 @@ export class ResourceDetailComponent {
 
   canPreviewDoc(resource: Resource): boolean {
     if (!resource.fileUrl) return false;
-    const type = resource.type; // Assuming type is still mapped or checks need update
-    return ['PDF', 'WORD', 'DOC', 'DOCX'].includes(type);
+    const type = resource.type || '';
+    return [
+      'PDF',
+      'WORD',
+      'DOC',
+      'DOCX',
+      'DOCUMENT',
+      'EXCEL',
+      'PPT',
+      'PPTX',
+      'POWERPOINT',
+    ].includes(type);
   }
 
   // Pastel colors for avatars

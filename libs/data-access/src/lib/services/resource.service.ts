@@ -31,18 +31,39 @@ export class ResourceService {
       httpParams = httpParams.set('page', params.page - 1); // Backend is 0-indexed
     if (params.size !== undefined)
       httpParams = httpParams.set('size', params.size);
-    if (params.topicId) httpParams = httpParams.set('topicId', params.topicId);
-    if (params.categoryId)
-      httpParams = httpParams.set('categoryId', params.categoryId);
-    if (params.ageGroupId)
-      httpParams = httpParams.set('ageGroupId', params.ageGroupId);
+
+    // Helper to append array or single value
+    const appendParam = (key: string, value: string | string[] | undefined) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => (httpParams = httpParams.append(key, v)));
+      } else {
+        httpParams = httpParams.set(key, value as string);
+      }
+    };
+
+    appendParam('topicId', params.topicId);
+    appendParam('categoryId', params.categoryId);
+    appendParam('ageGroupId', params.ageGroupId);
+
+    // New Multi-select Params
+    appendParam('topicSlugs', params.topicSlugs);
+    appendParam('categorySlugs', params.categorySlugs);
+    appendParam('ageSlugs', params.ageSlugs);
+    appendParam('types', params.types);
+
+    // Old Params (Backward compatibility if needed, but prefer new ones)
+    if (!params.topicSlugs && params.topic)
+      appendParam('topic', params.topic as any);
+    if (!params.categorySlugs && params.category)
+      appendParam('category', params.category as any);
+    if (!params.ageSlugs && params.ages)
+      appendParam('ages', params.ages as any);
+    if (!params.types && params.type) appendParam('type', params.type);
+
     if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
-    if (params.topic) httpParams = httpParams.set('topic', params.topic);
-    if (params.category)
-      httpParams = httpParams.set('category', params.category);
-    if (params.ages) httpParams = httpParams.set('ages', params.ages);
     if (params.status) httpParams = httpParams.set('status', params.status);
-    if (params.type) httpParams = httpParams.set('type', params.type);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
 
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
@@ -244,6 +265,16 @@ export class ResourceService {
         `${this.apiUrl}/resources/${id}/thumbnail`,
         formData
       )
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Restore Resource
+   * PUT /resources/:id/restore
+   */
+  restoreResource(id: string): Observable<RestResponse<void>> {
+    return this.http
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
       .pipe(catchError(this.handleError));
   }
 }

@@ -25,6 +25,7 @@ export class CategoryService {
     limit = 10,
     search?: string,
     isDeleted?: boolean,
+    status?: string, // Comma separated 'ACTIVE', 'INACTIVE'
     sortBy: string = 'id',
     order: 'asc' | 'desc' = 'desc'
   ): Observable<{ data: Category[]; total: number }> {
@@ -39,6 +40,9 @@ export class CategoryService {
     }
     if (isDeleted !== undefined) {
       params = params.set('deleted', isDeleted.toString());
+    }
+    if (status) {
+      params = params.set('status', status);
     }
 
     return this.http

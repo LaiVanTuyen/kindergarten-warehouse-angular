@@ -8,7 +8,7 @@
         <ng-container *ngIf="resource.thumbnailUrl && !hasImageError">
             <img [src]="resource.thumbnailUrl" (error)="onImageError()" loading="lazy"
                 class="w-full h-full transition-transform duration-500 group-hover:scale-105"
-                [ngClass]="{'object-cover': ['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type), 'object-contain p-6': !['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type)}"
+                [ngClass]="{'object-cover': ['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type || ''), 'object-contain p-6': !['VIDEO', 'IMAGE', 'AUDIO'].includes(resource.type || '')}"
                 alt="{{ resource.title }} thumbnail" />
 
             <!-- Video Overlay -->
@@ -25,30 +25,30 @@
         <div *ngIf="!resource.thumbnailUrl || hasImageError"
             class="w-full h-full flex items-center justify-center relative overflow-hidden transition-transform duration-500 group-hover:scale-105"
             [ngClass]="{
-                'bg-emerald-100': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
-                'bg-blue-100': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
-                'bg-orange-100': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type),
+                'bg-emerald-100': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type || ''),
+                'bg-blue-100': ['WORD', 'DOC', 'DOCX', 'DOCUMENT'].includes(resource.type || ''),
+                'bg-orange-100': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || ''),
                 'bg-rose-100': resource.type === 'PDF',
                 'bg-purple-100': resource.type === 'IMAGE' || resource.type === 'VIDEO',
                 'bg-indigo-100': resource.type === 'AUDIO',
-                'bg-gray-100': !['EXCEL','WORD','PPT','PDF','IMAGE','VIDEO','AUDIO'].includes(resource.type)
+                'bg-gray-100': !['EXCEL','WORD','PPT','PDF','IMAGE','VIDEO','AUDIO','DOCUMENT'].includes(resource.type || '')
             }">
 
             <!-- Icon -->
             <i *ngIf="resource.type === 'VIDEO'"
                 class="ph-fill ph-play-circle text-6xl text-purple-500 drop-shadow-sm"></i>
-            <i *ngIf="['PDF'].includes(resource.type)"
+            <i *ngIf="['PDF'].includes(resource.type || '')"
                 class="ph-fill ph-file-pdf text-6xl text-rose-500 drop-shadow-sm"></i>
-            <i *ngIf="['WORD', 'DOC', 'DOCX'].includes(resource.type)"
+            <i *ngIf="['WORD', 'DOC', 'DOCX', 'DOCUMENT'].includes(resource.type || '')"
                 class="ph-fill ph-file-doc text-6xl text-blue-500 drop-shadow-sm"></i>
-            <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type)"
+            <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type || '')"
                 class="ph-fill ph-file-xls text-6xl text-emerald-500 drop-shadow-sm"></i>
-            <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type)"
+            <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || '')"
                 class="ph-fill ph-presentation text-6xl text-orange-500 drop-shadow-sm"></i>
             <i *ngIf="resource.type === 'AUDIO'"
                 class="ph-fill ph-music-notes text-6xl text-indigo-500 drop-shadow-sm"></i>
             <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image text-6xl text-purple-500 drop-shadow-sm"></i>
-            <i *ngIf="!['VIDEO','PDF','WORD','DOC','DOCX','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT','AUDIO','IMAGE'].includes(resource.type)"
+            <i *ngIf="!['VIDEO','PDF','WORD','DOC','DOCX','DOCUMENT','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT','AUDIO','IMAGE'].includes(resource.type || '')"
                 class="ph-fill ph-file text-6xl text-gray-400 drop-shadow-sm"></i>
         </div>
 
@@ -74,18 +74,22 @@
 
         <!-- Rating Stars (Two-Tag Logic: Fill vs Empty) -->
         <!-- Rating Stars (Two-Tag Logic: Fill vs Empty) -->
-        <div class="flex items-center text-yellow-400 mb-3" *ngIf="(resource.rating || 0) > 0">
+        <div class="flex items-center text-yellow-400 mb-3"
+            *ngIf="(resource.averageRating || resource.rating || 0) > 0">
             <div class="flex items-center gap-1">
-                <span class="font-bold text-gray-700 text-xs mt-[2px] leading-none">{{ resource.rating }}</span>
+                <span class="font-bold text-gray-700 text-xs mt-[2px] leading-none">{{ resource.averageRating ||
+                    resource.rating }}</span>
                 <div class="flex gap-0.5">
                     <ng-container *ngFor="let star of starTemplate">
                         <!-- Case 1: Fill Star (Yellow) - using ph-fill ph-star -->
-                        <i *ngIf="(resource.rating || 0) >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
+                        <i *ngIf="(resource.averageRating || resource.rating || 0) >= star"
+                            class="ph-fill ph-star text-yellow-400 text-base"></i>
                         <!-- Case 2: Half Star (Yellow) - using ph-fill ph-star-half -->
-                        <i *ngIf="(resource.rating || 0) < star && (resource.rating || 0) > (star - 1)"
+                        <i *ngIf="(resource.averageRating || resource.rating || 0) < star && (resource.averageRating || resource.rating || 0) > (star - 1)"
                             class="ph-fill ph-star-half text-yellow-400 text-base"></i>
                         <!-- Case 3: Empty Star (Gray) - using ph ph-star -->
-                        <i *ngIf="(resource.rating || 0) <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
+                        <i *ngIf="(resource.averageRating || resource.rating || 0) <= (star - 1)"
+                            class="ph ph-star text-gray-300 text-base"></i>
                     </ng-container>
                 </div>
             </div>
@@ -101,12 +105,18 @@
 
                 <!-- Relocated Type Info -->
                 <span class="flex items-center pl-3 border-l border-gray-200 h-4">
-                    <i *ngIf="resource.type === 'PDF'" class="ph-fill ph-file-pdf mr-1.5 text-base text-orange-500"></i>
+                    <i *ngIf="resource.type === 'PDF'" class="ph-fill ph-file-pdf mr-1.5 text-base text-rose-500"></i>
+                    <i *ngIf="['WORD', 'DOC', 'DOCX', 'DOCUMENT'].includes(resource.type || '')"
+                        class="ph-fill ph-file-doc mr-1.5 text-base text-blue-500"></i>
+                    <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type || '')"
+                        class="ph-fill ph-file-xls mr-1.5 text-base text-emerald-500"></i>
+                    <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || '')"
+                        class="ph-fill ph-presentation mr-1.5 text-base text-orange-500"></i>
                     <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-video mr-1.5 text-base text-lime-600"></i>
                     <i *ngIf="resource.type === 'AUDIO'"
                         class="ph-fill ph-music-note mr-1.5 text-base text-purple-600"></i>
-                    <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image mr-1.5 text-base text-rose-500"></i>
-                    <i *ngIf="!['PDF','VIDEO','AUDIO','IMAGE'].includes(resource.type)"
+                    <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image mr-1.5 text-base text-purple-500"></i>
+                    <i *ngIf="!['PDF','VIDEO','AUDIO','IMAGE','WORD','DOC','DOCX','DOCUMENT','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT'].includes(resource.type || '')"
                         class="ph-fill ph-file mr-1.5 text-base text-gray-400"></i>
                     <span
                         class="uppercase tracking-wider text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{

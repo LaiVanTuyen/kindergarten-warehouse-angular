@@ -18,18 +18,12 @@ import {
 } from '@angular/forms';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
-import {
-  UserService,
-  User,
-  UserRole,
-  UserStatus,
-  AdminUpdateUserRequest,
-  ApiResponse,
-} from '@kindergarten-warehouse/data-access';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { timer } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { User, UserService } from '@kindergarten-warehouse/data-access';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
+
+import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
 
 @Component({
   selector: 'app-admin-users',
@@ -42,6 +36,7 @@ import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
     SkeletonTableComponent,
     BreadcrumbComponent,
     EmptyStateComponent,
+    MultiSelectFilterComponent,
   ],
   templateUrl: './users.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,18 +69,26 @@ export class UsersComponent {
   currentPage = signal(1);
   pageSize = signal(10);
 
-  // Filter Signals (Driven by FormControls)
+  // Filter Signals
   searchQuery = signal('');
-  roleFilter = signal<'ALL' | UserRole>('ALL');
-  statusFilter = signal<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>('ALL');
+  roleFilter = signal<Set<string>>(new Set());
+  statusFilter = signal<Set<string>>(new Set());
+  activeFilterDropdown = signal<string | null>(null);
+
+  // Filter Options
+  roleOptions = [
+    { label: 'Admin', value: 'ADMIN' },
+    { label: 'User', value: 'USER' },
+    { label: 'Teacher', value: 'TEACHER' },
+  ];
+
+  statusOptions = [
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Blocked', value: 'BLOCKED' },
+  ];
 
   // Form Controls for UI
   searchControl = new FormControl<string>('', { nonNullable: true });
-  roleControl = new FormControl<'ALL' | UserRole>('ALL', { nonNullable: true });
-  statusControl = new FormControl<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>(
-    'ALL',
-    { nonNullable: true }
-  );
 
   // Sorting
   sortColumn = signal<'fullName' | 'createdAt' | 'lastActive'>('createdAt');
@@ -105,22 +108,7 @@ export class UsersComponent {
         this.loadUsers();
       });
 
-    this.roleControl.valueChanges.subscribe((val) => {
-      this.roleFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.updateUrl();
-      this.loadUsers();
-    });
-
-    this.statusControl.valueChanges.subscribe((val) => {
-      this.statusFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.updateUrl();
-      this.loadUsers();
-    });
-
     // Initial load is triggered by initFromUrl if needed, or explicitly here if no params
-    // But loadUsers() updates URL, so let's call it to sync everything.
     this.loadUsers();
   }
 
@@ -139,19 +127,17 @@ export class UsersComponent {
     }
 
     if (params['role']) {
-      const role = params['role'];
-      this.roleFilter.set(role);
-      this.roleControl.setValue(role, { emitEvent: false });
+      const roles = params['role'].split(',');
+      this.roleFilter.set(new Set(roles));
     }
 
     if (params['status']) {
-      const status = params['status'];
-      this.statusFilter.set(status);
-      this.statusControl.setValue(status, { emitEvent: false });
+      const statuses = params['status'].split(',');
+      this.statusFilter.set(new Set(statuses));
     }
   }
 
-  private updateUrl() {
+  updateUrl() {
     const queryParams: any = {
       page: this.currentPage(),
       size: this.pageSize(),
@@ -160,19 +146,19 @@ export class UsersComponent {
     };
 
     if (this.searchQuery()) {
-      queryParams['search'] = this.searchQuery();
+      queryParams['q'] = this.searchQuery();
     } else {
-      queryParams['search'] = null;
+      queryParams['q'] = null;
     }
 
-    if (this.roleFilter() !== 'ALL') {
-      queryParams['role'] = this.roleFilter();
+    if (this.roleFilter().size > 0) {
+      queryParams['role'] = Array.from(this.roleFilter()).join(',');
     } else {
       queryParams['role'] = null;
     }
 
-    if (this.statusFilter() !== 'ALL') {
-      queryParams['status'] = this.statusFilter();
+    if (this.statusFilter().size > 0) {
+      queryParams['status'] = Array.from(this.statusFilter()).join(',');
     } else {
       queryParams['status'] = null;
     }
@@ -187,13 +173,16 @@ export class UsersComponent {
 
   loadUsers() {
     this.isLoading.set(true);
+    const roles = Array.from(this.roleFilter()).join(',');
+    const statuses = Array.from(this.statusFilter()).join(',');
+
     this.userService
       .getUsers(
         this.currentPage(),
         this.pageSize(),
         this.searchQuery(),
-        this.roleFilter(),
-        this.statusFilter(), // Pass string status directly
+        roles,
+        statuses,
         this.sortColumn(),
         this.sortDirection()
       )
@@ -202,11 +191,70 @@ export class UsersComponent {
           if (res.result) {
             this.users.set(res.result.content);
             this.totalUsersCount.set(res.result.totalElements);
+          } else {
+            this.users.set([]);
+            this.totalUsersCount.set(0);
           }
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        error: () => {
+          this.users.set([]);
+          this.totalUsersCount.set(0);
+          this.isLoading.set(false);
+        },
       });
+  }
+
+  // Filter Helpers
+  toggleFilterDropdown(key: string) {
+    this.activeFilterDropdown.update((current) =>
+      current === key ? null : key
+    );
+  }
+
+  removeRoleFilter(role: string) {
+    const current = this.roleFilter();
+    const newSet = new Set(current);
+    newSet.delete(role);
+    this.roleFilter.set(newSet);
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
+  }
+
+  clearRoleFilter() {
+    this.roleFilter.set(new Set());
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
+  }
+
+  removeStatusFilter(status: string) {
+    const current = this.statusFilter();
+    const newSet = new Set(current);
+    newSet.delete(status);
+    this.statusFilter.set(newSet);
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
+  }
+
+  clearStatusFilter() {
+    this.statusFilter.set(new Set());
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
+  }
+
+  resetFilters() {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.searchQuery.set('');
+    this.roleFilter.set(new Set());
+    this.statusFilter.set(new Set());
+
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
   }
 
   // Derived Statistics
@@ -248,21 +296,6 @@ export class UsersComponent {
 
   showPassword = signal(false);
   currentUser = signal<User | null>(null);
-
-  resetFilters() {
-    this.searchControl.setValue('', { emitEvent: false });
-    this.roleControl.setValue('ALL', { emitEvent: false });
-    this.statusControl.setValue('ALL', { emitEvent: false });
-
-    // Update signals manually since events are suppressed
-    this.searchQuery.set('');
-    this.roleFilter.set('ALL');
-    this.statusFilter.set('ALL');
-
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadUsers();
-  }
 
   toggleSort(column: 'fullName' | 'createdAt' | 'lastActive') {
     if (this.sortColumn() === column) {

@@ -1,4 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, ActivatedRoute, Params } from '@angular/router';
 import { CommonModule, NgIf } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
@@ -19,6 +21,8 @@ import {
   delay,
   finalize,
 } from 'rxjs/operators';
+
+import { forkJoin } from 'rxjs';
 import {
   ResourceService,
   CategoryService,
@@ -28,6 +32,7 @@ import {
   Topic,
   AuthService,
   AgeGroup,
+  UpdateResourceRequest,
 } from '@kindergarten-warehouse/data-access';
 import { ToastService } from '@kindergarten-warehouse/data-access';
 
@@ -54,14 +59,18 @@ import { ToastService } from '@kindergarten-warehouse/data-access';
     `,
   ],
 })
-export class ResourcesComponent {
+export class ResourcesComponent implements OnInit {
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   resourceService = inject(ResourceService);
   categoryService = inject(CategoryService);
   topicService = inject(TopicService);
   toastService = inject(ToastService);
   authService = inject(AuthService);
   sanitizer = inject(DomSanitizer);
+  protected readonly Math = Math;
 
   // Data Signals
   resources = signal<Resource[]>([]);
@@ -78,15 +87,48 @@ export class ResourcesComponent {
   totalResources = signal(0);
   totalPages = signal(0);
   currentPage = signal(1);
-  pageSize = signal(10);
+  pageSize = signal(12);
   selectedIds = signal<Set<string>>(new Set());
 
   // Search & Filter Controls
+  // Search & Filter Controls
   searchControl = new FormControl('');
-  typeFilter = new FormControl('');
-  categoryFilter = new FormControl('');
-  topicFilter = new FormControl('');
-  ageGroupFilter = new FormControl('');
+  typeFilter = new FormControl<string[]>([], { nonNullable: true });
+  categoryFilter = new FormControl<string[]>([], { nonNullable: true });
+  topicFilter = new FormControl<string[]>([], { nonNullable: true });
+  ageGroupFilter = new FormControl<string[]>([], { nonNullable: true });
+
+  // UI State for Filters
+  showFilters = signal<boolean>(false);
+  activeFilterDropdown = signal<string | null>(null);
+
+  toggleFilterDropdown(name: string) {
+    this.activeFilterDropdown.update((current) =>
+      current === name ? null : name
+    );
+  }
+
+  closeFilterDropdown() {
+    this.activeFilterDropdown.set(null);
+  }
+
+  isSelected(control: FormControl<string[]>, value: string): boolean {
+    return control.value.includes(value);
+  }
+
+  toggleFilter(control: FormControl<string[]>, value: string) {
+    const current = control.value;
+    if (current.includes(value)) {
+      control.setValue(current.filter((v) => v !== value));
+    } else {
+      control.setValue([...current, value]);
+    }
+  }
+
+  removeFilter(control: FormControl<string[]>, value: string) {
+    const current = control.value;
+    control.setValue(current.filter((v) => v !== value));
+  }
 
   // Forms
   uploadForm!: FormGroup;
@@ -117,8 +159,12 @@ export class ResourcesComponent {
     }
   }
 
+  clearSelection() {
+    this.selectedIds.set(new Set());
+  }
+
   // UI State
-  activeTab = signal<'pending' | 'list'>('pending');
+  activeTab = signal<'pending' | 'list' | 'trash'>('pending');
   isEditMode = signal(false);
   currentResourceId: string | null = null;
 
@@ -129,21 +175,109 @@ export class ResourcesComponent {
   isTopicsLoading = signal(false); // Added missing signal
   currentThumbnailUrl = signal<string | null>(null); // Added missing signal
   previewUrl: SafeResourceUrl | null = null;
-  previewType: 'VIDEO' | 'AUDIO' | 'IMAGE' | 'DOC' | 'UNSUPPORTED' | 'YOUTUBE' =
-    'UNSUPPORTED';
+  previewType:
+    | 'VIDEO'
+    | 'AUDIO'
+    | 'IMAGE'
+    | 'DOCUMENT'
+    | 'UNSUPPORTED'
+    | 'YOUTUBE' = 'UNSUPPORTED';
 
   // Modal State
   isUploadModalOpen = signal(false);
   isMoveModalOpen = signal(false);
+  uploadedFileDuration = signal<string | null>(null);
   selectedFile: File | null = null;
 
+  // Helpers
+  getCurrentResource(): Resource | undefined {
+    return this.resources().find((r) => r.id === this.currentResourceId);
+  }
+
+  // Actions
+  restoreResource(resource: Resource) {
+    this.openConfirmModal(
+      'Khôi phục Tài nguyên',
+      `Bạn có chắc chắn muốn khôi phục "${resource.title}"?`,
+      'RESTORE',
+      resource.id
+    );
+  }
+
+  executeRestore(id: string) {
+    this.resourceService.restoreResource(id).subscribe({
+      next: (res) => {
+        this.toastService.showResponse(res);
+        this.loadData();
+      },
+      error: (err: Error) => this.toastService.show(err.message, 'error'),
+    });
+  }
+
+  restoreSelected() {
+    this.openConfirmModal(
+      'Khôi phục mục đã chọn',
+      `Bạn có chắc chắn muốn khôi phục ${
+        this.selectedIds().size
+      } tài nguyên đã chọn?`,
+      'BULK_RESTORE'
+    );
+  }
+
+  executeBulkRestore() {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+
+    this.isTableLoading.set(true);
+
+    forkJoin(ids.map((id) => this.resourceService.restoreResource(id)))
+      .pipe(finalize(() => this.isTableLoading.set(false)))
+      .subscribe({
+        next: () => {
+          this.toastService.show('Khôi phục tài nguyên thành công', 'success');
+          this.selectedIds.set(new Set());
+          this.loadData();
+        },
+        error: (err: Error) => {
+          this.toastService.show(
+            'Một số tài nguyên không thể khôi phục: ' + err.message,
+            'error'
+          );
+          this.loadData();
+        },
+      });
+  }
+
+  // Helpers
+  formatFileSize(bytes: number | undefined): string {
+    if (!bytes || bytes === 0) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    // Localize 'Bytes' if needed, though standard is fine. "Byte", "KB", "MB"...
+    // const sizes = ['Byte', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
   // GENERIC CONFIRMATION MODAL STATE
+  isYoutube = signal<boolean>(false);
+
+  // VIEW MODE
+  viewMode = signal<'list' | 'grid'>('list');
+
   isConfirmModalOpen = signal(false);
   confirmConfig = signal<{
     title: string;
     message: string;
-    action: 'APPROVE' | 'REJECT' | 'DELETE' | 'BULK_APPROVE' | 'BULK_DELETE';
-    data?: any;
+    action:
+      | 'APPROVE'
+      | 'REJECT'
+      | 'DELETE'
+      | 'BULK_APPROVE'
+      | 'BULK_DELETE'
+      | 'RESTORE'
+      | 'BULK_RESTORE';
+    data?: string | null;
   } | null>(null);
 
   constructor() {
@@ -153,8 +287,15 @@ export class ResourcesComponent {
   openConfirmModal(
     title: string,
     message: string,
-    action: 'APPROVE' | 'REJECT' | 'DELETE' | 'BULK_APPROVE' | 'BULK_DELETE',
-    data: any = null
+    action:
+      | 'APPROVE'
+      | 'REJECT'
+      | 'DELETE'
+      | 'BULK_APPROVE'
+      | 'BULK_DELETE'
+      | 'RESTORE'
+      | 'BULK_RESTORE',
+    data: string | null = null
   ) {
     this.confirmConfig.set({ title, message, action, data });
     this.isConfirmModalOpen.set(true);
@@ -171,19 +312,25 @@ export class ResourcesComponent {
 
     switch (config.action) {
       case 'APPROVE':
-        this.executeApprove(config.data);
+        if (config.data) this.executeApprove(config.data);
         break;
       case 'REJECT':
-        this.executeReject(config.data);
+        if (config.data) this.executeReject(config.data);
         break;
       case 'DELETE':
-        this.executeDeleteSingle(config.data);
+        if (config.data) this.executeDeleteSingle(config.data);
         break;
       case 'BULK_APPROVE':
         this.executeBulkApprove();
         break;
       case 'BULK_DELETE':
         this.executeBulkDelete();
+        break;
+      case 'RESTORE':
+        if (config.data) this.executeRestore(config.data);
+        break;
+      case 'BULK_RESTORE':
+        this.executeBulkRestore();
         break;
     }
     this.closeConfirmModal();
@@ -194,10 +341,79 @@ export class ResourcesComponent {
     this.loadCategories();
     this.loadAgeGroups();
     this.loadAllTopics(); // Load lookup data
+
+    // 0. Initialize View Mode
+    const savedView = localStorage.getItem('resourceViewMode');
+    if (savedView === 'grid' || savedView === 'list') {
+      this.viewMode.set(savedView);
+    }
+
+    // 1. Initialize Filters from URL
+    this.initFiltersFromUrl();
+
+    // 2. Load Data (will use values set above)
     this.loadData();
 
-    // Watchers
+    // 3. Setup Watchers (to handle future changes)
     this.setupFilterWatchers();
+  }
+
+  initFiltersFromUrl() {
+    const params = this.route.snapshot.queryParams;
+
+    // Helper to coerce to array of strings (handle comma-separated strings or repeated params)
+    const getArray = (key: string): string[] => {
+      const val = params[key];
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      // Handle comma-separated string
+      return (val as string).split(',').filter((v) => !!v);
+    };
+
+    // Patch values without emitting events (we load data manually after)
+    this.searchControl.setValue(params['keyword'] || '', { emitEvent: false });
+    this.typeFilter.setValue(getArray('types'), { emitEvent: false });
+    this.categoryFilter.setValue(getArray('categorySlugs'), {
+      emitEvent: false,
+    });
+    this.topicFilter.setValue(getArray('topicSlugs'), { emitEvent: false });
+    this.ageGroupFilter.setValue(getArray('ageSlugs'), { emitEvent: false });
+
+    // Set Active Tab if present
+    if (params['status'] === 'DELETED') {
+      this.activeTab.set('trash');
+    } else if (params['status'] === 'PENDING') {
+      this.activeTab.set('pending');
+    } else {
+      this.activeTab.set('pending'); // Default
+    }
+  }
+
+  updateUrl() {
+    const params: Params = {};
+
+    if (this.searchControl.value) params['keyword'] = this.searchControl.value;
+    if (this.typeFilter.value.length)
+      params['types'] = this.typeFilter.value.join(',');
+    if (this.categoryFilter.value.length)
+      params['categorySlugs'] = this.categoryFilter.value.join(',');
+    if (this.topicFilter.value.length)
+      params['topicSlugs'] = this.topicFilter.value.join(',');
+    if (this.ageGroupFilter.value.length)
+      params['ageSlugs'] = this.ageGroupFilter.value.join(',');
+
+    if (this.activeTab() === 'trash') {
+      params['status'] = 'DELETED';
+    } else if (this.activeTab() === 'pending') {
+      params['status'] = 'PENDING';
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: null, // Clear other params (Don't merge)
+      replaceUrl: true, // Don't spam history
+    });
   }
 
   initForms() {
@@ -217,12 +433,16 @@ export class ResourcesComponent {
   setupYoutubeWatcher() {
     this.uploadForm
       .get('url')
-      ?.valueChanges.pipe(distinctUntilChanged(), debounceTime(300))
+      ?.valueChanges.pipe(
+        distinctUntilChanged(),
+        debounceTime(300),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((url) => {
         if (!url) return;
         const videoId = this.extractYoutubeId(url);
         if (videoId) {
-          this.uploadForm.patchValue({ type: 'VIDEO' }, { emitEvent: false });
+          this.uploadForm.patchValue({ type: 'YOUTUBE' }, { emitEvent: false });
           const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           // Update preview signal
           this.currentThumbnailUrl.set(thumbUrl);
@@ -240,63 +460,94 @@ export class ResourcesComponent {
 
   setupFilterWatchers() {
     this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => {
         this.currentPage.set(1);
+        this.updateUrl();
         this.loadData();
       });
 
-    this.typeFilter.valueChanges.subscribe(() => {
-      this.currentPage.set(1);
-      this.loadData();
-    });
+    this.typeFilter.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.updateUrl();
+        this.loadData();
+      });
 
-    this.ageGroupFilter.valueChanges.subscribe(() => {
-      this.currentPage.set(1);
-      this.loadData();
-    });
+    this.ageGroupFilter.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.updateUrl();
+        this.loadData();
+      });
 
-    this.categoryFilter.valueChanges.subscribe((catId) => {
-      this.topicFilter.setValue('');
-      if (catId) {
-        this.filteredTopics.set(
-          this.topics().filter((t) => t.categoryId === catId)
-        );
-      } else {
-        this.filteredTopics.set(this.topics());
-      }
-    });
+    this.categoryFilter.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((slugs) => {
+        this.topicFilter.setValue([]);
+        if (slugs && slugs.length > 0) {
+          // Map slugs to IDs for filtering topics
+          const selectedCatIds = this.categories()
+            .filter((c) => slugs.includes(c.slug))
+            .map((c) => c.id);
 
-    this.topicFilter.valueChanges.subscribe(() => {
-      this.currentPage.set(1);
-      this.loadData();
-    });
+          this.filteredTopics.set(
+            this.allTopics().filter((t) =>
+              selectedCatIds.includes(t.categoryId)
+            )
+          );
+        } else {
+          this.filteredTopics.set(this.allTopics());
+        }
+        this.currentPage.set(1);
+        this.updateUrl();
+        this.loadData();
+      });
+
+    this.topicFilter.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.currentPage.set(1);
+        this.updateUrl();
+        this.loadData();
+      });
 
     // Upload Form Filter - Fetch Topics by Category from API
-    this.uploadForm.get('categoryId')?.valueChanges.subscribe((catId) => {
-      this.uploadForm.get('topicId')?.reset();
-      this.uploadTopics.set([]); // Clear previous topics
+    this.uploadForm
+      .get('categoryId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((catId) => {
+        this.uploadForm.get('topicId')?.reset();
+        this.uploadTopics.set([]); // Clear previous topics
 
-      if (catId) {
-        // Fetch topics for this category specifically
-        this.topicService.getTopics(catId, 1, 100).subscribe((res) => {
-          this.uploadTopics.set(res.data);
-        });
-      }
-      this.onCategoryChange(catId);
-    });
+        if (catId) {
+          // Fetch topics for this category specifically
+          this.topicService.getTopics(catId, 1, 100).subscribe((res) => {
+            this.uploadTopics.set(res.data);
+          });
+        }
+        this.onCategoryChange(catId);
+      });
 
     // Move Modal Category Change - Fetch Topics by Category from API
-    this.moveTargetCategoryId.valueChanges.subscribe((catId) => {
-      this.moveTargetTopicId.reset();
-      this.moveTopics.set([]); // Clear previous topics
+    this.moveTargetCategoryId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((catId) => {
+        this.moveTargetTopicId.reset();
+        this.moveTopics.set([]); // Clear previous topics
 
-      if (catId) {
-        this.topicService.getTopics(catId, 1, 100).subscribe((res) => {
-          this.moveTopics.set(res.data);
-        });
-      }
-    });
+        if (catId) {
+          this.topicService.getTopics(catId, 1, 100).subscribe((res) => {
+            this.moveTopics.set(res.data);
+          });
+        }
+      });
   }
 
   onCategoryChange(categoryId: string) {
@@ -316,17 +567,39 @@ export class ResourcesComponent {
     }
   }
 
-  setActiveTab(tab: 'pending' | 'list') {
+  setActiveTab(tab: 'pending' | 'list' | 'trash') {
     this.activeTab.set(tab);
+
+    // Reset Page & Filters on Tab Change
     this.currentPage.set(1);
+    this.searchControl.setValue('', { emitEvent: false });
+    this.categoryFilter.setValue([], { emitEvent: false });
+    this.topicFilter.setValue([], { emitEvent: false });
+    this.ageGroupFilter.setValue([], { emitEvent: false });
+    this.typeFilter.setValue([], { emitEvent: false });
+
+    // Force URL Update (Clear old params)
+    this.updateUrl();
     this.loadData();
   }
 
+  toggleView(mode: 'list' | 'grid') {
+    this.viewMode.set(mode);
+    localStorage.setItem('resourceViewMode', mode);
+  }
+
   loadData() {
-    let status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | undefined =
-      undefined;
+    let status:
+      | 'PENDING'
+      | 'APPROVED'
+      | 'REJECTED'
+      | 'HIDDEN'
+      | 'DELETED'
+      | undefined = undefined;
     if (this.activeTab() === 'pending') {
       status = 'PENDING';
+    } else if (this.activeTab() === 'trash') {
+      status = 'DELETED';
     }
 
     this.isTableLoading.set(true);
@@ -337,9 +610,16 @@ export class ResourcesComponent {
         size: this.pageSize(),
         keyword: this.searchControl.value || undefined,
         status: status,
-        type: (this.typeFilter.value as any) || undefined,
-        topicId: (this.topicFilter.value as any) || undefined,
-        ageGroupId: (this.ageGroupFilter.value as any) || undefined,
+        types: this.typeFilter.value.length ? this.typeFilter.value : undefined,
+        topicSlugs: this.topicFilter.value.length
+          ? this.topicFilter.value
+          : undefined,
+        categorySlugs: this.categoryFilter.value.length
+          ? this.categoryFilter.value
+          : undefined,
+        ageSlugs: this.ageGroupFilter.value.length
+          ? this.ageGroupFilter.value
+          : undefined,
       })
       .pipe(delay(500))
       .subscribe((res) => {
@@ -349,9 +629,21 @@ export class ResourcesComponent {
           // Polyfill missing types for icons/edit
           const content = (responseData.content || []).map((r: Resource) => ({
             ...r,
+            // Map API fields directly
+            resourceType:
+              r.resourceType ||
+              (r.fileUrl?.includes('youtube') ? 'YOUTUBE' : 'FILE'),
+            fileType: (r.fileType ||
+              this.detectFileType(r.fileUrl || '')) as Resource['fileType'],
+            // Extract extension if missing
+            fileExtension:
+              r.fileExtension || this.extractExtension(r.fileUrl || ''),
+            // Helper for UI (Legacy support)
             type:
-              r.type ||
-              this.detectResourceType(r.fileUrl || r.fileExtension || ''),
+              r.resourceType === 'YOUTUBE'
+                ? 'YOUTUBE'
+                : r.fileType || this.detectFileType(r.fileUrl || ''),
+            uploader: r.createdBy || r.uploader || 'Hệ thống',
           }));
           this.resources.set(content);
           this.totalResources.set(responseData.totalElements);
@@ -398,14 +690,43 @@ export class ResourcesComponent {
 
   resetFilters() {
     this.searchControl.setValue('', { emitEvent: false });
-    this.categoryFilter.setValue('', { emitEvent: false });
-    this.topicFilter.setValue('', { emitEvent: false });
-    this.typeFilter.setValue('', { emitEvent: false });
-    this.ageGroupFilter.setValue('', { emitEvent: false });
+    this.categoryFilter.setValue([], { emitEvent: false });
+    this.topicFilter.setValue([], { emitEvent: false });
+    this.typeFilter.setValue([], { emitEvent: false });
+    this.ageGroupFilter.setValue([], { emitEvent: false });
 
     this.filteredTopics.set(this.topics());
     this.currentPage.set(1);
     this.loadData();
+  }
+
+  // UI Helpers for Filter Chips
+  getCategoryNameBySlug(slug: string): string {
+    const cat = this.categories().find((c) => c.slug === slug);
+    return cat ? cat.name : slug;
+  }
+
+  getTopicNameBySlug(slug: string): string {
+    const topic = this.allTopics().find((t) => t.slug === slug);
+    return topic ? topic.name : slug;
+  }
+
+  getAgeGroupNameBySlug(slug: string): string {
+    const ag = this.ageGroups().find((a) => a.slug === slug);
+    return ag ? ag.name : slug;
+  }
+
+  getTypeLabel(type: string): string {
+    const map: Record<string, string> = {
+      VIDEO: 'Video',
+      DOCUMENT: 'Tài liệu',
+      PDF: 'PDF',
+      EXCEL: 'Excel',
+      POWERPOINT: 'PowerPoint',
+      IMAGE: 'Hình ảnh',
+      OTHER: 'Khác',
+    };
+    return map[type] || type;
   }
 
   openUploadModal() {
@@ -413,6 +734,7 @@ export class ResourcesComponent {
     this.isEditMode.set(false);
     this.currentResourceId = null;
     this.selectedFile = null;
+    this.uploadedFileDuration.set(null); // Reset duration
     this.uploadForm.reset({ type: 'VIDEO', ageGroupIds: [] });
   }
 
@@ -424,8 +746,8 @@ export class ResourcesComponent {
 
   approveResource(id: string) {
     this.openConfirmModal(
-      'Approve Resource?',
-      'Are you sure you want to APPROVE this resource? It will become visible to all users.',
+      'Phê duyệt Tài nguyên?',
+      'Bạn có chắc chắn muốn PHÊ DUYỆT tài nguyên này? Nó sẽ hiển thị cho tất cả người dùng.',
       'APPROVE',
       id
     );
@@ -440,8 +762,8 @@ export class ResourcesComponent {
 
   rejectResource(id: string) {
     this.openConfirmModal(
-      'Reject Resource?',
-      'Are you sure you want to REJECT this resource? It will be marked as rejected.',
+      'Từ chối Tài nguyên?',
+      'Bạn có chắc chắn muốn TỪ CHỐI tài nguyên này? Nó sẽ bị đánh dấu là đã từ chối.',
       'REJECT',
       id
     );
@@ -456,8 +778,8 @@ export class ResourcesComponent {
 
   confirmDelete(id: string) {
     this.openConfirmModal(
-      'Delete Resource?',
-      'Are you sure you want to delete this resource? This action cannot be undone.',
+      'Xóa Tài nguyên?',
+      'Bạn có chắc chắn muốn xóa tài nguyên này? Hành động này không thể hoàn tác.',
       'DELETE',
       id
     );
@@ -465,10 +787,6 @@ export class ResourcesComponent {
 
   executeDeleteSingle(id: string) {
     this.resourceService.deleteResource(id).subscribe((res) => {
-      // Assuming cancelEdit() is a method that resets edit state, if it exists.
-      // If not, this line might need adjustment or removal.
-      // For now, I'll comment it out or assume it's handled elsewhere if not provided.
-
       this.toastService.showResponse(res);
       this.loadData();
     });
@@ -480,8 +798,8 @@ export class ResourcesComponent {
     if (ids.length === 0) return;
 
     this.openConfirmModal(
-      'Approve Selected?',
-      `Are you sure you want to approve ${ids.length} selected resources?`,
+      'Phê duyệt các mục đã chọn?',
+      `Bạn có chắc chắn muốn phê duyệt ${ids.length} tài nguyên đã chọn?`,
       'BULK_APPROVE'
     );
   }
@@ -506,8 +824,8 @@ export class ResourcesComponent {
     if (ids.length === 0) return;
 
     this.openConfirmModal(
-      'Delete Selected?',
-      `Are you sure you want to delete ${ids.length} selected resources? This cannot be undone.`,
+      'Xóa các mục đã chọn?',
+      `Bạn có chắc chắn muốn xóa ${ids.length} tài nguyên đã chọn? Hành động này không thể hoàn tác.`,
       'BULK_DELETE'
     );
   }
@@ -579,8 +897,13 @@ export class ResourcesComponent {
     // Pre-populate uploadTopics with the current topic if available
     // This ensures the name is displayed immediately even before the full list loads
     if (resource.topic) {
-      // Cast to any to avoid strict Topic type mismatch (slug missing in inline type)
-      this.uploadTopics.set([resource.topic as any]);
+      this.uploadTopics.set([
+        {
+          ...resource.topic,
+          id: String(resource.topic.id),
+          categoryId: String(resource.topic.categoryId),
+        } as Topic,
+      ]);
     }
 
     if (topicId && !catId) {
@@ -603,7 +926,7 @@ export class ResourcesComponent {
               this.patchUploadForm(resource, '', String(topicId)); // Fallback
             }
           },
-          error: (err) => {
+          error: (err: unknown) => {
             console.error('Failed to fetch topic details:', err);
             this.patchUploadForm(resource, '', String(topicId));
           },
@@ -626,7 +949,7 @@ export class ResourcesComponent {
   setUploadMode(mode: 'FILE' | 'YOUTUBE') {
     this.uploadMode.set(mode);
     if (mode === 'YOUTUBE') {
-      this.uploadForm.patchValue({ type: 'VIDEO' });
+      this.uploadForm.patchValue({ type: 'YOUTUBE' });
     } else {
       // Reset to default or keep current if valid?
       // If we switch back to file, maybe we just leave it or set to VIDEO default
@@ -647,9 +970,9 @@ export class ResourcesComponent {
         title: resource.title,
         categoryId: String(catId),
         topicId: String(topicId),
-        type: resource.type
-          ? resource.type.toUpperCase()
-          : this.detectResourceType(resource.fileUrl || ''),
+        type: resource.fileType
+          ? resource.fileType.toUpperCase()
+          : this.detectFileType(resource.fileUrl || ''),
         description: resource.description,
         url: resource.fileUrl,
         ageGroupIds: resource.ageGroups
@@ -658,6 +981,8 @@ export class ResourcesComponent {
       },
       { emitEvent: false }
     );
+    this.uploadForm.markAsPristine();
+    this.uploadForm.markAsUntouched();
   }
 
   // Helper for loading dropdown topics
@@ -676,12 +1001,52 @@ export class ResourcesComponent {
       });
   }
 
-  onFileSelected(event: Event) {
+  // Helper to extract video duration
+  getVideoDuration(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      try {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          const duration = video.duration;
+          resolve(this.formatDuration(duration));
+        };
+
+        video.onerror = () => {
+          resolve('');
+        };
+
+        video.src = window.URL.createObjectURL(file);
+      } catch (e) {
+        resolve('');
+      }
+    });
+  }
+
+  formatDuration(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    const mDisplay = m < 10 ? `0${m}` : m;
+    const sDisplay = s < 10 ? `0${s}` : s;
+
+    if (h > 0) {
+      const hDisplay = h < 10 ? `0${h}` : h;
+      return `${hDisplay}:${mDisplay}:${sDisplay}`;
+    }
+    return `${mDisplay}:${sDisplay}`;
+  }
+
+  async onFileSelected(event: Event) {
     if (this.isEditMode()) return;
 
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile = input.files[0];
+      this.uploadedFileDuration.set(null); // Reset
 
       // Auto-populate Title if empty
       if (!this.uploadForm.get('title')?.value) {
@@ -689,11 +1054,20 @@ export class ResourcesComponent {
       }
 
       // Auto-detect Type
-      const type = this.detectResourceType(this.selectedFile.name);
+      const type = this.detectFileType(this.selectedFile.name);
       this.uploadForm.patchValue({ type });
 
+      // Auto-detect Duration if Video
+      if (this.selectedFile.type.startsWith('video/')) {
+        const duration = await this.getVideoDuration(this.selectedFile);
+        if (duration) {
+          this.uploadedFileDuration.set(duration);
+          console.log('Auto-detected duration:', duration);
+        }
+      }
+
       this.toastService.show(
-        `File "${this.selectedFile.name}" selected!`,
+        `Đã chọn file "${this.selectedFile.name}"!`,
         'info'
       );
     }
@@ -712,6 +1086,7 @@ export class ResourcesComponent {
       });
     }
     this.uploadForm.get('ageGroupIds')?.markAsTouched();
+    this.uploadForm.get('ageGroupIds')?.markAsDirty();
   }
 
   // THUMBNAIL UPDATE LOGIC
@@ -737,7 +1112,10 @@ export class ResourcesComponent {
 
   submitUpload() {
     if (this.uploadForm.invalid) {
-      this.toastService.show('Please fill in all required fields.', 'error');
+      this.toastService.show(
+        'Vui lòng điền đầy đủ các trường bắt buộc.',
+        'error'
+      );
       // Mark all controls as touched to show errors
       this.uploadForm.markAllAsTouched();
       return;
@@ -748,17 +1126,23 @@ export class ResourcesComponent {
 
     if (this.isEditMode() && this.currentResourceId) {
       // UPDATE (JSON Body)
-      const updateData: any = {
+      const updateData: UpdateResourceRequest = {
         title: val.title,
         description: val.description,
         topicId: val.topicId,
         ageGroupIds: val.ageGroupIds || [],
+        duration: this.uploadedFileDuration() || undefined,
       };
 
       // If YouTube mode and URL changed?
       // Spec says "youtubeLink" in JSON logic.
       if (this.uploadMode() === 'YOUTUBE' && val.url) {
         updateData.youtubeLink = val.url;
+      }
+
+      // Exception: Allow manual override of fileType (if not YOUTUBE)
+      if (val.type && val.type !== 'YOUTUBE') {
+        updateData.fileType = val.type;
       }
 
       this.resourceService
@@ -790,13 +1174,13 @@ export class ResourcesComponent {
       if (this.uploadMode() === 'YOUTUBE') {
         const url = this.uploadForm.get('url')?.value;
         if (!url) {
-          this.toastService.show('Please enter a YouTube URL.', 'error');
+          this.toastService.show('Vui lòng nhập đường dẫn YouTube.', 'error');
           return;
         }
         // Validate URL
         const videoId = this.extractYoutubeId(url);
         if (!videoId) {
-          this.toastService.show('Invalid YouTube URL.', 'error');
+          this.toastService.show('Đường dẫn YouTube không hợp lệ.', 'error');
           return;
         }
 
@@ -805,15 +1189,19 @@ export class ResourcesComponent {
       } else {
         // 2. File Upload Mode
         if (!this.selectedFile) {
-          this.toastService.show('Please select a file to upload.', 'error');
+          this.toastService.show('Vui lòng chọn file để tải lên.', 'error');
           return;
         }
         formData.append('file', this.selectedFile);
+        if (this.uploadedFileDuration()) {
+          formData.append('duration', this.uploadedFileDuration()!);
+        }
       }
 
       this.resourceService.uploadResource(formData).subscribe((res) => {
         this.uploadForm.reset({ type: 'VIDEO', ageGroupIds: [] });
         this.selectedFile = null;
+        this.uploadedFileDuration.set(null);
         this.toastService.showResponse(res);
         this.loadData();
         this.closeUploadModal();
@@ -825,8 +1213,36 @@ export class ResourcesComponent {
   openPreview(resource: Resource) {
     this.previewResource.set(resource);
     this.isLoading.set(true);
-    this.previewType = this.getPreviewType(resource.fileUrl || '');
-    this.previewUrl = this.getSafeUrl(resource.fileUrl || '', this.previewType);
+
+    let safeType = 'UNSUPPORTED';
+
+    // Determine Preview Type based on Resource Data
+    if (resource.resourceType === 'YOUTUBE') {
+      this.previewType = 'VIDEO'; // UI uses VIDEO layout for both
+      safeType = 'YOUTUBE'; // Sanitizer needs YOUTUBE to convert to embed URL
+      this.isYoutube.set(true);
+    } else {
+      this.isYoutube.set(false);
+      // FILE
+      const ft = resource.fileType || 'OTHER';
+      if (ft === 'VIDEO') {
+        this.previewType = 'VIDEO';
+        safeType = 'VIDEO';
+      } else if (ft === 'IMAGE') {
+        this.previewType = 'IMAGE';
+        safeType = 'IMAGE';
+      } else if (
+        ['PDF', 'DOCUMENT', 'WORD', 'EXCEL', 'POWERPOINT'].includes(ft)
+      ) {
+        this.previewType = 'DOCUMENT'; // UI uses iframe
+        safeType = 'DOC'; // Sanitizer uses Google Viewer
+      } else {
+        this.previewType = 'UNSUPPORTED';
+        safeType = 'UNSUPPORTED';
+      }
+    }
+
+    this.previewUrl = this.getSafeUrl(resource.fileUrl || '', safeType);
 
     // If unsupported, stop loading spinner immediately
     if (this.previewType === 'UNSUPPORTED') {
@@ -844,16 +1260,20 @@ export class ResourcesComponent {
     this.isLoading.set(false);
   }
 
-  getPreviewType(url: string) {
-    if (url.includes('youtube.com') || url.includes('youtu.be'))
-      return 'YOUTUBE';
+  getPreviewType(
+    url: string
+  ): 'VIDEO' | 'IMAGE' | 'PDF' | 'UNSUPPORTED' | 'YOUTUBE' {
+    if (!url) return 'UNSUPPORTED';
+
+    // Check if YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'VIDEO'; // YouTube is treated as VIDEO for preview but handled by specific player
 
     const ext = url.split('.').pop()?.toLowerCase();
-    if (['mp4', 'webm', 'ogg'].includes(ext || '')) return 'VIDEO';
-    if (['mp3', 'wav', 'ogg'].includes(ext || '')) return 'AUDIO';
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || ''))
       return 'IMAGE';
-    if (['pdf', 'doc', 'docx', 'xls', 'xlsx'].includes(ext || '')) return 'DOC';
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext || '')) return 'VIDEO';
+    if (ext === 'pdf') return 'PDF';
+
     return 'UNSUPPORTED';
   }
 
@@ -887,12 +1307,12 @@ export class ResourcesComponent {
     }
     // 2. Fallback to local lookup
     const topicId = resource.topicId;
-    if (!topicId) return 'Unknown';
+    if (!topicId) return 'Không xác định';
 
     const topic = this.allTopics().find((t) => t.id == topicId);
-    if (!topic) return 'Unknown';
+    if (!topic) return 'Không xác định';
     const cat = this.categories().find((c) => c.id == topic.categoryId);
-    return cat ? cat.name : 'Unknown';
+    return cat ? cat.name : 'Không xác định';
   }
 
   getCategoryIdFromTopic(topicId?: string | number): string {
@@ -908,32 +1328,98 @@ export class ResourcesComponent {
     }
     // 2. Fallback to local lookup
     const topicId = resource.topicId;
-    if (!topicId) return 'General';
+    if (!topicId) return 'Chung';
     const topic = this.allTopics().find((t) => t.id == topicId);
-    return topic ? topic.name : 'General';
+    return topic ? topic.name : 'Chung';
   }
-  detectResourceType(filenameOrUrl: string): string {
-    if (!filenameOrUrl) return 'VIDEO'; // Default
+
+  extractExtension(filenameOrUrl: string): string {
+    return filenameOrUrl.split('.').pop()?.toLowerCase() || '';
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'APPROVED':
+        return 'Đã duyệt';
+      case 'PENDING':
+        return 'Chờ duyệt';
+      case 'REJECTED':
+        return 'Đã từ chối';
+      case 'DELETED':
+        return 'Đã xóa';
+      case 'HIDDEN':
+        return 'Đã ẩn';
+      default:
+        return 'Nháp';
+    }
+  }
+
+  getThumbnail(resource: Resource): string {
+    if (resource.thumbnailUrl) return resource.thumbnailUrl;
+
+    if (resource.resourceType === 'YOUTUBE' && resource.fileUrl) {
+      const videoId = this.extractYoutubeId(resource.fileUrl);
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      }
+    }
+    return ''; // Trigger onerror in template
+  }
+
+  getTypeBadgeClass(type: string): string {
+    switch (type) {
+      case 'YOUTUBE':
+        return 'bg-red-50 text-red-700 border-red-100';
+      case 'VIDEO':
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'PDF':
+        return 'bg-rose-50 text-rose-700 border-rose-200'; // Same as video? Maybe differentiate
+      case 'WORD':
+      case 'DOCUMENT':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'EXCEL':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'POWERPOINT':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'IMAGE':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  }
+
+  isImageOrVideo(resource: Resource): boolean {
+    return (
+      resource.resourceType === 'YOUTUBE' ||
+      resource.fileType === 'VIDEO' ||
+      resource.fileType === 'IMAGE'
+    );
+  }
+
+  detectFileType(filenameOrUrl: string): string {
+    if (!filenameOrUrl) return 'OTHER';
+
+    // Check YouTube first just in case
     if (
       filenameOrUrl.includes('youtube.com') ||
       filenameOrUrl.includes('youtu.be')
     )
       return 'VIDEO';
 
-    const ext = filenameOrUrl.split('.').pop()?.toLowerCase();
-    if (['pdf'].includes(ext || '')) return 'PDF';
-    if (['doc', 'docx'].includes(ext || '')) return 'WORD';
-    if (['xls', 'xlsx'].includes(ext || '')) return 'EXCEL';
-    if (['ppt', 'pptx'].includes(ext || '')) return 'POWERPOINT';
-    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext || '')) return 'VIDEO';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || ''))
-      return 'IMAGE';
-    if (['mp3', 'wav', 'm4a'].includes(ext || '')) return 'AUDIO';
-    return 'DOCUMENT'; // Default fallback
+    const ext = this.extractExtension(filenameOrUrl);
+    if (['pdf'].includes(ext)) return 'PDF';
+    if (['doc', 'docx', 'txt'].includes(ext)) return 'DOCUMENT';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'EXCEL';
+    if (['ppt', 'pptx'].includes(ext)) return 'POWERPOINT';
+    if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext))
+      return 'VIDEO';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'IMAGE';
+
+    return 'OTHER';
   }
 
   getDisplayType(res: Resource): string {
-    if (res.fileExtension?.toLowerCase() === 'youtube') return 'YOUTUBE';
-    return res.type;
+    if (res.resourceType === 'YOUTUBE') return 'YOUTUBE';
+    return res.fileType || 'DOCUMENT';
   }
 }

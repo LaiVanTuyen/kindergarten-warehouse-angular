@@ -48,8 +48,8 @@ export class UserService {
     page: number,
     limit: number,
     query: string = '',
-    role: string = 'ALL',
-    status: string = 'ALL',
+    role: string = '', // Comma-separated or 'ALL'
+    status: string = '', // Comma-separated or 'ALL'
     sort: string = 'createdAt',
     dir: 'asc' | 'desc' = 'desc'
   ): Observable<ApiResponse<Page<User>>> {

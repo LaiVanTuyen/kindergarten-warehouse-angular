@@ -69,35 +69,19 @@
       </div>
 
       <!-- Role Filter -->
-      <div class="relative w-full sm:w-56">
-        <select [formControl]="roleControl"
-          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
-          <option value="ALL">All Roles</option>
-          <option value="ADMIN">Admin</option>
-          <option value="TEACHER">Teacher</option>
-          <option value="USER">User</option>
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+      <div class="relative group">
+        <app-multi-select-filter label="Role" [options]="roleOptions" [selectedValues]="roleFilter()"
+          [isOpen]="activeFilterDropdown() === 'role'" (toggleOpen)="toggleFilterDropdown('role')"
+          (selectionChange)="roleFilter.set($event); currentPage.set(1); updateUrl(); loadUsers()">
+        </app-multi-select-filter>
       </div>
 
       <!-- Status Filter -->
-      <div class="relative w-full sm:w-56">
-        <select [formControl]="statusControl"
-          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer">
-          <option value="ALL">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="BLOCKED">Blocked</option>
-          <option value="DELETED">Deleted (Bin)</option>
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+      <div class="relative group">
+        <app-multi-select-filter label="Status" [options]="statusOptions" [selectedValues]="statusFilter()"
+          [isOpen]="activeFilterDropdown() === 'status'" (toggleOpen)="toggleFilterDropdown('status')"
+          (selectionChange)="statusFilter.set($event); currentPage.set(1); updateUrl(); loadUsers()">
+        </app-multi-select-filter>
       </div>
 
       <!-- Reset/Refresh Button -->
@@ -139,6 +123,62 @@
         <span class="text-lg leading-none">+</span> New User
       </button>
     </div>
+  </div>
+
+  <!-- Active Filters Chips -->
+  <div class="flex flex-wrap items-center gap-2 mb-4 px-1"
+    *ngIf="roleFilter().size > 0 || statusFilter().size > 0 || searchQuery()">
+
+    <!-- Search Query Chip -->
+    <div *ngIf="searchQuery()"
+      class="inline-flex items-center h-8 px-3 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold animate-in fade-in zoom-in-95">
+      <span class="opacity-70 mr-1.5">Search:</span>
+      {{ searchQuery() }}
+      <button (click)="resetFilters()" class="ml-2 hover:bg-slate-200 rounded-full p-0.5 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Chips -->
+    <ng-container *ngFor="let role of roleFilter()">
+      <div
+        class="inline-flex items-center h-8 px-3 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-xs font-semibold animate-in fade-in zoom-in-95">
+        <span class="opacity-70 mr-1.5">Role:</span>
+        {{ role }}
+        <button (click)="removeRoleFilter(role)" class="ml-2 hover:bg-purple-100 rounded-full p-0.5 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Status Chips -->
+    <ng-container *ngFor="let status of statusFilter()">
+      <div
+        class="inline-flex items-center h-8 px-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold animate-in fade-in zoom-in-95">
+        <span class="opacity-70 mr-1.5">Status:</span>
+        {{ status }}
+        <button (click)="removeStatusFilter(status)"
+          class="ml-2 hover:bg-blue-100 rounded-full p-0.5 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </ng-container>
+
+    <button (click)="resetFilters()" class="text-xs text-slate-500 hover:text-red-600 hover:underline font-medium ml-2">
+      Clear All
+    </button>
   </div>
 
   <!-- Data Table -->
