@@ -19,17 +19,22 @@
     <!-- Left: Tabs -->
     <div class="flex p-1 bg-slate-100/80 rounded-xl shadow-inner border border-slate-200/50 w-full sm:w-auto">
       <button (click)="setActiveTab('pending')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
         [ngClass]="activeTab() === 'pending' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'">
         Chờ duyệt
       </button>
       <button (click)="setActiveTab('list')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
         [ngClass]="activeTab() === 'list' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'">
         Kho tài liệu
       </button>
+      <button (click)="setActiveTab('rejected')"
+        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
+        [ngClass]="activeTab() === 'rejected' ? 'bg-white text-orange-600 shadow-sm ring-1 ring-orange-100' : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50/50'">
+        Bị từ chối
+      </button>
       <button (click)="setActiveTab('trash')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
         [ngClass]="activeTab() === 'trash' ? 'bg-white text-red-600 shadow-sm ring-1 ring-red-100' : 'text-slate-500 hover:text-red-600 hover:bg-red-50/50'">
         Thùng rác
       </button>
@@ -91,7 +96,8 @@
   </div>
 
   <!-- Global Backdrop for Dropdowns -->
-  <div *ngIf="activeFilterDropdown()" class="fixed inset-0 z-30 bg-transparent" (click)="closeFilterDropdown()"></div>
+  <div tabindex="-1" *ngIf="activeFilterDropdown()" class="fixed inset-0 z-30 bg-transparent focus:outline-none"
+    (click)="closeFilterDropdown()"></div>
 
   <!-- Filters Section -->
   <div class="flex flex-col gap-4 mb-6">
@@ -134,12 +140,12 @@
         <!-- Dropdown -->
         <div *ngIf="activeFilterDropdown() === 'category'"
           class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <div *ngFor="let cat of categories()"
-            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+          <button type="button" *ngFor="let cat of categories()"
+            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
             (click)="toggleFilter(categoryFilter, cat.slug)">
             <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(categoryFilter, cat.slug)"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+              <input type="checkbox" [checked]="isSelected(categoryFilter, cat.slug)" tabindex="-1"
+                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
               <svg
                 class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -150,7 +156,7 @@
             <span
               class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
               cat.name }}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -177,12 +183,12 @@
           <div *ngIf="filteredTopics().length === 0" class="px-3 py-3 text-sm text-slate-400 text-center italic">
             Không có chủ đề phù hợp
           </div>
-          <div *ngFor="let topic of filteredTopics()"
-            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+          <button type="button" *ngFor="let topic of filteredTopics()"
+            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
             (click)="toggleFilter(topicFilter, topic.slug)">
             <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(topicFilter, topic.slug)"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+              <input type="checkbox" [checked]="isSelected(topicFilter, topic.slug)" tabindex="-1"
+                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
               <svg
                 class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -193,7 +199,7 @@
             <span
               class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
               topic.name }}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -216,12 +222,12 @@
         <!-- Dropdown -->
         <div *ngIf="activeFilterDropdown() === 'age'"
           class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <div *ngFor="let ag of ageGroups()"
-            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+          <button type="button" *ngFor="let ag of ageGroups()"
+            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
             (click)="toggleFilter(ageGroupFilter, ag.slug)">
             <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(ageGroupFilter, ag.slug)"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+              <input type="checkbox" [checked]="isSelected(ageGroupFilter, ag.slug)" tabindex="-1"
+                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
               <svg
                 class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -232,7 +238,7 @@
             <span
               class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
               ag.name }}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -257,12 +263,12 @@
         <div *ngIf="activeFilterDropdown() === 'type'"
           class="absolute z-50 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
           <ng-container *ngFor="let type of ['VIDEO', 'DOCUMENT', 'PDF', 'EXCEL', 'POWERPOINT', 'IMAGE', 'OTHER']">
-            <div
-              class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+            <button type="button"
+              class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
               (click)="toggleFilter(typeFilter, type)">
               <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-                <input type="checkbox" [checked]="isSelected(typeFilter, type)"
-                  class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+                <input type="checkbox" [checked]="isSelected(typeFilter, type)" tabindex="-1"
+                  class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
                 <svg
                   class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
                   xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -273,7 +279,7 @@
               <span
                 class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
                 getTypeLabel(type) }}</span>
-            </div>
+            </button>
           </ng-container>
         </div>
       </div>
@@ -434,7 +440,13 @@
             <th
               class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px] whitespace-nowrap">
               Loại & Kích thước</th>
-            <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Trạng thái
+            <th
+              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">
+              Trạng thái duyệt
+            </th>
+            <th
+              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">
+              Hiển thị
             </th>
             <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px]">Chủ đề</th>
             <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px]">Danh mục</th>
@@ -446,7 +458,8 @@
           </tr>
         </thead>
         <tbody class="text-slate-700 text-sm divide-y divide-slate-100">
-          <tr *ngFor="let res of resources()" class="hover:bg-slate-50/80 transition-all duration-200 group relative"
+          <tr *ngFor="let res of resources(); trackBy: trackById"
+            class="hover:bg-slate-50/80 transition-all duration-200 group relative"
             [class.bg-blue-50/50]="selectedIds().has(res.id)">
             <!-- Checkbox -->
             <td class="pl-8 py-3 w-10">
@@ -462,8 +475,8 @@
                 <!-- Thumbnail: Real Image or Fallback Icon -->
                 <div
                   class="h-12 w-12 bg-gray-50 rounded-xl flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden border border-gray-100 relative group-hover:border-blue-200 transition-all">
-                  <img *ngIf="res.thumbnailUrl" [src]="res.thumbnailUrl" alt="Thumbnail"
-                    class="w-full h-full object-cover"
+                  <img *ngIf="res.thumbnailUrl" loading="lazy" [src]="res.thumbnailUrl" alt="Thumbnail"
+                    class="object-cover w-full h-full rounded-md"
                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
                   <!-- Fallback if no thumbnail or error -->
                   <span class="w-full h-full flex items-center justify-center bg-slate-50"
@@ -599,13 +612,18 @@
                     <span class="text-gray-300">•</span>
                     <span>{{ res.createdBy || res.uploader }}</span>
                   </div>
+                  <div *ngIf="activeTab() === 'rejected' && res.rejectionReason"
+                    class="mt-1 text-[10.5px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100 w-fit line-clamp-1"
+                    [title]="res.rejectionReason">
+                    Lý do: {{ res.rejectionReason }}
+                  </div>
                 </div>
               </div>
             </td>
 
-            <!-- Type & Size (New Column/Refined) -->
-            <td class="px-3 py-3">
-              <div class="flex flex-col gap-1">
+            <!-- Type & Size -->
+            <td class="px-3 py-3 text-center">
+              <div class="flex flex-col gap-1 items-center justify-center">
                 <!-- Icon BadgeOnly -->
                 <ng-container [ngSwitch]="getDisplayType(res)">
                   <!-- YOUTUBE -->
@@ -734,12 +752,12 @@
                 </ng-container>
 
                 <!-- Metadata (Duration or Size) -->
-                <span class="text-xs text-gray-500 font-medium pl-6 block min-w-[80px]">
+                <span class="text-[11px] text-gray-500 font-medium">
                   <!-- Case: Video/Youtube -> Duration -->
                   <ng-container *ngIf="res.resourceType === 'YOUTUBE' || res.fileType === 'VIDEO'">
-                    <span *ngIf="res.duration" class="flex items-center gap-1.5" title="Thời lượng">
+                    <span *ngIf="res.duration" class="flex items-center gap-1 opacity-80" title="Thời lượng">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" class="w-3.5 h-3.5">
+                        stroke-width="2" class="w-3 h-3">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
@@ -749,9 +767,9 @@
 
                   <!-- Case: File -> Size -->
                   <ng-container *ngIf="res.resourceType !== 'YOUTUBE' && res.fileType !== 'VIDEO'">
-                    <span *ngIf="res.fileSize" class="flex items-center gap-1.5" title="Dung lượng">
+                    <span *ngIf="res.fileSize" class="flex items-center gap-1 opacity-80" title="Dung lượng">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" class="w-3.5 h-3.5">
+                        stroke-width="2" class="w-3 h-3">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -762,14 +780,15 @@
                 </span>
               </div>
             </td>
-            <!-- Status -->
-            <td class="px-3 py-3">
+
+            <!-- Status (Approval) -->
+            <td class="px-3 py-3 text-center">
               <span *ngIf="activeTab() === 'trash'"
-                class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-lg font-bold">
+                class="px-2 py-1 bg-red-100 text-red-600 text-[10px] rounded-lg font-bold uppercase">
                 Đã xóa
               </span>
               <span *ngIf="activeTab() !== 'trash'"
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm whitespace-nowrap"
+                class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-sm whitespace-nowrap"
                 [ngClass]="{
                   'bg-amber-50 text-amber-700 border-amber-100': res.status === 'PENDING',
                   'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'APPROVED',
@@ -780,24 +799,39 @@
               </span>
             </td>
 
-            <!-- Topic (New Column) -->
+            <!-- Visibility (Public/Private Toggle) -->
+            <td class="px-3 py-3 text-center">
+              <div class="flex justify-center" *ngIf="activeTab() !== 'trash'">
+                <button (click)="executeChangeVisibility(res.id, res.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC')"
+                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
+                  [ngClass]="res.visibility === 'PUBLIC' ? 'bg-blue-600' : 'bg-gray-200'"
+                  [title]="res.visibility === 'PUBLIC' ? 'Đang công khai. Nhấn để chuyển thành Nội bộ (Private)' : 'Đang nội bộ. Nhấn để Công khai (Public)'">
+                  <span class="sr-only">Toggle Visibility</span>
+                  <span aria-hidden="true"
+                    class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    [ngClass]="res.visibility === 'PUBLIC' ? 'translate-x-2' : '-translate-x-2'"></span>
+                </button>
+              </div>
+            </td>
+
+            <!-- Topic -->
             <td class="px-3 py-3">
-              <span class="text-sm font-medium text-gray-700 block max-w-[180px] truncate"
+              <span class="text-xs font-semibold text-gray-700 block max-w-[120px] truncate"
                 [title]="getTopicTitle(res)">{{ getTopicTitle(res) }}</span>
             </td>
 
             <!-- Category -->
             <td class="px-3 py-3">
               <span
-                class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 group-hover:border-blue-200 transition-colors block max-w-[150px] truncate"
+                class="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-200 block max-w-[120px] truncate uppercase tracking-wide"
                 [title]="getCategoryName(res)">{{
                 getCategoryName(res) }}</span>
             </td>
 
             <!-- Views -->
-            <td class="px-3 py-3 text-center font-bold text-gray-700">{{ res.viewsCount }}</td>
+            <td class="px-3 py-3 text-center font-bold text-gray-700">{{ res.viewsCount || 0 }}</td>
 
-            <!-- Actions -->
+
             <!-- Actions -->
             <td class="px-3 py-3 text-center">
               <div class="flex justify-center gap-2">
@@ -832,8 +866,9 @@
                   </button>
                 </ng-container>
 
-                <!-- REPOSITORY TAB ACTIONS -->
-                <ng-container *ngIf="activeTab() === 'list'">
+                <!-- REPOSITORY & REJECTED TAB ACTIONS -->
+                <ng-container *ngIf="activeTab() === 'list' || activeTab() === 'rejected'">
+
                   <!-- Preview -->
                   <button (click)="openPreview(res)" title="Xem trước"
                     class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
@@ -961,12 +996,13 @@
           </div>
 
           <!-- Thumbnail Area (Fixed Height 180px) -->
-          <div class="relative h-[180px] bg-gray-50 border-b border-gray-100 overflow-hidden cursor-pointer group/thumb"
+          <div role="button" tabindex="0" (keydown.enter)="openPreview(resource)"
+            class="relative h-[180px] bg-gray-50 border-b border-gray-100 overflow-hidden cursor-pointer group/thumb"
             (click)="openPreview(resource)">
             <!-- Thumbnail Image (Cover for Media, Contain for Docs) -->
-            <img [src]="getThumbnail(resource)"
-              class="w-full h-full transition-transform duration-500 object-cover group-hover/thumb:scale-105"
-              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <img loading="lazy" [src]="getThumbnail(resource)" alt="Thumbnail"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
+              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'" />
 
             <!-- Fallback/Placeholder (Clean Icon) -->
             <div [class.hidden]="resource.thumbnailUrl"
@@ -1038,7 +1074,8 @@
                 class="flex items-center gap-1 font-bold uppercase whitespace-nowrap" [ngClass]="{
                             'text-green-600': resource.status === 'APPROVED',
                             'text-amber-600': resource.status === 'PENDING',
-                            'text-red-600': resource.status === 'REJECTED' || resource.status === 'DELETED'
+                            'text-red-600': resource.status === 'REJECTED' || resource.status === 'DELETED',
+                            'text-gray-500': resource.status === 'HIDDEN'
                         }">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
                 {{ getStatusLabel(resource.status) }}
@@ -1046,7 +1083,7 @@
             </div>
 
             <!-- Title -->
-            <h4
+            <h4 role="button" tabindex="0" (keydown.enter)="openPreview(resource)"
               class="font-semibold text-gray-900 text-sm mb-1 px-0.5 line-clamp-2 min-h-[40px] leading-tight group-hover:text-blue-600 transition-colors cursor-pointer"
               [title]="resource.title" (click)="openPreview(resource)">
               {{ resource.title }}
@@ -1055,7 +1092,14 @@
             <!-- Footer Info (Uploader & Views) -->
             <div
               class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium text-gray-500">
-              <span class="truncate max-w-[70%] text-slate-600">
+              <span class="truncate max-w-[70%] text-slate-600 flex items-center gap-1.5">
+                <!-- Visiblity Indicator -->
+                <svg *ngIf="resource.visibility === 'PRIVATE'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                  fill="currentColor" class="w-3.5 h-3.5 text-amber-500 cursor-help" title="Nội bộ (Private)">
+                  <path fill-rule="evenodd"
+                    d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
+                    clip-rule="evenodd" />
+                </svg>
                 {{ resource.uploader || 'Admin' }}
               </span>
               <span class="flex items-center gap-1 text-slate-500">
@@ -1092,8 +1136,7 @@
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </button>
-                <button
-                  (click)="openConfirmModal('Từ chối', 'Từ chối tài nguyên này?', 'REJECT', resource.id); $event.stopPropagation()"
+                <button (click)="rejectResource(resource.id); $event.stopPropagation()"
                   class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Từ chối">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1153,362 +1196,11 @@
 </div>
 
 
-<!-- UPLOAD / EDIT MODAL -->
-<div *ngIf="isUploadModalOpen()"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
-  <div
-    class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col border border-white/10 ring-1 ring-black/5">
-    <div
-      class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10">
-      <div>
-        <h3 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Chỉnh sửa Tài nguyên' : 'Tải lên
-          Tài nguyên mới' }}</h3>
-        <p class="text-xs text-gray-500 mt-1.5 font-medium">Điền thông tin chi tiết bên dưới.</p>
-      </div>
-      <button (click)="closeUploadModal()"
-        class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-
-    <div class="p-8 pt-6">
-      <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-6">
-
-        <!-- Upload Type Toggle -->
-        <div *ngIf="!isEditMode()" class="flex mb-6 bg-gray-100 p-1 rounded-xl">
-          <button type="button" (click)="setUploadMode('FILE')"
-            class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-            [ngClass]="uploadMode() === 'FILE' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-            📤 Tải tập tin
-          </button>
-          <button type="button" (click)="setUploadMode('YOUTUBE')"
-            class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-            [ngClass]="uploadMode() === 'YOUTUBE' ? 'bg-red-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-            🎥 Liên kết YouTube
-          </button>
-        </div>
-
-        <!-- File Upload Area (Hidden in Edit Mode) -->
-        <div *ngIf="!isEditMode()">
-
-          <!-- MODE: FILE -->
-          <ng-container *ngIf="uploadMode() === 'FILE'">
-            <!-- Drop Zone (Show when NO file selected) -->
-            <div *ngIf="!selectedFile" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0"
-              class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
-              <div
-                class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
-                ☁️</div>
-              <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Nhấn để tải lên hoặc kéo thả</p>
-              <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Tối đa 50MB)</p>
-            </div>
-
-            <!-- Selected File View (Show when file IS selected) -->
-            <div *ngIf="selectedFile"
-              class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-center justify-between animate-fade-in-up">
-              <div class="flex items-center gap-4">
-                <div class="h-12 w-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm">
-                  📄
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs">{{ selectedFile.name
-                    }}
-                  </h4>
-                  <p class="text-xs text-gray-500 mt-0.5 font-medium">{{ (selectedFile.size / 1024 / 1024) |
-                    number:'1.1-2' }} MB</p>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <button type="button" (click)="fileInput.click()"
-                  class="text-sm text-blue-600 font-bold hover:text-blue-700 px-3 py-1.5 hover:bg-white rounded-lg transition-colors">
-                  Thay đổi
-                </button>
-                <button type="button" (click)="selectedFile = null; uploadForm.patchValue({title: ''})"
-                  class="text-sm text-red-500 font-bold hover:text-red-600 px-3 py-1.5 hover:bg-white rounded-lg transition-colors">
-                  Gỡ bỏ
-                </button>
-              </div>
-            </div>
-          </ng-container>
-
-          <!-- MODE: YOUTUBE -->
-          <ng-container *ngIf="uploadMode() === 'YOUTUBE'">
-            <div class="group">
-              <label for="youtubeUrl"
-                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-red-600 transition-colors">
-                Đường dẫn Video YouTube <span class="text-red-500">*</span>
-              </label>
-              <input type="text" id="youtubeUrl" formControlName="url" placeholder="https://www.youtube.com/watch?v=..."
-                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
-              <p class="text-xs text-gray-400 mt-2 ml-1">Hình thu nhỏ sẽ được tự động lấy.</p>
-            </div>
-          </ng-container>
-
-        </div>
-
-        <!-- Edit Mode Notice -->
-        <!-- Edit Mode Notice & Thumbnail Update -->
-        <div *ngIf="isEditMode()" class="space-y-4">
-          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
-            <div class="text-blue-500 mt-0.5 text-lg">ℹ️</div>
-            <div>
-              <h4 class="text-sm font-bold text-blue-900">Chế độ Chỉnh sửa Hạn chế</h4>
-              <p class="text-sm text-blue-700 mt-1 font-medium">Bạn đang chỉnh sửa thông tin bổ sung. Để thay đổi tệp,
-                vui lòng xóa và tải lại mới.</p>
-            </div>
-          </div>
-
-          <div
-            class="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-center justify-between transition-all hover:bg-white hover:shadow-sm">
-            <div class="flex items-center gap-4">
-              <!-- Current Thumbnail Preview -->
-              <div
-                class="h-16 w-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative shrink-0">
-                <!-- Show current thumbnail if editing and exists -->
-                <img *ngIf="currentThumbnailUrl()" [src]="currentThumbnailUrl()" class="w-full h-full object-cover"
-                  alt="Current Thumbnail">
-
-                <div *ngIf="!currentThumbnailUrl()"
-                  class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400" [ngClass]="{
-                    'text-red-500 bg-red-50': uploadForm.get('type')?.value === 'VIDEO' || uploadForm.get('type')?.value === 'YOUTUBE',
-                    'text-blue-500 bg-blue-50': uploadForm.get('type')?.value === 'DOCUMENT' || uploadForm.get('type')?.value === 'WORD',
-                    'text-green-500 bg-green-50': uploadForm.get('type')?.value === 'EXCEL',
-                    'text-rose-500 bg-rose-50': uploadForm.get('type')?.value === 'PDF',
-                    'text-orange-500 bg-orange-50': uploadForm.get('type')?.value === 'POWERPOINT',
-                    'text-purple-500 bg-purple-50': uploadForm.get('type')?.value === 'IMAGE'
-                  }">
-
-                  <ng-container [ngSwitch]="uploadForm.get('type')?.value">
-                    <!-- VIDEO / YOUTUBE -->
-                    <svg *ngSwitchCase="'VIDEO'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path
-                        d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.27 2.56 1.065v11.38c0 1.335-1.616 2.01-2.56 1.065z" />
-                    </svg>
-                    <svg *ngSwitchCase="'YOUTUBE'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path
-                        d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.27 2.56 1.065v11.38c0 1.335-1.616 2.01-2.56 1.065z" />
-                    </svg>
-
-                    <!-- PDF -->
-                    <svg *ngSwitchCase="'PDF'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path fill-rule="evenodd"
-                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z"
-                        clip-rule="evenodd" />
-                      <path
-                        d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875c1.148 0 2.222.508 2.934 1.309a1.875 1.875 0 00.32-2.1l-6.79-6.791a1.875 1.875 0 00-2.1.32z" />
-                    </svg>
-
-                    <!-- EXCEL -->
-                    <svg *ngSwitchCase="'EXCEL'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path fill-rule="evenodd"
-                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875c1.148 0 2.222.508 2.934 1.309a1.875 1.875 0 00.32-2.1l-6.79-6.791a1.875 1.875 0 00-2.1.32z"
-                        clip-rule="evenodd" />
-                    </svg>
-
-                    <!-- PPT -->
-                    <svg *ngSwitchCase="'POWERPOINT'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path fill-rule="evenodd"
-                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875c1.148 0 2.222.508 2.934 1.309a1.875 1.875 0 00.32-2.1l-6.79-6.791a1.875 1.875 0 00-2.1.32z"
-                        clip-rule="evenodd" />
-                      <path d="M12 11.25a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3a.75.75 0 01.75-.75z" />
-                    </svg>
-
-                    <!-- IMAGE -->
-                    <svg *ngSwitchCase="'IMAGE'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill="currentColor" class="w-8 h-8">
-                      <path fill-rule="evenodd"
-                        d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-
-                    <!-- DEFAULT -->
-                    <svg *ngSwitchDefault xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                      class="w-8 h-8">
-                      <path fill-rule="evenodd"
-                        d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-                  </ng-container>
-                </div>
-              </div>
-              <div>
-                <h4 class="text-sm font-bold text-gray-900">Ảnh Bìa</h4>
-                <p class="text-xs text-gray-500 font-medium">Cập nhật hình ảnh hiển thị cho tài nguyên này.</p>
-              </div>
-            </div>
-            <div>
-              <input #thumbInput type="file" class="hidden"
-                (change)="currentResourceId && onThumbnailSelected($event, currentResourceId)" accept="image/*">
-              <button type="button" (click)="thumbInput.click()"
-                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-xs uppercase tracking-wide font-bold rounded-xl transition-all shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                  class="w-4 h-4 text-gray-500">
-                  <path fill-rule="evenodd"
-                    d="M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 0 0 .75-.75v-2.69l-2.22-2.219a.75.75 0 0 0-1.06 0l-1.91 1.909.47.47a.75.75 0 1 1-1.06 1.06L6.53 8.091a.75.75 0 0 0-1.06 0l-2.97 2.97ZM12 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
-                    clip-rule="evenodd" />
-                </svg>
-                Upload mới
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)"
-          accept=".pdf,.doc,.docx,.xls,.xlsx,video/*" [disabled]="isEditMode()">
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="md:col-span-2 group">
-            <label for="resourceTitle"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Tiêu
-              đề
-              <span class="text-rose-500">*</span></label>
-            <input type="text" id="resourceTitle" formControlName="title" placeholder="ví dụ: Bài hát bảng chữ cái"
-              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
-          </div>
-
-          <div class="md:col-span-2 group">
-            <label for="resourceDesc"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Mô
-              tả</label>
-            <textarea id="resourceDesc" formControlName="description" rows="3"
-              placeholder="Mô tả ngắn gọn về nội dung..."
-              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white resize-none text-gray-900 font-medium"></textarea>
-          </div>
-
-          <div class="group">
-            <label for="resourceCategory"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Danh
-              mục
-              <span class="text-rose-500">*</span></label>
-            <select id="resourceCategory" formControlName="categoryId"
-              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
-              <option value="">Chọn Danh mục</option>
-              <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
-            </select>
-          </div>
-
-          <div class="group">
-            <label for="resourceTopic"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Chủ
-              đề
-              <span class="text-rose-500">*</span></label>
-            <select id="resourceTopic" formControlName="topicId"
-              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
-              <option value="">Chọn Chủ đề</option>
-              <option *ngFor="let topic of uploadTopics()" [value]="topic.id">{{ topic.name }}</option>
-            </select>
-          </div>
-
-          <div class="group" *ngIf="isEditMode() && uploadMode() !== 'YOUTUBE'">
-            <label for="resourceType"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Định
-              dạng
-              (Ghi đè)</label>
-            <select id="resourceType" formControlName="type"
-              class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
-              <option value="VIDEO">Video (.mp4, .mov...)</option>
-              <option value="DOCUMENT">Tài liệu (.doc, .docx, .txt)</option>
-              <option value="EXCEL">Excel (.xls, .xlsx, .csv)</option>
-              <option value="PDF">PDF (.pdf)</option>
-              <option value="POWERPOINT">PowerPoint (.ppt, .pptx)</option>
-              <option value="IMAGE">Hình ảnh (.jpg, .png...)</option>
-              <option value="OTHER">Khác (.zip, .rar...)</option>
-            </select>
-          </div>
-
-          <div class="md:col-span-2 group">
-            <p class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 transition-colors">
-              Nhóm độ tuổi <span class="text-rose-500">*</span>
-            </p>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <label *ngFor="let ag of ageGroups()"
-                class="cursor-pointer relative min-h-[50px] flex items-center justify-center text-center px-4 py-3 rounded-2xl border-2 transition-all duration-200"
-                [ngClass]="{
-                  'border-blue-500 bg-blue-50 text-blue-700 shadow-md shadow-blue-100 scale-[1.02]': uploadForm.get('ageGroupIds')?.value?.includes(ag.id),
-                  'border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-gray-50': !uploadForm.get('ageGroupIds')?.value?.includes(ag.id)
-                }">
-                <input type="checkbox" [value]="ag.id" class="hidden"
-                  [checked]="uploadForm.get('ageGroupIds')?.value?.includes(ag.id)" (change)="toggleAgeGroup(ag.id)">
-                <span class="text-sm font-bold">{{ ag.name }}</span>
-                <!-- Checkmark Badge -->
-                <div *ngIf="uploadForm.get('ageGroupIds')?.value?.includes(ag.id)"
-                  class="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-              </label>
-            </div>
-            <p *ngIf="uploadForm.get('ageGroupIds')?.touched && uploadForm.get('ageGroupIds')?.invalid"
-              class="text-rose-500 text-xs mt-2 font-bold ml-1">
-              Vui lòng chọn ít nhất một nhóm tuổi.
-            </p>
-          </div>
-        </div>
-
-        <!-- Metadata (Edit Mode Only) -->
-        <div *ngIf="isEditMode() && getCurrentResource() as resource" class="pt-4 border-t border-gray-100">
-          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Thông tin bổ sung</h4>
-          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
-            <div>
-              <span class="block text-gray-400">ID</span>
-              <span class="font-mono text-gray-700">#{{ resource.id }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Trạng thái</span>
-              <span
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border"
-                [ngClass]="{
-                  'bg-amber-50 text-amber-700 border-amber-100': resource.status === 'PENDING',
-                  'bg-emerald-50 text-emerald-700 border-emerald-100': resource.status === 'APPROVED',
-                  'bg-rose-50 text-rose-700 border-rose-100': resource.status === 'REJECTED'
-                }">
-                {{ resource.status }}
-              </span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Ngày tạo</span>
-              <span>{{ resource.createdAt ? (resource.createdAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật cuối</span>
-              <span>{{ resource.updatedAt ? (resource.updatedAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Tạo bởi</span>
-              <span class="font-medium text-gray-700">{{ resource.createdBy || resource.uploader || 'Hệ thống' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật bởi</span>
-              <span class="font-medium text-gray-700">{{ resource.updatedBy || 'Hệ thống' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-8 flex gap-4">
-          <button type="button" (click)="closeUploadModal()"
-            class="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-colors">
-            Hủy
-          </button>
-          <button type="submit" [disabled]="uploadForm.invalid || (isEditMode() && uploadForm.pristine)"
-            class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-200 active:scale-95 transition-all">
-            {{ isEditMode() ? 'Cập nhật' : 'Tải lên' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<!-- UPLOAD / EDIT MODAL COMPONENT -->
+<app-admin-resources-form [isOpen]="isUploadModalOpen()"
+  [editResource]="isEditMode() ? (getCurrentResource() || null) : null" [categories]="categories()"
+  [ageGroups]="ageGroups()" (closeForm)="closeUploadModal()" (saveSuccess)="handleSaveSuccess()">
+</app-admin-resources-form>
 
 <!-- Generic Confirmation Modal -->
 <div *ngIf="isConfirmModalOpen()"
@@ -1639,8 +1331,8 @@
         </div>
 
         <!-- IMAGE -->
-        <img *ngSwitchCase="'IMAGE'" [src]="previewUrl" alt="Preview"
-          class="max-h-[75vh] max-w-full object-contain shadow-2xl" (load)="onLoad()">
+        <img *ngSwitchCase="'IMAGE'" loading="lazy" [src]="previewUrl" alt="Preview"
+          class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" (load)="onLoad()">
 
         <!-- DOCUMENTS (Google Viewer) -->
         <iframe *ngSwitchCase="'DOCUMENT'" [src]="previewUrl" class="w-full h-[75vh] border-0 bg-white"
@@ -1661,8 +1353,8 @@
     <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
       <div class="flex items-center gap-2">
         <!-- Avatar: Real Image -->
-        <img *ngIf="previewResource()?.uploaderAvatar" [src]="previewResource()?.uploaderAvatar" alt="Avatar"
-          class="h-8 w-8 rounded-full object-cover border border-gray-100">
+        <img *ngIf="previewResource()?.uploaderAvatar" loading="lazy" [src]="previewResource()?.uploaderAvatar"
+          alt="Avatar" class="w-10 h-10 rounded-full border border-slate-200">
 
         <!-- Avatar: Fallback -->
         <div *ngIf="!previewResource()?.uploaderAvatar"
@@ -1706,21 +1398,39 @@
       <div class="group">
         <label for="moveCategory" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Danh
           mục</label>
-        <select id="moveCategory" [formControl]="moveTargetCategoryId"
-          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium">
-          <option value="">Chọn Danh mục</option>
-          <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
-        </select>
+        <div class="relative">
+          <select id="moveCategory" [formControl]="moveTargetCategoryId"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium appearance-none">
+            <option value="">Chọn Danh mục</option>
+            <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div class="group">
         <label for="moveTopic" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Chủ
           đề</label>
-        <select id="moveTopic" [formControl]="moveTargetTopicId" [disabled]="!moveTargetCategoryId.value"
-          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium">
-          <option value="">Chọn Chủ đề</option>
-          <option *ngFor="let topic of moveTopics()" [value]="topic.id">{{ topic.name }}</option>
-        </select>
+        <div class="relative">
+          <select id="moveTopic" [formControl]="moveTargetTopicId" [disabled]="!moveTargetCategoryId.value"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 drop-shadow-sm text-gray-900 font-medium appearance-none">
+            <option value="">Chọn Chủ đề</option>
+            <option *ngFor="let topic of moveTopics()" [value]="topic.id">{{ topic.name }}</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1732,6 +1442,53 @@
       <button (click)="executeBulkMove()" [disabled]="!moveTargetTopicId.value"
         class="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
         Di chuyển
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div *ngIf="isRejectModalOpen()"
+  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+  <div
+    class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
+
+    <div class="flex items-center gap-4 mb-4">
+      <div class="h-10 w-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-gray-900">Từ chối Tài nguyên</h3>
+        <p class="text-sm text-gray-500">Vui lòng nhập lý do từ chối để người dùng có thể điều chỉnh.</p>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <label for="rejectReason" class="block text-sm font-bold text-slate-700 mb-2">Lý do từ chối <span
+          class="text-red-500">*</span></label>
+      <textarea id="rejectReason" [formControl]="rejectReasonControl" rows="4"
+        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-400 text-sm resize-none"
+        placeholder="Ví dụ: File bị lỗi font, Vi phạm bản quyền, Sai danh mục..."></textarea>
+      <div *ngIf="rejectReasonControl.touched && rejectReasonControl.invalid" class="text-red-500 text-xs mt-1">
+        Lý do từ chối không được để trống và tối đa 1000 ký tự.
+      </div>
+    </div>
+
+    <div class="flex gap-3 justify-end">
+      <button (click)="closeRejectModal()"
+        class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">
+        Hủy
+      </button>
+      <button (click)="executeReject()" [disabled]="rejectReasonControl.invalid || isTableLoading()"
+        class="px-5 py-2.5 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <span *ngIf="isTableLoading()"
+          class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        Từ chối
       </button>
     </div>
 

@@ -15,8 +15,8 @@ export interface Resource {
   topicId: string;
   createdById?: number; // User Id assumed number based on Users table
   createdBy?: string; // Username from API
-  isActive: boolean;
   isDeleted: boolean;
+  visibility: 'PUBLIC' | 'PRIVATE'; // New field from spec
   isFavorited?: boolean; // New field from spec
   createdAt: string;
   updatedAt?: string;
@@ -28,7 +28,7 @@ export interface Resource {
   // Enums or Union types
   // Enums or Union types
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
-
+  rejectionReason?: string | null;
   // Mapped from backend resourceType
   resourceType?: 'FILE' | 'YOUTUBE' | 'EXTERNAL_LINK';
 
@@ -113,7 +113,7 @@ export interface ResourceFilterParams {
   topic?: string | string[]; // Deprecated: use topicSlugs
   category?: string | string[]; // Deprecated: use categorySlugs
   ages?: string | string[]; // Deprecated: use ageSlugs
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
+  status?: string | string[]; // Can be PENDING, APPROVED, REJECTED, DELETED, HIDDEN
   type?: string | string[]; // Deprecated: use types
   sort?: string;
   // New Multi-select Params

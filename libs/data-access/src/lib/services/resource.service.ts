@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { API_URL } from '../tokens';
 import { Observable, catchError, throwError, map } from 'rxjs';
 import {
@@ -19,8 +19,8 @@ export class ResourceService {
   private apiUrl = inject(API_URL);
 
   /**
-   * Get Public Resources with Filters and Pagination
-   * GET /resources
+   * Get Admin Resources with Filters and Pagination
+   * GET /admin/resources
    */
   getResources(
     params: ResourceFilterParams
@@ -62,12 +62,12 @@ export class ResourceService {
     if (!params.types && params.type) appendParam('type', params.type);
 
     if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
-    if (params.status) httpParams = httpParams.set('status', params.status);
+    appendParam('status', params.status);
     if (params.sort) httpParams = httpParams.set('sort', params.sort);
 
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/resources`,
+        `${this.apiUrl}/admin/resources`,
         {
           params: httpParams,
         }
@@ -119,11 +119,35 @@ export class ResourceService {
 
   /**
    * Delete Resource
-   * DELETE /resources/:id
+   * DELETE /resources/:id?hard={true/false}
    */
-  deleteResource(id: string): Observable<RestResponse<void>> {
+  deleteResource(
+    id: string,
+    hard: boolean = false
+  ): Observable<RestResponse<void>> {
+    let params = new HttpParams();
+    if (hard) params = params.set('hard', 'true');
     return this.http
-      .delete<RestResponse<void>>(`${this.apiUrl}/resources/${id}`)
+      .delete<RestResponse<void>>(`${this.apiUrl}/resources/${id}`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Bulk Delete Resources
+   * DELETE /resources/bulk?hard={true/false}
+   * Payload: Array of IDs
+   */
+  bulkDeleteResources(
+    ids: string[],
+    hard: boolean = false
+  ): Observable<RestResponse<void>> {
+    let params = new HttpParams();
+    if (hard) params = params.set('hard', 'true');
+    return this.http
+      .delete<RestResponse<void>>(`${this.apiUrl}/resources/bulk`, {
+        body: ids,
+        params,
+      })
       .pipe(catchError(this.handleError));
   }
 
@@ -148,6 +172,17 @@ export class ResourceService {
   }
 
   /**
+   * Download a resource file
+   * GET /resources/:id/file
+   */
+  downloadFile(id: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.apiUrl}/resources/${id}/file`, {
+      observe: 'response',
+      responseType: 'blob',
+    });
+  }
+
+  /**
    * Get Age Groups
    * GET /age-groups
    */
@@ -158,12 +193,14 @@ export class ResourceService {
   }
 
   /**
-   * Create Resource (Metadata)
-   * POST /resources/json
+   * Update Resource (Text/JSON only - no file replacement)
+   * PUT /resources/:id
+   * Content-Type: application/json
+   * Use this when only updating title, description, topicId, ageGroupIds, etc.
    */
-  createResource(data: any): Observable<RestResponse<Resource>> {
+  updateResource(id: string, data: any): Observable<RestResponse<Resource>> {
     return this.http
-      .post<RestResponse<Resource>>(`${this.apiUrl}/resources/json`, data)
+      .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, data)
       .pipe(
         map((res) => {
           if (res.result && !res.data) res.data = res.result;
@@ -174,13 +211,18 @@ export class ResourceService {
   }
 
   /**
-   * Update Resource
+   * Update Resource with File/Thumbnail Replacement
    * PUT /resources/:id
-   * Content-Type: Query Params
+   * Content-Type: multipart/form-data
+   * Use this when user needs to replace the content file or thumbnail.
+   * FormData fields: file?, thumbnail?, title, description, topicId, ageGroupIds[]
    */
-  updateResource(id: string, data: any): Observable<RestResponse<Resource>> {
+  updateResourceWithFormData(
+    id: string,
+    formData: FormData
+  ): Observable<RestResponse<Resource>> {
     return this.http
-      .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, data) // Send data as JSON body
+      .put<RestResponse<Resource>>(`${this.apiUrl}/resources/${id}`, formData)
       .pipe(
         map((res) => {
           if (res.result && !res.data) res.data = res.result;
@@ -202,23 +244,27 @@ export class ResourceService {
 
   /**
    * Approve Resource
-   * PUT /resources/:id/approve (Or Update Status)
+   * PATCH /admin/resources/:id/approve
    */
   approveResource(id: string): Observable<RestResponse<void>> {
-    // Based on spec, Admin calls Update with status=APPROVED
-    const params = new HttpParams().set('status', 'APPROVED');
     return this.http
-      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}`, {}, { params })
+      .patch<RestResponse<void>>(
+        `${this.apiUrl}/admin/resources/${id}/approve`,
+        {}
+      )
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Reject Resource
-   * PUT /resources/:id/reject
+   * PATCH /admin/resources/:id/reject
    */
-  rejectResource(id: string): Observable<RestResponse<void>> {
+  rejectResource(id: string, reason: string): Observable<RestResponse<void>> {
     return this.http
-      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/reject`, {})
+      .patch<RestResponse<void>>(
+        `${this.apiUrl}/admin/resources/${id}/reject`,
+        { reason }
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -240,13 +286,46 @@ export class ResourceService {
 
   private handleError(error: any) {
     console.error('ResourceService Error:', error);
-    return throwError(
-      () =>
-        new Error(
-          error.message ||
-            'Something went wrong while communicating with the server.'
-        )
-    );
+
+    let errorMsg = 'Đã xảy ra lỗi khi kết nối với máy chủ.';
+
+    // Extract API specific error code/message if available
+    if (error.error && error.error.code) {
+      const code = error.error.code;
+      switch (code) {
+        case 6001:
+          errorMsg = 'Không tìm thấy tài nguyên. Có thể đã bị xóa hoặc ẩn.';
+          break;
+        case 6004:
+          errorMsg = 'Bạn không có quyền thực hiện thao tác này.';
+          break;
+        case 6005:
+          errorMsg =
+            'Đường dẫn YouTube không hợp lệ hoặc video không khả dụng.';
+          break;
+        case 6006:
+          errorMsg =
+            'Định dạng ảnh thu nhỏ không hợp lệ (hỗ trợ JPG, PNG, WebP).';
+          break;
+        case 6007:
+          errorMsg =
+            'Kích thước ảnh thu nhỏ quá lớn. Vui lòng chọn ảnh nhỏ hơn.';
+          break;
+        case 9001:
+          errorMsg =
+            'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin cung cấp.';
+          break;
+        default:
+          if (error.error.message) {
+            errorMsg = error.error.message;
+          }
+          break;
+      }
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+
+    return throwError(() => new Error(errorMsg));
   }
   /**
    * Update Resource Thumbnail
@@ -269,12 +348,38 @@ export class ResourceService {
   }
 
   /**
+   * Change Resource Visibility
+   * PATCH /resources/:id/visibility
+   */
+  changeVisibility(
+    id: string,
+    visibility: 'PUBLIC' | 'PRIVATE'
+  ): Observable<RestResponse<void>> {
+    return this.http
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/${id}/visibility`, {
+        visibility,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Restore Resource
    * PUT /resources/:id/restore
    */
   restoreResource(id: string): Observable<RestResponse<void>> {
     return this.http
       .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Bulk Restore Resources
+   * PATCH /resources/bulk-restore
+   * Payload: Array of IDs
+   */
+  bulkRestoreResources(ids: string[]): Observable<RestResponse<void>> {
+    return this.http
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, ids)
       .pipe(catchError(this.handleError));
   }
 }
