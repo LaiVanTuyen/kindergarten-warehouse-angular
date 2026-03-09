@@ -60,6 +60,19 @@
                     [ngClass]="isFavorite ? 'ph-fill ph-heart text-red-500' : 'ph ph-heart text-gray-400 group-hover/heart:text-red-400'"></i>
             </button>
         </div>
+
+        <!-- Status Badge (For My Resources) -->
+        <div class="absolute top-3 right-3 flex flex-col gap-1 items-end z-10"
+            *ngIf="resource.status === 'PENDING' || resource.status === 'REJECTED'">
+            <span *ngIf="resource.status === 'PENDING'"
+                class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/90 backdrop-blur-sm shadow-sm rounded-md border border-amber-200">
+                <i class="ph-bold ph-hourglass-high mr-1"></i> Chờ duyệt
+            </span>
+            <span *ngIf="resource.status === 'REJECTED'"
+                class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-100/90 backdrop-blur-sm shadow-sm rounded-md border border-rose-200">
+                <i class="ph-bold ph-warning-circle mr-1"></i> Bị từ chối
+            </span>
+        </div>
     </div>
 
     <!-- Content -->

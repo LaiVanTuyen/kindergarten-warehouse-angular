@@ -63,13 +63,81 @@ export class AuditLogsComponent implements OnInit {
 
   actionFilter = signal<Set<string>>(new Set());
   activeFilterDropdown = signal<string | null>(null);
+  showFilters = signal(false);
 
   actionOptions = [
-    { label: 'Login', value: 'LOGIN' },
-    { label: 'Create', value: 'CREATE' },
-    { label: 'Update', value: 'UPDATE' },
-    { label: 'Delete', value: 'DELETE' },
-    { label: 'Restore', value: 'RESTORE' },
+    {
+      label: 'Đăng nhập',
+      value: 'LOGIN',
+      colorClass: 'text-purple-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
+    },
+    {
+      label: 'Tạo mới',
+      value: 'CREATE',
+      colorClass: 'text-emerald-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+    },
+    {
+      label: 'Cập nhật',
+      value: 'UPDATE',
+      colorClass: 'text-blue-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    },
+    {
+      label: 'Xóa',
+      value: 'DELETE',
+      colorClass: 'text-rose-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    },
+    {
+      label: 'Khôi phục',
+      value: 'RESTORE',
+      colorClass: 'text-emerald-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
+    },
+    {
+      label: 'Phê duyệt',
+      value: 'APPROVE',
+      colorClass: 'text-emerald-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    },
+    {
+      label: 'Từ chối',
+      value: 'REJECT',
+      colorClass: 'text-rose-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    },
+    {
+      label: 'Di chuyển',
+      value: 'MOVE',
+      colorClass: 'text-amber-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="19 9 22 12 19 15"/><polyline points="9 19 12 22 15 19"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>',
+    },
+    {
+      label: 'Phê duyệt hl',
+      value: 'APPROVE_BULK',
+      colorClass: 'text-emerald-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/><polyline points="16 4 6 14.01 3 11.01"/></svg>',
+    },
+    {
+      label: 'Từ chối hl',
+      value: 'REJECT_BULK',
+      colorClass: 'text-rose-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="15" x2="9" y2="9"/></svg>',
+    },
+    {
+      label: 'Xóa hàng loạt',
+      value: 'DELETE_BULK',
+      colorClass: 'text-rose-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>',
+    },
+    {
+      label: 'Khôi phục hl',
+      value: 'RESTORE_BULK',
+      colorClass: 'text-emerald-600',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12h18"/></svg>',
+    },
   ];
 
   // Modal State
@@ -124,7 +192,7 @@ export class AuditLogsComponent implements OnInit {
   }
 
   updateUrl() {
-    const queryParams: any = {
+    const queryParams: Record<string, string | number | null> = {
       page: this.currentPage(),
       size: this.pageSize(),
       sortDir: this.sortDir(),
@@ -246,16 +314,34 @@ export class AuditLogsComponent implements OnInit {
       case 'LOGIN':
         return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'CREATE':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'UPDATE':
         return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'DELETE':
-        return 'bg-red-100 text-red-700 border-red-200';
-      case 'RESTORE':
+      case 'APPROVE':
+      case 'APPROVE_BULK':
         return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'REJECT':
+      case 'REJECT_BULK':
+        return 'bg-rose-100 text-rose-700 border-rose-200';
+      case 'DELETE':
+      case 'DELETE_BULK':
+        return 'bg-rose-100 text-rose-700 border-rose-200';
+      case 'RESTORE':
+      case 'RESTORE_BULK':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'MOVE':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
+  }
+
+  formatActionText(action: string): string {
+    if (!action) return '';
+    return action
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
   }
 
   formatUserAgent(ua?: string): string {

@@ -78,7 +78,7 @@ export interface UpdateResourceRequest {
   description?: string;
   topicId?: string;
   ageGroupIds?: string | string[]; // List<Long> but sent as query params usually string or multi-value
-  status?: 'APPROVED' | 'REJECTED' | 'HIDDEN';
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
   file?: File; // If re-uploading (not in update spec but good to keep if needed)
   youtubeLink?: string;
   fileType?: string;

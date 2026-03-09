@@ -6,11 +6,12 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-multi-select-filter',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SafeHtmlPipe],
   template: `
     <div class="relative group">
       <button
@@ -52,43 +53,68 @@ import { CommonModule } from '@angular/common';
         </span>
       </button>
 
-      <!-- Dropdown -->
       <div
         *ngIf="isOpen"
-        class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0"
+        class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 left-0"
       >
+        <!-- Quick Actions Header -->
         <div
-          *ngFor="let option of options"
-          class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
-          (click)="onOptionClick(option.value)"
-          (keydown.enter)="onOptionClick(option.value)"
-          tabindex="0"
+          class="sticky top-0 bg-slate-50 border-b border-slate-100 px-3 py-2 flex items-center justify-between z-10"
         >
-          <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-            <input
-              type="checkbox"
-              [checked]="selectedValues.has(option.value)"
-              class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
-              tabindex="-1"
-            />
-            <svg
-              class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="4"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          </div>
-          <span
-            class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900"
+          <button
+            (click)="onSelectAll($event)"
+            class="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
           >
-            {{ option.label }}
-          </span>
+            Select All
+          </button>
+          <button
+            (click)="onClear($event)"
+            class="text-xs font-semibold text-slate-500 hover:text-red-600 hover:underline"
+          >
+            Clear
+          </button>
+        </div>
+
+        <div class="p-1.5 space-y-0.5">
+          <div
+            *ngFor="let option of options"
+            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+            (click)="onOptionClick(option.value)"
+            (keydown.enter)="onOptionClick(option.value)"
+            tabindex="0"
+          >
+            <div class="relative flex items-center justify-center w-5 h-5 mr-3">
+              <input
+                type="checkbox"
+                [checked]="selectedValues.has(option.value)"
+                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                tabindex="-1"
+              />
+              <svg
+                class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span
+              class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900 flex items-center gap-2.5"
+            >
+              <span
+                *ngIf="option.icon"
+                [innerHTML]="option.icon | safeHtml"
+                [class]="option.colorClass || 'text-slate-500'"
+                class="flex items-center justify-center w-4 h-4 mt-px"
+              ></span>
+              {{ option.label }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -97,7 +123,12 @@ import { CommonModule } from '@angular/common';
 })
 export class MultiSelectFilterComponent<T> {
   @Input() label = '';
-  @Input() options: { label: string; value: T }[] = [];
+  @Input() options: {
+    label: string;
+    value: T;
+    icon?: string;
+    colorClass?: string;
+  }[] = [];
   @Input() selectedValues = new Set<T>();
   @Input() isOpen = false;
 
@@ -112,5 +143,16 @@ export class MultiSelectFilterComponent<T> {
       newSet.add(value);
     }
     this.selectionChange.emit(newSet);
+  }
+
+  onSelectAll(event: MouseEvent) {
+    event.stopPropagation();
+    const allValues = this.options.map((opt) => opt.value);
+    this.selectionChange.emit(new Set(allValues));
+  }
+
+  onClear(event: MouseEvent) {
+    event.stopPropagation();
+    this.selectionChange.emit(new Set());
   }
 }

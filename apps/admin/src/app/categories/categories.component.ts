@@ -112,6 +112,7 @@ export class CategoriesComponent {
   // Filter State
   statusFilter = signal<Set<string>>(new Set());
   activeFilterDropdown = signal<string | null>(null);
+  showFilters = signal<boolean>(false);
 
   statusOptions = [
     { label: 'Active', value: 'ACTIVE' },
@@ -264,6 +265,14 @@ export class CategoriesComponent {
   }
 
   clearStatusFilter() {
+    this.statusFilter.set(new Set());
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadData();
+  }
+
+  resetFilters() {
+    this.searchControl.reset('', { emitEvent: false });
     this.statusFilter.set(new Set());
     this.currentPageCategories.set(1);
     this.updateUrl();

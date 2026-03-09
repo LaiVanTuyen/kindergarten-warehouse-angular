@@ -269,6 +269,52 @@ export class ResourceService {
   }
 
   /**
+   * Bulk Approve Resources
+   * PATCH /admin/resources/bulk-approve
+   */
+  bulkApproveResources(
+    ids: string[]
+  ): Observable<
+    RestResponse<{ successCount: number; failedIds: string[]; message: string }>
+  > {
+    return this.http
+      .patch<
+        RestResponse<{
+          successCount: number;
+          failedIds: string[];
+          message: string;
+        }>
+      >(`${this.apiUrl}/admin/resources/bulk-approve`, {
+        resourceIds: ids,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Bulk Reject Resources
+   * PATCH /admin/resources/bulk-reject
+   */
+  bulkRejectResources(
+    ids: string[],
+    reason: string
+  ): Observable<
+    RestResponse<{ successCount: number; failedIds: string[]; message: string }>
+  > {
+    return this.http
+      .patch<
+        RestResponse<{
+          successCount: number;
+          failedIds: string[];
+          message: string;
+        }>
+      >(`${this.apiUrl}/admin/resources/bulk-reject`, {
+        resourceIds: ids,
+        reason,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Move Resources
    * PUT /resources/move
    */

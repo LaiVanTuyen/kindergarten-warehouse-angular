@@ -320,6 +320,31 @@
                         </div>
                     </div>
 
+                    <div class="group" *ngIf="isEditMode()">
+                        <label for="resourceStatus"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">
+                            Trạng thái (Admin)
+                        </label>
+                        <div class="relative">
+                            <select id="resourceStatus" formControlName="status"
+                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+                                <option value="PENDING">⏳ Chờ duyệt (Pending)</option>
+                                <option value="APPROVED">✅ Đã duyệt (Approved)</option>
+                                <option value="REJECTED">🚫 Từ chối (Rejected)</option>
+                                <option value="HIDDEN">👁️ Đã ẩn (Hidden)</option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="group" *ngIf="isEditMode() && uploadMode() !== 'YOUTUBE'">
                         <label for="resourceType"
                             class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Định

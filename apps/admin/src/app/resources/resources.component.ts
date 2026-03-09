@@ -1,5 +1,17 @@
-import { Component, inject, signal, DestroyRef, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  WritableSignal,
+  DestroyRef,
+  OnInit,
+} from '@angular/core';
+import {
+  takeUntilDestroyed,
+  toSignal,
+  toObservable,
+} from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { CommonModule, NgIf } from '@angular/common';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
@@ -21,11 +33,9 @@ import {
   finalize,
   switchMap,
   tap,
-  concatMap,
-  toArray,
 } from 'rxjs/operators';
 
-import { merge, Subject, from } from 'rxjs';
+import { Subject } from 'rxjs';
 import {
   ResourceService,
   CategoryService,
@@ -39,6 +49,7 @@ import {
 import { ToastService } from '@kindergarten-warehouse/data-access';
 
 import { ResourcesFormComponent } from './resources-form/resources-form.component';
+import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
 
 @Component({
   selector: 'app-admin-resources',
@@ -53,6 +64,7 @@ import { ResourcesFormComponent } from './resources-form/resources-form.componen
     BreadcrumbComponent,
     EmptyStateComponent,
     ResourcesFormComponent,
+    MultiSelectFilterComponent,
   ],
   templateUrl: './resources.component.html',
   styles: [
@@ -95,12 +107,72 @@ export class ResourcesComponent implements OnInit {
   selectedIds = signal<Set<string>>(new Set());
 
   // Search & Filter Controls
-  // Search & Filter Controls
   searchControl = new FormControl('');
-  typeFilter = new FormControl<string[]>([], { nonNullable: true });
-  categoryFilter = new FormControl<string[]>([], { nonNullable: true });
-  topicFilter = new FormControl<string[]>([], { nonNullable: true });
-  ageGroupFilter = new FormControl<string[]>([], { nonNullable: true });
+  typeFilter = signal<Set<string>>(new Set());
+  categoryFilter = signal<Set<string>>(new Set());
+  topicFilter = signal<Set<string>>(new Set());
+  ageGroupFilter = signal<Set<string>>(new Set());
+
+  // Filter Options for MultiSelectFilterComponent
+  categoryOptions = computed(() =>
+    this.categories().map((c) => ({ label: c.name, value: c.slug }))
+  );
+  topicOptions = computed(() =>
+    this.filteredTopics().map((t) => ({ label: t.name, value: t.slug }))
+  );
+  ageGroupOptions = computed(() =>
+    this.ageGroups().map((ag) => ({ label: ag.name, value: ag.slug }))
+  );
+  typeOptions = [
+    { label: 'Video', value: 'VIDEO' },
+    { label: 'Hình ảnh', value: 'IMAGE' },
+    { label: 'Tài liệu / Văn bản', value: 'DOCUMENT' },
+    { label: 'PDF', value: 'PDF' },
+    { label: 'Excel', value: 'EXCEL' },
+    { label: 'PowerPoint', value: 'POWERPOINT' },
+  ];
+
+  // Signals from FormControls - These are no longer needed as filters are signals directly
+  // categoryFilterSignal = toSignal(this.categoryFilter.valueChanges, {
+  //   initialValue: this.categoryFilter.value,
+  // });
+  // topicFilterSignal = toSignal(this.topicFilter.valueChanges, {
+  //   initialValue: this.topicFilter.value,
+  // });
+  // ageGroupFilterSignal = toSignal(this.ageGroupFilter.valueChanges, {
+  //   initialValue: this.ageGroupFilter.value,
+  // });
+  // typeFilterSignal = toSignal(this.typeFilter.valueChanges, {
+  //   initialValue: this.typeFilter.value,
+  // });
+
+  // Computed Sets for MultiSelectFilterComponent - These are now the filter signals themselves
+  categoryFilterSet = computed(() => this.categoryFilter());
+  topicFilterSet = computed(() => this.topicFilter());
+  ageGroupFilterSet = computed(() => this.ageGroupFilter());
+  typeFilterSet = computed(() => this.typeFilter());
+
+  getFilterSet(key: 'category' | 'topic' | 'age' | 'type'): Set<string> {
+    switch (key) {
+      case 'category':
+        return this.categoryFilter();
+      case 'topic':
+        return this.topicFilter();
+      case 'age':
+        return this.ageGroupFilter();
+      case 'type':
+        return this.typeFilter();
+      default:
+        return new Set();
+    }
+  }
+
+  onFilterChange(
+    targetSignal: ReturnType<typeof signal<Set<string>>>,
+    newSet: Set<string>
+  ) {
+    targetSignal.set(newSet);
+  }
 
   // UI State for Filters
   showFilters = signal<boolean>(false);
@@ -116,22 +188,28 @@ export class ResourcesComponent implements OnInit {
     this.activeFilterDropdown.set(null);
   }
 
-  isSelected(control: FormControl<string[]>, value: string): boolean {
-    return control.value.includes(value);
+  isSelected(control: WritableSignal<Set<string>>, value: string): boolean {
+    return control().has(value);
   }
 
-  toggleFilter(control: FormControl<string[]>, value: string) {
-    const current = control.value;
-    if (current.includes(value)) {
-      control.setValue(current.filter((v) => v !== value));
-    } else {
-      control.setValue([...current, value]);
-    }
+  toggleFilter(control: WritableSignal<Set<string>>, value: string) {
+    control.update((current) => {
+      const newSet = new Set(current);
+      if (newSet.has(value)) {
+        newSet.delete(value);
+      } else {
+        newSet.add(value);
+      }
+      return newSet;
+    });
   }
 
-  removeFilter(control: FormControl<string[]>, value: string) {
-    const current = control.value;
-    control.setValue(current.filter((v) => v !== value));
+  removeFilter(control: WritableSignal<Set<string>>, value: string) {
+    control.update((current) => {
+      const newSet = new Set(current);
+      newSet.delete(value);
+      return newSet;
+    });
   }
 
   // Forms
@@ -190,7 +268,7 @@ export class ResourcesComponent implements OnInit {
   isUploadModalOpen = signal(false);
   isMoveModalOpen = signal(false);
   isRejectModalOpen = signal(false);
-  resourceToRejectId = signal<string | null>(null);
+  resourceToRejectIds = signal<string[]>([]);
   rejectReasonControl = new FormControl('', [
     Validators.required,
     Validators.maxLength(1000),
@@ -378,12 +456,10 @@ export class ResourcesComponent implements OnInit {
 
     // Patch values without emitting events (we load data manually after)
     this.searchControl.setValue(params['keyword'] || '', { emitEvent: false });
-    this.typeFilter.setValue(getArray('types'), { emitEvent: false });
-    this.categoryFilter.setValue(getArray('categorySlugs'), {
-      emitEvent: false,
-    });
-    this.topicFilter.setValue(getArray('topicSlugs'), { emitEvent: false });
-    this.ageGroupFilter.setValue(getArray('ageSlugs'), { emitEvent: false });
+    this.typeFilter.set(new Set(getArray('types')));
+    this.categoryFilter.set(new Set(getArray('categorySlugs')));
+    this.topicFilter.set(new Set(getArray('topicSlugs')));
+    this.ageGroupFilter.set(new Set(getArray('ageSlugs')));
 
     // Set Active Tab if present
     if (params['status'] === 'DELETED') {
@@ -401,14 +477,14 @@ export class ResourcesComponent implements OnInit {
     const params: Params = {};
 
     if (this.searchControl.value) params['keyword'] = this.searchControl.value;
-    if (this.typeFilter.value.length)
-      params['types'] = this.typeFilter.value.join(',');
-    if (this.categoryFilter.value.length)
-      params['categorySlugs'] = this.categoryFilter.value.join(',');
-    if (this.topicFilter.value.length)
-      params['topicSlugs'] = this.topicFilter.value.join(',');
-    if (this.ageGroupFilter.value.length)
-      params['ageSlugs'] = this.ageGroupFilter.value.join(',');
+    if (this.typeFilter().size > 0)
+      params['types'] = Array.from(this.typeFilter()).join(',');
+    if (this.categoryFilter().size > 0)
+      params['categorySlugs'] = Array.from(this.categoryFilter()).join(',');
+    if (this.topicFilter().size > 0)
+      params['topicSlugs'] = Array.from(this.topicFilter()).join(',');
+    if (this.ageGroupFilter().size > 0)
+      params['ageSlugs'] = Array.from(this.ageGroupFilter()).join(',');
 
     if (this.activeTab() === 'trash') {
       params['status'] = 'DELETED';
@@ -427,42 +503,52 @@ export class ResourcesComponent implements OnInit {
   }
 
   setupFilterWatchers() {
-    this.categoryFilter.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((slugs) => {
-        this.topicFilter.setValue([], { emitEvent: false });
-        if (slugs && slugs.length > 0) {
-          // Map slugs to IDs for filtering topics
-          const selectedCatIds = this.categories()
-            .filter((c) => slugs.includes(c.slug))
-            .map((c) => c.id);
+    import('rxjs').then(({ combineLatest }) => {
+      // Create observables from signals
+      const search$ = toObservable(
+        toSignal(this.searchControl.valueChanges, {
+          initialValue: this.searchControl.value,
+        })
+      ).pipe(debounceTime(300), distinctUntilChanged()); // Apply debounce/distinct here
+      const category$ = toObservable(this.categoryFilter);
+      const topic$ = toObservable(this.topicFilter);
+      const ageGroup$ = toObservable(this.ageGroupFilter);
+      const type$ = toObservable(this.typeFilter);
 
-          this.filteredTopics.set(
-            this.allTopics().filter((t) =>
-              selectedCatIds.includes(t.categoryId)
-            )
-          );
-        } else {
-          this.filteredTopics.set(this.allTopics());
-        }
-      });
+      // Handle category -> topic dependency
+      category$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((slugsSet) => {
+          this.topicFilter.set(new Set()); // Reset topic when category changes
+          const slugs = Array.from(slugsSet);
+          if (slugs && slugs.length > 0) {
+            // Map slugs to IDs for filtering topics
+            const selectedCatIds = this.categories()
+              .filter((c) => slugs.includes(c.slug))
+              .map((c) => c.id);
 
-    merge(
-      this.searchControl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      ),
-      this.typeFilter.valueChanges,
-      this.categoryFilter.valueChanges,
-      this.topicFilter.valueChanges,
-      this.ageGroupFilter.valueChanges
-    )
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.currentPage.set(1);
-        this.updateUrl();
-        this.triggerLoad$.next();
-      });
+            this.filteredTopics.set(
+              this.allTopics().filter((t) =>
+                selectedCatIds.includes(t.categoryId)
+              )
+            );
+          } else {
+            this.filteredTopics.set(this.allTopics());
+          }
+        });
+
+      // Handle global filter changes
+      combineLatest([search$, type$, category$, topic$, ageGroup$])
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          debounceTime(50) // small debounce to batch signal updates
+        )
+        .subscribe(() => {
+          this.currentPage.set(1);
+          this.updateUrl();
+          this.triggerLoad$.next();
+        });
+    });
 
     this.triggerLoad$
       .pipe(
@@ -484,18 +570,22 @@ export class ResourcesComponent implements OnInit {
             size: this.pageSize(),
             keyword: this.searchControl.value || undefined,
             status: status,
-            types: this.typeFilter.value.length
-              ? this.typeFilter.value
-              : undefined,
-            topicSlugs: this.topicFilter.value.length
-              ? this.topicFilter.value
-              : undefined,
-            categorySlugs: this.categoryFilter.value.length
-              ? this.categoryFilter.value
-              : undefined,
-            ageSlugs: this.ageGroupFilter.value.length
-              ? this.ageGroupFilter.value
-              : undefined,
+            types:
+              this.typeFilter().size > 0
+                ? Array.from(this.typeFilter())
+                : undefined,
+            topicSlugs:
+              this.topicFilter().size > 0
+                ? Array.from(this.topicFilter())
+                : undefined,
+            categorySlugs:
+              this.categoryFilter().size > 0
+                ? Array.from(this.categoryFilter())
+                : undefined,
+            ageSlugs:
+              this.ageGroupFilter().size > 0
+                ? Array.from(this.ageGroupFilter())
+                : undefined,
           });
         }),
         takeUntilDestroyed(this.destroyRef)
@@ -558,10 +648,10 @@ export class ResourcesComponent implements OnInit {
     // Reset Page & Filters on Tab Change
     this.currentPage.set(1);
     this.searchControl.setValue('', { emitEvent: false });
-    this.categoryFilter.setValue([], { emitEvent: false });
-    this.topicFilter.setValue([], { emitEvent: false });
-    this.ageGroupFilter.setValue([], { emitEvent: false });
-    this.typeFilter.setValue([], { emitEvent: false });
+    this.categoryFilter.set(new Set());
+    this.topicFilter.set(new Set());
+    this.ageGroupFilter.set(new Set());
+    this.typeFilter.set(new Set());
 
     // Force URL Update (Clear old params)
     this.updateUrl();
@@ -633,11 +723,11 @@ export class ResourcesComponent implements OnInit {
   }
 
   resetFilters() {
-    this.searchControl.setValue('', { emitEvent: false });
-    this.categoryFilter.setValue([], { emitEvent: false });
-    this.topicFilter.setValue([], { emitEvent: false });
-    this.typeFilter.setValue([], { emitEvent: false });
-    this.ageGroupFilter.setValue([], { emitEvent: false });
+    this.searchControl.setValue('');
+    this.categoryFilter.set(new Set());
+    this.topicFilter.set(new Set());
+    this.typeFilter.set(new Set());
+    this.ageGroupFilter.set(new Set());
 
     this.filteredTopics.set(this.topics());
     this.currentPage.set(1);
@@ -710,14 +800,14 @@ export class ResourcesComponent implements OnInit {
   }
 
   rejectResource(id: string) {
-    this.resourceToRejectId.set(id);
+    this.resourceToRejectIds.set([id]);
     this.rejectReasonControl.reset();
     this.isRejectModalOpen.set(true);
   }
 
   closeRejectModal() {
     this.isRejectModalOpen.set(false);
-    this.resourceToRejectId.set(null);
+    this.resourceToRejectIds.set([]);
   }
 
   executeReject() {
@@ -725,13 +815,14 @@ export class ResourcesComponent implements OnInit {
       this.rejectReasonControl.markAsTouched();
       return;
     }
-    const id = this.resourceToRejectId();
-    if (!id) return;
+    const ids = this.resourceToRejectIds();
+    if (ids.length === 0) return;
 
     const reason = this.rejectReasonControl.value || '';
     this.isTableLoading.set(true);
+
     this.resourceService
-      .rejectResource(id, reason)
+      .bulkRejectResources(ids, reason)
       .pipe(
         finalize(() => {
           this.isTableLoading.set(false);
@@ -739,9 +830,28 @@ export class ResourcesComponent implements OnInit {
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((res) => {
-        this.toastService.showResponse(res);
-        this.loadData();
+      .subscribe({
+        next: (res) => {
+          this.toastService.showResponse(res);
+          const failedIds = res.data?.failedIds || [];
+          if (failedIds.length > 0) {
+            this.selectedIds.set(new Set(failedIds));
+            this.toastService.show(
+              `Có ${failedIds.length} tài liệu bị lỗi khi từ chối.`,
+              'error'
+            );
+          } else {
+            this.selectedIds.set(new Set());
+          }
+          this.loadData();
+        },
+        error: (err: Error) => {
+          this.toastService.show(
+            'Lỗi khi từ chối tài nguyên: ' + err.message,
+            'error'
+          );
+          this.loadData();
+        },
       });
   }
 
@@ -777,28 +887,45 @@ export class ResourcesComponent implements OnInit {
     );
   }
 
+  rejectSelected() {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+
+    this.resourceToRejectIds.set(ids);
+    this.rejectReasonControl.reset();
+    this.isRejectModalOpen.set(true);
+  }
+
   executeBulkApprove() {
     const ids = Array.from(this.selectedIds());
     if (ids.length === 0) return;
 
     this.isTableLoading.set(true);
 
-    // Call API sequentially using concatMap instead of forkJoin to prevent DDoS-ing the backend
-    from(ids)
+    this.resourceService
+      .bulkApproveResources(ids)
       .pipe(
-        concatMap((id) => this.resourceService.approveResource(id)),
-        toArray(),
-        finalize(() => this.isTableLoading.set(false))
+        finalize(() => this.isTableLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: () => {
-          this.toastService.show('Phê duyệt tài nguyên thành công', 'success');
-          this.selectedIds.set(new Set());
+        next: (res) => {
+          this.toastService.showResponse(res);
+          const failedIds = res.data?.failedIds || [];
+          if (failedIds.length > 0) {
+            this.selectedIds.set(new Set(failedIds));
+            this.toastService.show(
+              `Có ${failedIds.length} tài liệu bị lỗi khi phê duyệt.`,
+              'error'
+            );
+          } else {
+            this.selectedIds.set(new Set());
+          }
           this.loadData();
         },
         error: (err: Error) => {
           this.toastService.show(
-            'Một số tài nguyên không thể phê duyệt: ' + err.message,
+            'Lỗi khi phê duyệt tài nguyên: ' + err.message,
             'error'
           );
           this.loadData();

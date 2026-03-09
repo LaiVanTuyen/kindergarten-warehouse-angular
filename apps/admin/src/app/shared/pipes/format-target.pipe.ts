@@ -21,6 +21,8 @@ export class FormatTargetPipe implements PipeTransform {
       RESOURCE: 'Tài liệu',
       RESOURCE_CREATE: 'Tạo tài liệu',
       RESOURCE_UPDATE: 'Cập nhật tài liệu',
+      RESOURCE_STATUS: 'Trạng thái tài liệu',
+      RESOURCE_VISIBILITY: 'Hiển thị tài liệu',
 
       // Category
       CATEGORY: 'Danh mục',

@@ -37,6 +37,34 @@
         </ol>
       </nav>
 
+      <!-- Rejection Warning Alert -->
+      <div *ngIf="resource.status === 'REJECTED'"
+        class="mb-8 p-6 bg-rose-50 rounded-2xl border-l-4 border-rose-500 shadow-sm flex items-start gap-4">
+        <div class="p-3 bg-rose-100 text-rose-600 rounded-full flex-shrink-0 mt-1">
+          <i class="ph-fill ph-warning-circle text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-rose-800 text-lg mb-1">Tài liệu đã bị từ chối phê duyệt</h3>
+          <p class="text-rose-700 font-medium mb-3">
+            <strong>Lý do:</strong> {{ resource.rejectionReason || 'Không có lý do cụ thể.' }}
+          </p>
+          <p class="text-sm text-rose-600 opacity-90 flex items-center gap-1.5">
+            <i class="ph-bold ph-info"></i>
+            Vui lòng nhấn nút <span
+              class="font-bold border border-rose-200 bg-white px-1.5 py-0.5 rounded text-xs mx-1">Chỉnh sửa</span> (nếu
+            có) để cập nhật lại file hoặc nội dung.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pending Info Alert -->
+      <div *ngIf="resource.status === 'PENDING'"
+        class="mb-8 p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400 shadow-sm flex items-center gap-3">
+        <i class="ph-fill ph-hourglass-high text-amber-500 text-2xl"></i>
+        <p class="text-amber-800 font-medium">Tài liệu của bạn đang trong trạng thái chờ Ban Quản Trị phê duyệt. Sẽ
+          không hiển thị công khai cho đến khi được duyệt.</p>
+      </div>
+
       <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2">
           <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">

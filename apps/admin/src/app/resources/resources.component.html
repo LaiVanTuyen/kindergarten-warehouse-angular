@@ -75,11 +75,10 @@
             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
         </svg>
         Bộ lọc
-        <span
-          *ngIf="(categoryFilter.value.length + topicFilter.value.length + ageGroupFilter.value.length + typeFilter.value.length) > 0"
+        <span *ngIf="(categoryFilter().size + topicFilter().size + ageGroupFilter().size + typeFilter().size) > 0"
           class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1 min-w-[18px] text-center">
-          {{ categoryFilter.value.length + topicFilter.value.length + ageGroupFilter.value.length +
-          typeFilter.value.length }}
+          {{ categoryFilter().size + topicFilter().size + ageGroupFilter().size +
+          typeFilter().size }}
         </span>
       </button>
 
@@ -100,7 +99,7 @@
     (click)="closeFilterDropdown()"></div>
 
   <!-- Filters Section -->
-  <div class="flex flex-col gap-4 mb-6">
+  <div class="flex flex-col gap-4 mb-6 relative z-30">
 
     <!-- Top Row: Filters & Page Size -->
     <div class="flex flex-wrap items-center gap-3 mb-6" *ngIf="showFilters()">
@@ -121,167 +120,35 @@
       </div>
 
       <!-- Category Filter (Multi-select) -->
-      <div class="relative group">
-        <button type="button" (click)="toggleFilterDropdown('category')"
-          class="min-w-[180px] pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
-          [class.ring-2]="activeFilterDropdown() === 'category'"
-          [class.border-blue-500]="activeFilterDropdown() === 'category'">
-          <span class="truncate block text-slate-700" *ngIf="categoryFilter.value.length === 0">Danh mục</span>
-          <span class="truncate block text-slate-900 font-bold" *ngIf="categoryFilter.value.length > 0">
-            Danh mục: {{ categoryFilter.value.length }}
-          </span>
-          <span class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </button>
-        <!-- Dropdown -->
-        <div *ngIf="activeFilterDropdown() === 'category'"
-          class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <button type="button" *ngFor="let cat of categories()"
-            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
-            (click)="toggleFilter(categoryFilter, cat.slug)">
-            <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(categoryFilter, cat.slug)" tabindex="-1"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
-              <svg
-                class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <span
-              class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
-              cat.name }}</span>
-          </button>
-        </div>
+      <div class="relative group z-40">
+        <app-multi-select-filter label="Danh mục" [options]="categoryOptions()"
+          [selectedValues]="getFilterSet('category')" [isOpen]="activeFilterDropdown() === 'category'"
+          (toggleOpen)="toggleFilterDropdown('category')" (selectionChange)="onFilterChange(categoryFilter, $event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Topic Filter (Multi-select) -->
-      <div class="relative group">
-        <button type="button" (click)="toggleFilterDropdown('topic')"
-          class="min-w-[180px] pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
-          [class.ring-2]="activeFilterDropdown() === 'topic'"
-          [class.border-blue-500]="activeFilterDropdown() === 'topic'">
-          <span class="truncate block text-slate-700" *ngIf="topicFilter.value.length === 0">Chủ đề</span>
-          <span class="truncate block text-slate-900 font-bold" *ngIf="topicFilter.value.length > 0">
-            Chủ đề: {{ topicFilter.value.length }}
-          </span>
-          <span class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </button>
-        <!-- Dropdown -->
-        <div *ngIf="activeFilterDropdown() === 'topic'"
-          class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <div *ngIf="filteredTopics().length === 0" class="px-3 py-3 text-sm text-slate-400 text-center italic">
-            Không có chủ đề phù hợp
-          </div>
-          <button type="button" *ngFor="let topic of filteredTopics()"
-            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
-            (click)="toggleFilter(topicFilter, topic.slug)">
-            <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(topicFilter, topic.slug)" tabindex="-1"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
-              <svg
-                class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <span
-              class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
-              topic.name }}</span>
-          </button>
-        </div>
+      <div class="relative group z-30">
+        <app-multi-select-filter label="Chủ đề" [options]="topicOptions()" [selectedValues]="getFilterSet('topic')"
+          [isOpen]="activeFilterDropdown() === 'topic'" (toggleOpen)="toggleFilterDropdown('topic')"
+          (selectionChange)="onFilterChange(topicFilter, $event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Age Group Filter (Multi-select) -->
-      <div class="relative group">
-        <button type="button" (click)="toggleFilterDropdown('age')"
-          class="min-w-[180px] pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
-          [class.ring-2]="activeFilterDropdown() === 'age'" [class.border-blue-500]="activeFilterDropdown() === 'age'">
-          <span class="truncate block text-slate-700" *ngIf="ageGroupFilter.value.length === 0">Độ tuổi</span>
-          <span class="truncate block text-slate-900 font-bold" *ngIf="ageGroupFilter.value.length > 0">
-            Độ tuổi: {{ ageGroupFilter.value.length }}
-          </span>
-          <span class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </button>
-        <!-- Dropdown -->
-        <div *ngIf="activeFilterDropdown() === 'age'"
-          class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <button type="button" *ngFor="let ag of ageGroups()"
-            class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
-            (click)="toggleFilter(ageGroupFilter, ag.slug)">
-            <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-              <input type="checkbox" [checked]="isSelected(ageGroupFilter, ag.slug)" tabindex="-1"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
-              <svg
-                class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <span
-              class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
-              ag.name }}</span>
-          </button>
-        </div>
+      <div class="relative group z-20">
+        <app-multi-select-filter label="Độ tuổi" [options]="ageGroupOptions()" [selectedValues]="getFilterSet('age')"
+          [isOpen]="activeFilterDropdown() === 'age'" (toggleOpen)="toggleFilterDropdown('age')"
+          (selectionChange)="onFilterChange(ageGroupFilter, $event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Type Filter (Multi-select) -->
-      <div class="relative group">
-        <button type="button" (click)="toggleFilterDropdown('type')"
-          class="min-w-[180px] pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
-          [class.ring-2]="activeFilterDropdown() === 'type'"
-          [class.border-blue-500]="activeFilterDropdown() === 'type'">
-          <span class="truncate block text-slate-700" *ngIf="typeFilter.value.length === 0">Loại tệp</span>
-          <span class="truncate block text-slate-900 font-bold" *ngIf="typeFilter.value.length > 0">
-            Loại tệp: {{ typeFilter.value.length }}
-          </span>
-          <span class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </button>
-        <!-- Dropdown -->
-        <div *ngIf="activeFilterDropdown() === 'type'"
-          class="absolute z-50 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-100 left-0">
-          <ng-container *ngFor="let type of ['VIDEO', 'DOCUMENT', 'PDF', 'EXCEL', 'POWERPOINT', 'IMAGE', 'OTHER']">
-            <button type="button"
-              class="w-full text-left flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
-              (click)="toggleFilter(typeFilter, type)">
-              <div class="relative flex items-center justify-center w-5 h-5 mr-3">
-                <input type="checkbox" [checked]="isSelected(typeFilter, type)" tabindex="-1"
-                  class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer pointer-events-none">
-                <svg
-                  class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span
-                class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900">{{
-                getTypeLabel(type) }}</span>
-            </button>
-          </ng-container>
-        </div>
+      <div class="relative group z-10">
+        <app-multi-select-filter label="Loại tệp" [options]="typeOptions" [selectedValues]="getFilterSet('type')"
+          [isOpen]="activeFilterDropdown() === 'type'" (toggleOpen)="toggleFilterDropdown('type')"
+          (selectionChange)="onFilterChange(typeFilter, $event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Reset Filters Button -->
@@ -298,10 +165,10 @@
 
     <!-- Active Filters Chips (Tags) -->
     <div class="flex flex-wrap items-center gap-2"
-      *ngIf="categoryFilter.value.length || topicFilter.value.length || ageGroupFilter.value.length || typeFilter.value.length">
+      *ngIf="categoryFilter().size || topicFilter().size || ageGroupFilter().size || typeFilter().size">
 
       <!-- Categories -->
-      <ng-container *ngFor="let slug of categoryFilter.value">
+      <ng-container *ngFor="let slug of categoryFilter()">
         <div
           class="inline-flex items-center h-8 px-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95">
           <span class="opacity-70 mr-1.5">Danh mục:</span>
@@ -318,7 +185,7 @@
       </ng-container>
 
       <!-- Topics -->
-      <ng-container *ngFor="let slug of topicFilter.value">
+      <ng-container *ngFor="let slug of topicFilter()">
         <div
           class="inline-flex items-center h-8 px-3 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-xs font-semibold animate-in fade-in zoom-in-95">
           <span class="opacity-70 mr-1.5">Chủ đề:</span>
@@ -335,7 +202,7 @@
       </ng-container>
 
       <!-- Age Groups -->
-      <ng-container *ngFor="let slug of ageGroupFilter.value">
+      <ng-container *ngFor="let slug of ageGroupFilter()">
         <div
           class="inline-flex items-center h-8 px-3 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-xs font-semibold animate-in fade-in zoom-in-95">
           <span class="opacity-70 mr-1.5">Độ tuổi:</span>
@@ -352,7 +219,7 @@
       </ng-container>
 
       <!-- Types -->
-      <ng-container *ngFor="let type of typeFilter.value">
+      <ng-container *ngFor="let type of typeFilter()">
         <div
           class="inline-flex items-center h-8 px-3 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold animate-in fade-in zoom-in-95">
           <span class="opacity-70 mr-1.5">Loại:</span>
@@ -869,6 +736,23 @@
                 <!-- REPOSITORY & REJECTED TAB ACTIONS -->
                 <ng-container *ngIf="activeTab() === 'list' || activeTab() === 'rejected'">
 
+                  <!-- Approve (Rejected Tab Only) -->
+                  <button *ngIf="activeTab() === 'rejected'" (click)="approveResource(res.id)" title="Duyệt nhanh"
+                    class="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </button>
+                  <!-- Reject (Approved Tab Only) -->
+                  <button *ngIf="activeTab() === 'list'" (click)="rejectResource(res.id)" title="Từ chối"
+                    class="p-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
                   <!-- Preview -->
                   <button (click)="openPreview(res)" title="Xem trước"
                     class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
@@ -1160,6 +1044,25 @@
               </ng-container>
 
               <ng-container *ngIf="resource.status !== 'DELETED' && resource.status !== 'PENDING'">
+                <!-- Approve Button (Rejected State Only) -->
+                <button *ngIf="resource.status === 'REJECTED'"
+                  (click)="openConfirmModal('Phê duyệt', 'Duyệt tài nguyên này?', 'APPROVE', resource.id); $event.stopPropagation()"
+                  class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Duyệt nhanh">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <!-- Reject Button (Approved State Only) -->
+                <button *ngIf="resource.status === 'APPROVED'"
+                  (click)="rejectResource(resource.id); $event.stopPropagation()"
+                  class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Từ chối">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
                 <button (click)="editResource(resource); $event.stopPropagation()"
                   class="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title="Chỉnh sửa">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -1505,8 +1408,8 @@
 
   <div class="h-6 w-px bg-slate-700"></div>
 
-  <!-- Approve Button (Pending Only) -->
-  <button *ngIf="activeTab() === 'pending'" (click)="approveSelected()"
+  <!-- Approve Button (Pending or Rejected) -->
+  <button *ngIf="activeTab() === 'pending' || activeTab() === 'rejected'" (click)="approveSelected()"
     class="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-bold text-sm transition-colors">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1515,7 +1418,20 @@
     Duyệt
   </button>
 
-  <div *ngIf="activeTab() === 'pending'" class="h-6 w-px bg-slate-700"></div>
+  <div *ngIf="activeTab() === 'pending' || activeTab() === 'rejected'" class="h-6 w-px bg-slate-700"></div>
+
+  <!-- Reject Button (Pending or Approved) -->
+  <button *ngIf="activeTab() === 'pending' || activeTab() === 'list'" (click)="rejectSelected()"
+    class="flex items-center gap-2 text-rose-400 hover:text-rose-300 font-bold text-sm transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+    Từ chối
+  </button>
+
+  <div *ngIf="activeTab() === 'pending' || activeTab() === 'list'" class="h-6 w-px bg-slate-700"></div>
 
   <!-- Restore Button (Trash Mode Only) -->
   <button *ngIf="activeTab() === 'trash'" (click)="restoreSelected()"

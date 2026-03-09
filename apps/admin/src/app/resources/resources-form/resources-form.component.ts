@@ -31,7 +31,7 @@ import {
   UpdateResourceRequest,
 } from '@kindergarten-warehouse/data-access';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-resources-form',
@@ -92,6 +92,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
       type: ['VIDEO', Validators.required],
       url: [''],
       description: [''],
+      status: ['PENDING'],
     });
 
     this.setupYoutubeWatcher();
@@ -129,6 +130,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
         ageGroupIds: [],
         categoryId: '',
         topicId: '',
+        status: 'PENDING',
       });
     }
   }
@@ -144,7 +146,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
 
     const topicId =
       resource.topicId || (resource.topic ? resource.topic.id : '');
-    let catId = resource.topic?.categoryId
+    const catId = resource.topic?.categoryId
       ? String(resource.topic.categoryId)
       : '';
 
@@ -159,6 +161,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
           type: resource.fileType || 'OTHER',
           ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
           url: isYoutube ? resource.fileUrl : '',
+          status: resource.status || 'PENDING',
         });
       });
     } else {
@@ -168,6 +171,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
         type: resource.fileType || 'OTHER',
         ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
         url: isYoutube ? resource.fileUrl : '',
+        status: resource.status || 'PENDING',
       });
     }
 
@@ -318,6 +322,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
             formData.append('ageGroupIds', ageId)
           );
         }
+        if (val.status) formData.append('status', val.status);
         if (this.selectedFile) {
           formData.append('file', this.selectedFile);
           if (this.uploadedFileDuration()) {
@@ -348,6 +353,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
           topicId: val.topicId,
           ageGroupIds: val.ageGroupIds || [],
           duration: this.uploadedFileDuration() || undefined,
+          status: val.status,
         };
         if (this.uploadMode() === 'YOUTUBE' && val.url) {
           updateData.youtubeLink = val.url;

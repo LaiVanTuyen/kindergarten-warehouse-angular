@@ -87,14 +87,14 @@ export class UsersComponent implements OnInit {
 
   // Filter Options
   roleOptions = [
-    { label: 'Admin', value: 'ADMIN' },
-    { label: 'User', value: 'USER' },
-    { label: 'Teacher', value: 'TEACHER' },
+    { label: 'Quản trị viên (Admin)', value: 'ADMIN' },
+    { label: 'Người dùng', value: 'USER' },
+    { label: 'Giáo viên', value: 'TEACHER' },
   ];
 
   statusOptions = [
-    { label: 'Active', value: 'ACTIVE' },
-    { label: 'Blocked', value: 'BLOCKED' },
+    { label: 'Hoạt động', value: 'ACTIVE' },
+    { label: 'Đã khóa', value: 'BLOCKED' },
   ];
 
   // Form Controls for UI
@@ -214,7 +214,7 @@ export class UsersComponent implements OnInit {
   }
 
   updateUrl() {
-    const queryParams: any = {
+    const queryParams: Record<string, string | number | null> = {
       page: this.currentPage(),
       size: this.pageSize(),
       sort: this.sortColumn(),
@@ -390,8 +390,8 @@ export class UsersComponent implements OnInit {
     if (selected.size === 0) return;
 
     this.openConfirmModal(
-      'Block Selected Users?',
-      `Are you sure you want to BLOCK ${selected.size} selected users? They will lose access.`,
+      'Khóa Người dùng đã chọn?',
+      `Bạn có chắc chắn muốn KHÓA ${selected.size} người dùng đã chọn? Họ sẽ mất quyền truy cập.`,
       'BULK_BLOCK'
     );
   }
@@ -413,7 +413,7 @@ export class UsersComponent implements OnInit {
       .subscribe({
         next: () => {
           this.toastService.show(
-            `${selected.size} users blocked/unblocked`,
+            `${selected.size} người dùng đã bị khóa/mở khóa`,
             'success'
           );
           // Let the reactive pipeline trigger the reload if we had a dedicated refresh subject,
@@ -425,7 +425,7 @@ export class UsersComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.show('Failed to process some users', 'error');
+          this.toastService.show('Không thể xử lý người dùng', 'error');
         },
       });
   }
@@ -435,8 +435,8 @@ export class UsersComponent implements OnInit {
     if (selected.size === 0) return;
 
     this.openConfirmModal(
-      'Delete Selected Users?',
-      `Are you sure you want to DELETE ${selected.size} selected users? This cannot be undone.`,
+      'Xóa Người dùng đã chọn?',
+      `Bạn có chắc chắn muốn XÓA ${selected.size} người dùng đã chọn? Thao tác này không thể hoàn tác.`,
       'BULK_DELETE'
     );
   }
@@ -458,7 +458,7 @@ export class UsersComponent implements OnInit {
       .subscribe({
         next: () => {
           this.toastService.show(
-            `${selected.size} users moved to bin`,
+            `Đã chuyển ${selected.size} người dùng vào thùng rác`,
             'success'
           );
           this.currentPage.set(this.currentPage()); // Trigger reload
@@ -466,7 +466,7 @@ export class UsersComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.show('Failed to delete some users', 'error');
+          this.toastService.show('Lỗi khi xóa người dùng', 'error');
         },
       });
   }
@@ -578,7 +578,7 @@ export class UsersComponent implements OnInit {
 
     const formVal = this.userForm.value;
 
-    const requestData: any = {
+    const requestData: Record<string, unknown> = {
       fullName: formVal.fullName,
       email: formVal.email,
       username: formVal.username,
@@ -616,7 +616,7 @@ export class UsersComponent implements OnInit {
         .createUser(requestData)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: (res) => {
+          next: () => {
             this.toastService.show('User created successfully', 'success');
             this.currentPage.set(this.currentPage()); // Trigger reload
             this.closeUserModal();
@@ -681,7 +681,7 @@ export class UsersComponent implements OnInit {
         .initiatePasswordReset(user.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: (res) => {
+          next: () => {
             this.toastService.show('OTP sent to user email', 'success');
             this.resetStep.set('OTP');
             this.startOtpTimer();
@@ -818,7 +818,7 @@ export class UsersComponent implements OnInit {
 
   // OTP Timer
   otpCountdown = signal(0);
-  private timerSub: any;
+  private timerSub: ReturnType<typeof setInterval> | null = null;
 
   startOtpTimer() {
     this.otpCountdown.set(300); // 5 minutes
@@ -854,12 +854,12 @@ export class UsersComponent implements OnInit {
         .restoreUser(String(user.id))
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: (res) => {
+          next: () => {
             this.toastService.show('User restored successfully', 'success');
             this.currentPage.set(this.currentPage()); // Trigger reload
             this.closeRestoreModal();
           },
-          error: (err) => {
+          error: () => {
             this.toastService.show('Failed to restore user', 'error');
           },
         });
