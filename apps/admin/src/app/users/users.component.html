@@ -432,167 +432,184 @@
 <!-- Add/Edit User Modal -->
 <div *ngIf="isUserModalOpen()"
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95">
-    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-      <h3 class="font-bold text-lg text-slate-800">{{ isEditMode() ? 'Sửa Người dùng' : 'Thêm Người dùng mới' }}</h3>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 border border-slate-100">
+    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+      <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+        <svg *ngIf="isEditMode()" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        <svg *ngIf="!isEditMode()" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+        {{ isEditMode() ? 'Cập nhật Người dùng' : 'Thêm Người dùng mới' }}
+      </h3>
       <button (click)="closeUserModal()" class="text-slate-400 hover:text-slate-600"><svg
           xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg></button>
+        </svg>
+      </button>
     </div>
 
-    <form [formGroup]="userForm" (ngSubmit)="submitUserForm()" class="p-6 space-y-4">
-      <!-- Full Name -->
-      <div>
-        <label for="fullName" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Họ và
-          tên</label>
-        <input id="fullName" type="text" formControlName="fullName"
-          class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-700"
-          placeholder="VD: Nguyễn Văn A" />
-        <p *ngIf="userForm.get('fullName')?.invalid && userForm.get('fullName')?.touched"
-          class="text-xs text-rose-500 mt-1">Tên không được để trống</p>
-      </div>
+    <!-- Scrollable Form Area -->
+    <div class="max-h-[85vh] overflow-y-auto custom-scrollbar">
+      <form [formGroup]="userForm" (ngSubmit)="submitUserForm()" class="p-6">
+        
+        <!-- Form Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+          <!-- Full Name (Spans full width) -->
+          <div class="col-span-1 md:col-span-2">
+            <label for="fullName" class="block text-[13px] font-semibold text-slate-700 mb-1.5">Họ và tên <span class="text-rose-500">*</span></label>
+            <input id="fullName" type="text" formControlName="fullName"
+              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400"
+              placeholder="VD: Nguyễn Văn A" />
+            <p *ngIf="userForm.get('fullName')?.invalid && userForm.get('fullName')?.touched"
+              class="text-xs text-rose-500 mt-1 font-medium flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+              Tên không được để trống
+            </p>
+          </div>
 
-      <!-- Email & Username Row -->
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <label for="email"
-            class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email</label>
-          <input id="email" type="email" formControlName="email"
-            class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-700"
-            placeholder="nguyenvana@example.com" />
-          <p *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched"
-            class="text-xs text-rose-500 mt-1">Email không hợp lệ</p>
+          <!-- Email -->
+          <div class="col-span-1">
+            <label for="email" class="block text-[13px] font-semibold text-slate-700 mb-1.5">Email <span class="text-rose-500">*</span></label>
+            <input id="email" type="email" formControlName="email"
+              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400"
+              placeholder="nguyenvana@example.com" />
+            <p *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched"
+              class="text-xs text-rose-500 mt-1 font-medium flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+              Email không hợp lệ
+            </p>
+          </div>
+
+          <!-- Username -->
+          <div class="col-span-1">
+            <label for="username" class="block text-[13px] font-semibold text-slate-700 mb-1.5">Tên đăng nhập <span class="text-rose-500">*</span></label>
+            <input id="username" type="text" formControlName="username"
+              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400"
+              placeholder="nguyenvana" />
+          </div>
+
+          <!-- Password -->
+          <div class="col-span-1 md:col-span-2" *ngIf="!isEditMode() || showPassword()">
+            <label for="password" class="block text-[13px] font-semibold text-slate-700 mb-1.5">
+              Mật khẩu <span *ngIf="isEditMode()" class="text-slate-400 font-normal ml-1">(Bỏ trống nếu không đổi)</span>
+            </label>
+            <div class="flex gap-3">
+              <div class="relative flex-1">
+                <input id="password" type="text" formControlName="password"
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400"
+                  placeholder="Tối thiểu 6 ký tự" />
+              </div>
+              <button type="button" (click)="generatePassword()"
+                class="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap focus:outline-none focus:ring-4 focus:ring-slate-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                Sinh mẫu
+              </button>
+            </div>
+          </div>
+
+          <!-- Roles (Checkbox Group) -->
+          <div class="col-span-1 md:col-span-2">
+            <p class="block text-[13px] font-semibold text-slate-700 mb-2">Phân quyền vai trò <span class="text-rose-500">*</span></p>
+            <div class="flex flex-wrap gap-3">
+              <!-- Admin Role -->
+              <label class="relative flex items-center p-3 rounded-xl border cursor-pointer hover:bg-slate-50 transition-all group"
+                     [ngClass]="userForm.value.roles?.includes('ADMIN') ? 'border-pink-500 bg-pink-50/30' : 'border-slate-200 bg-white'">
+                <input type="checkbox" [checked]="userForm.value.roles?.includes('ADMIN')" (change)="toggleRole('ADMIN', $any($event.target).checked)"
+                  class="w-4 h-4 rounded border-slate-300 text-pink-500 focus:ring-pink-500 cursor-pointer" />
+                <span class="ml-2.5 text-sm font-bold text-slate-700 group-hover:text-pink-600 transition-colors">Quản trị viên</span>
+              </label>
+
+              <!-- Teacher Role -->
+              <label class="relative flex items-center p-3 rounded-xl border cursor-pointer hover:bg-slate-50 transition-all group"
+                     [ngClass]="userForm.value.roles?.includes('TEACHER') ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 bg-white'">
+                <input type="checkbox" [checked]="userForm.value.roles?.includes('TEACHER')" (change)="toggleRole('TEACHER', $any($event.target).checked)"
+                  class="w-4 h-4 rounded border-slate-300 text-blue-500 focus:ring-blue-500 cursor-pointer" />
+                <span class="ml-2.5 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Giáo viên</span>
+              </label>
+
+              <!-- User Role -->
+              <label class="relative flex items-center p-3 rounded-xl border cursor-pointer hover:bg-slate-50 transition-all group"
+                     [ngClass]="userForm.value.roles?.includes('USER') ? 'border-gray-500 bg-gray-50/50' : 'border-slate-200 bg-white'">
+                <input type="checkbox" [checked]="userForm.value.roles?.includes('USER')" (change)="toggleRole('USER', $any($event.target).checked)"
+                  class="w-4 h-4 rounded border-slate-300 text-gray-500 focus:ring-gray-500 cursor-pointer" />
+                <span class="ml-2.5 text-sm font-bold text-slate-700 group-hover:text-gray-700 transition-colors">Người dùng</span>
+              </label>
+            </div>
+            <p *ngIf="userForm.get('roles')?.invalid && userForm.get('roles')?.touched" class="text-xs text-rose-500 mt-2 font-medium flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+              Vui lòng chọn ít nhất một vai trò
+            </p>
+          </div>
+
+          <!-- Status -->
+          <div class="col-span-1 md:col-span-2">
+            <label for="status" class="block text-[13px] font-semibold text-slate-700 mb-1.5">Trạng thái tài khoản</label>
+            <div class="relative">
+              <select id="status" formControlName="isActive"
+                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold text-slate-700 appearance-none shadow-sm cursor-pointer hover:border-slate-300">
+                <option [ngValue]="true">🟢 Hoạt động (Có thể đăng nhập)</option>
+                <option [ngValue]="false">🔴 Đã khóa (Cấm đăng nhập)</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- End Grid -->
+
+        <!-- Metadata Section (Read Only) -->
+        <div *ngIf="isEditMode() && currentUser()" class="mt-8 pt-6 border-t border-slate-200 bg-slate-50/50 rounded-xl p-5">
+          <h4 class="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Thông tin hệ thống
+          </h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+            <div>
+              <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Mã định danh</span>
+              <span class="text-sm font-mono font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">#{{ currentUser()?.id }}</span>
+            </div>
+            <div>
+              <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Ngày đăng ký</span>
+              <span class="text-sm font-semibold text-slate-700 block">{{ currentUser()?.createdAt | date:'mediumDate' }}</span>
+              <span class="text-[11px] text-slate-500">{{ currentUser()?.createdAt | date:'shortTime' }}</span>
+            </div>
+            <div>
+              <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Cập nhật lần cuối</span>
+              <span class="text-sm font-semibold text-slate-700 block">{{ currentUser()?.updatedAt ? (currentUser()?.updatedAt | date:'mediumDate') : (currentUser()?.createdAt | date:'mediumDate') }}</span>
+              <span class="text-[11px] text-slate-500">{{ currentUser()?.updatedAt ? (currentUser()?.updatedAt | date:'shortTime') : (currentUser()?.createdAt | date:'shortTime') }}</span>
+            </div>
+            <div>
+              <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Người tạo</span>
+              <span class="text-sm text-slate-700 font-medium truncate w-full block">{{ currentUser()?.createdBy || 'Hệ thống' }}</span>
+            </div>
+            <div>
+              <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Người cập nhật</span>
+              <span class="text-sm text-slate-700 font-medium truncate w-full block">{{ currentUser()?.updatedBy || 'Hệ thống' }}</span>
+            </div>
+          </div>
         </div>
-        <div class="flex-1">
-          <label for="username" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên
-            đăng nhập</label>
-          <input id="username" type="text" formControlName="username"
-            class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-700"
-            placeholder="nguyenvana" />
-        </div>
-      </div>
 
-      <!-- Roles (Checkbox Group) -->
-      <div>
-        <div id="roles-lbl" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Vai
-          trò</div>
-        <div class="flex flex-wrap gap-4 px-1">
-          <label class="inline-flex items-center cursor-pointer group">
-            <input type="checkbox" [checked]="userForm.value.roles?.includes('ADMIN')"
-              (change)="toggleRole('ADMIN', $any($event.target).checked)"
-              class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
-            <span class="ml-2 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Quản trị
-              viên</span>
-          </label>
-          <label class="inline-flex items-center cursor-pointer group">
-            <input type="checkbox" [checked]="userForm.value.roles?.includes('TEACHER')"
-              (change)="toggleRole('TEACHER', $any($event.target).checked)"
-              class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
-            <span class="ml-2 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Giáo
-              viên</span>
-          </label>
-          <label class="inline-flex items-center cursor-pointer group">
-            <input type="checkbox" [checked]="userForm.value.roles?.includes('USER')"
-              (change)="toggleRole('USER', $any($event.target).checked)"
-              class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
-            <span class="ml-2 text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Người
-              dùng</span>
-          </label>
-        </div>
-        <p *ngIf="userForm.get('roles')?.invalid && userForm.get('roles')?.touched" class="text-xs text-rose-500 mt-1">
-          Vui lòng chọn ít nhất một vai trò
-        </p>
-      </div>
+      </form>
+    </div>
 
-      <!-- Status -->
-      <div>
-        <label for="status" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng
-          thái</label>
-        <select id="status" formControlName="isActive"
-          class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-700 bg-white">
-          <option [ngValue]="true">Hoạt động</option>
-          <option [ngValue]="false">Đã khóa</option>
-        </select>
-      </div>
-
-      <!-- Metadata Section (Read Only) -->
-      <div *ngIf="isEditMode() && currentUser()" class="pt-6 mt-4 border-t border-slate-100">
-        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4">Thông tin thêm</h4>
-        <div class="grid grid-cols-2 gap-y-5 gap-x-8">
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">ID</span>
-            <span class="text-sm font-bold text-slate-700">#{{ currentUser()?.id }}</span>
-          </div>
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Nền tảng</span>
-            <span class="text-sm font-bold text-slate-700">N/A</span>
-          </div>
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Ngày tạo</span>
-            <span class="text-sm border-b border-dashed border-slate-300 pb-0.5 text-slate-500">
-              {{ currentUser()?.createdAt | date:'mediumDate' }}
-            </span>
-            <span class="text-xs text-slate-400 block mt-1">
-              {{ currentUser()?.createdAt | date:'shortTime' }}
-            </span>
-          </div>
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Cập nhật lần
-              cuối</span>
-            <span class="text-sm border-b border-dashed border-slate-300 pb-0.5 text-slate-500">
-              {{ currentUser()?.updatedAt ? (currentUser()?.updatedAt | date:'mediumDate') : (currentUser()?.createdAt |
-              date:'mediumDate') }}
-            </span>
-            <span class="text-xs text-slate-400 block mt-1">
-              {{ currentUser()?.updatedAt ? (currentUser()?.updatedAt | date:'shortTime') : (currentUser()?.createdAt |
-              date:'shortTime') }}
-            </span>
-          </div>
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Tạo bởi</span>
-            <span class="text-sm text-slate-700 font-medium">{{ currentUser()?.createdBy || 'Hệ thống' }}</span>
-          </div>
-          <div>
-            <span class="block text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Cập nhật bởi</span>
-            <span class="text-sm text-slate-700 font-medium">{{ currentUser()?.updatedBy || 'Hệ thống' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Password -->
-      <div *ngIf="!isEditMode() || showPassword()">
-        <label for="password" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-          Mật khẩu {{ isEditMode() ? '(Để trống nếu không muốn đổi)' : '' }}
-        </label>
-        <div class="flex gap-2">
-          <div class="relative flex-1">
-            <input id="password" type="text" formControlName="password"
-              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-700"
-              placeholder="Tối thiểu 6 ký tự" />
-          </div>
-          <button type="button" (click)="generatePassword()"
-            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors">Tạo
-            ngẫu nhiên</button>
-        </div>
-      </div>
-
-
-
-      <!-- Actions -->
-      <div class="flex gap-3 pt-4">
-        <button type="button" (click)="closeUserModal()"
-          class="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Đóng</button>
-        <button type="submit" [disabled]="userForm.invalid || userForm.pristine"
-          class="flex-1 py-3 bg-gray-500 text-white rounded-xl font-bold hover:bg-gray-600 disabled:opacity-50 transition-colors shadow-lg shadow-gray-200">
-          {{ isEditMode() ? 'Cập nhật' : 'Thêm mới' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    <!-- Modal Footer Actions -->
+    <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end items-center">
+      <button type="button" (click)="closeUserModal()"
+        class="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-sm font-bold transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">
+        Huỷ bỏ
+      </button>
+      <button type="button" (click)="submitUserForm()" [disabled]="userForm.invalid"
+        class="px-8 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:shadow-none focus:outline-none focus:ring-4 focus:ring-blue-500/30 flex items-center gap-2">
+        <span>{{ isEditMode() ? 'Cập nhật tài khoản' : 'Lưu người dùng' }}</span>
+        <svg *ngIf="!userForm.invalid" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+      </button>
+    </div><!-- close footer -->
+  </div><!-- close card -->
+</div><!-- close overlay fixed inset-0 -->
 
 <!-- Bulk Actions Toolbar (Floating) -->
 <div *ngIf="selectedIds().size > 0"
@@ -637,13 +654,12 @@
 </div>
 
 <!-- Block/Unblock Confirmation Modal -->
-<!-- Block/Unblock Confirmation Modal -->
 <div *ngIf="isBlockModalOpen()"
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
   <div
-    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center">
-    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border"
-      [ngClass]="(userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'bg-[#fff1f2] text-[#e11d48] border-[#ffe4e6]' : 'bg-[#ecfdf5] text-[#10b981] border-[#d1fae5]'">
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center border border-slate-100">
+    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 border shadow-sm"
+      [ngClass]="(userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'">
       <svg *ngIf="userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive" xmlns="http://www.w3.org/2000/svg"
         width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round">
@@ -661,19 +677,21 @@
     <h3 class="text-xl font-bold text-slate-900 mb-2">
       {{ (userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'Khóa tài khoản?' : 'Kích hoạt tài khoản?' }}
     </h3>
-    <p class="text-slate-500 mb-6">
-      Bạn có chắc chắn muốn {{ (userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'khóa' : 'mở khóa'
-      }} <strong>{{ userToBlock()?.fullName }}</strong>?
-      <span class="block mt-1 text-[13px]">{{ (userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'Họ sẽ
-        không thể truy cập vào hệ thống.' : 'Họ sẽ có thể truy cập lại vào hệ thống.' }}</span>
+    <p class="text-[14px] text-slate-500 mb-2">
+      Bạn có chắc chắn muốn {{ (userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'khóa' : 'mở khóa' }}
+      tài khoản của <strong class="text-slate-800">{{ userToBlock()?.fullName }}</strong>?
     </p>
+    <div class="text-[13px] px-4 py-2 rounded-xl mb-6"
+      [ngClass]="(userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'">
+      {{ (userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'Họ sẽ không thể truy cập vào hệ thống.' : 'Họ sẽ có thể truy cập lại vào hệ thống.' }}
+    </div>
 
-    <div class="flex gap-3 mt-8">
+    <div class="flex gap-3">
       <button (click)="closeBlockModal()"
-        class="flex-1 py-2.5 border border-slate-200 bg-white rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">Đóng</button>
+        class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-sm font-bold transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">Đóng</button>
       <button (click)="confirmBlockUser()"
-        class="flex-1 py-2.5 text-white rounded-xl font-bold transition-colors shadow-lg"
-        [ngClass]="(userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'bg-[#e11d48] hover:bg-[#be123c] shadow-[0_4px_14px_0_rgba(225,29,72,0.39)]' : 'bg-[#10b981] hover:bg-[#059669] shadow-[0_4px_14px_0_rgba(16,185,129,0.39)]'">
+        class="flex-1 py-2.5 text-white rounded-xl text-sm font-bold transition-all shadow-lg focus:outline-none focus:ring-4"
+        [ngClass]="(userToBlock()?.status === 'ACTIVE' || userToBlock()?.isActive) ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30 focus:ring-rose-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30 focus:ring-emerald-500/30'">
         Xác nhận
       </button>
     </div>
@@ -684,14 +702,11 @@
 <div *ngIf="isResetModalOpen()"
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
   <div
-    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center">
-    <div
-      class="w-16 h-16 rounded-full bg-[#fffbeb] text-[#f59e0b] border border-[#fef3c7] flex items-center justify-center mx-auto mb-4">
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center border border-slate-100">
+    <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 border border-amber-100 flex items-center justify-center mx-auto mb-5 shadow-sm">
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path
-          d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4">
-        </path>
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
       </svg>
     </div>
 
@@ -701,46 +716,48 @@
 
     <div class="mb-6">
       <!-- Step 1 Message -->
-      <p *ngIf="resetStep() === 'INIT'" class="text-slate-500">
-        Hệ thống sẽ gửi mã OTP gồm 6 chữ số đến <strong>{{ userToReset()?.email }}</strong>.
-        <span class="block mt-1 text-sm">Sử dụng mã OTP để xác minh và tạo mật khẩu mới.</span>
+      <p *ngIf="resetStep() === 'INIT'" class="text-[14px] text-slate-500 leading-relaxed">
+        Hệ thống sẽ gửi mã OTP gồm 6 chữ số đến<br/> 
+        <strong class="text-slate-700">{{ userToReset()?.email }}</strong>.
+        <span class="block mt-2 text-[13px] bg-slate-50 p-2 rounded-lg border border-slate-100">Sử dụng mã OTP để xác minh và tạo mật khẩu mới.</span>
       </p>
 
       <!-- Step 2 Input -->
-      <div *ngIf="resetStep() === 'OTP'" class="text-left">
-        <p class="text-[13px] text-slate-500 mb-3 text-center">
-          Nhập mã OTP đã được gửi đến <strong>{{ userToReset()?.email }}</strong>
+      <div *ngIf="resetStep() === 'OTP'" class="text-left mt-4">
+        <p class="text-[13px] text-slate-500 mb-4 text-center">
+          Nhập mã OTP đã được gửi đến<br/>
+          <strong class="text-slate-700">{{ userToReset()?.email }}</strong>
         </p>
-        <label for="otpCode" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mã
-          OTP</label>
+        <label for="otpCode" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">Mã OTP</label>
         <input id="otpCode" [formControl]="otpControl" type="text" maxlength="6"
-          class="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all text-slate-700 bg-slate-50"
+          class="w-full px-4 py-3.5 text-center text-2xl tracking-[0.5em] font-mono border-2 border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-slate-800 bg-white placeholder-slate-300 shadow-inner"
           placeholder="000000" />
 
         <!-- Timer Display -->
-        <div class="mt-3 text-center">
-          <p *ngIf="otpCountdown() > 0" class="text-xs font-bold text-amber-600">
+        <div class="mt-4 text-center">
+          <p *ngIf="otpCountdown() > 0" class="text-[13px] font-bold text-amber-600 flex items-center justify-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Hết hạn sau {{ Math.floor(otpCountdown() / 60) }}:{{ (otpCountdown() % 60) | number:'2.0-0' }}
           </p>
-          <p *ngIf="otpCountdown() === 0" class="text-xs text-slate-400">
-            Mã OTP hết hạn? <button (click)="resetStep.set('INIT')" class="font-bold text-amber-600 hover:underline">Gửi
-              lại</button>
-          </p>
+          <div *ngIf="otpCountdown() === 0" class="text-[13px] text-slate-500 bg-rose-50 rounded-lg p-2 border border-rose-100">
+            Mã OTP hết hạn? <button (click)="resetStep.set('INIT')" class="font-bold text-rose-600 hover:text-rose-700 underline underline-offset-2">Gửi lại</button>
+          </div>
         </div>
 
-        <p *ngIf="otpControl.invalid && otpControl.touched" class="text-xs text-rose-500 mt-1 text-center font-medium">
+        <p *ngIf="otpControl.invalid && otpControl.touched" class="text-xs text-rose-500 mt-2 text-center font-medium flex items-center justify-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
           Vui lòng nhập mã gồm 6 chữ số
         </p>
       </div>
     </div>
 
-    <div class="flex gap-3 mt-8">
+    <div class="flex gap-3 mt-6">
       <button (click)="closeResetModal()"
-        class="flex-1 py-2.5 border border-slate-200 bg-white rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+        class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-sm font-bold transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">
         Đóng
       </button>
       <button (click)="confirmResetPassword()"
-        class="flex-1 py-2.5 bg-[#f59e0b] text-white rounded-xl font-bold hover:bg-[#d97706] transition-colors shadow-[0_4px_14px_0_rgba(245,158,11,0.39)] disabled:opacity-50 disabled:cursor-not-allowed"
+        class="flex-1 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-xl text-sm font-bold transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-amber-500/30 line-clamp-1 break-all px-2"
         [disabled]="resetStep() === 'OTP' && otpControl.invalid">
         {{ resetStep() === 'INIT' ? 'Gửi mã OTP' : 'Xác minh & Đặt lại' }}
       </button>
@@ -752,9 +769,9 @@
 <div *ngIf="isDeleteModalOpen()"
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
   <div
-    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center">
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center border border-slate-100">
     <div
-      class="w-16 h-16 rounded-full bg-[#fff1f2] text-[#e11d48] border border-[#ffe4e6] flex items-center justify-center mx-auto mb-4">
+      class="w-16 h-16 rounded-full bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-5 shadow-sm">
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 6h18"></path>
@@ -764,17 +781,21 @@
     </div>
 
     <h3 class="text-xl font-bold text-slate-900 mb-2">Xóa người dùng?</h3>
-    <p class="text-slate-500 mb-6">
-      Bạn có chắc chắn muốn xóa <strong>{{ userToDelete()?.fullName }}</strong>?
-      <span class="block mt-1 text-[13px] text-[#e11d48] font-medium">Hành động này không thể hoàn tác.</span>
+    <p class="text-[14px] text-slate-500 mb-2">
+      Bạn có chắc chắn muốn xóa <strong class="text-slate-800">{{ userToDelete()?.fullName }}</strong>?
     </p>
+    <div class="text-[13px] px-4 py-2 rounded-xl bg-rose-50 text-rose-700 mb-6 flex items-center justify-center gap-1.5 font-medium">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+      Hành động này không thể hoàn tác.
+    </div>
 
-    <div class="flex gap-3 mt-8">
+    <div class="flex gap-3">
       <button (click)="closeDeleteModal()"
-        class="flex-1 py-2.5 border border-slate-200 bg-white rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">Đóng</button>
+        class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-sm font-bold transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">Đóng</button>
       <button (click)="confirmDeleteUser()"
-        class="flex-1 py-2.5 bg-[#e11d48] text-white rounded-xl font-bold hover:bg-[#be123c] transition-colors shadow-[0_4px_14px_0_rgba(225,29,72,0.39)]">
-        Xóa
+        class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/25 focus:outline-none focus:ring-4 focus:ring-rose-500/30 flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        Xóa tài khoản
       </button>
     </div>
   </div>
@@ -785,8 +806,8 @@
 <div *ngIf="isRestoreModalOpen()"
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
   <div
-    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center">
-    <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 text-center border border-slate-100">
+    <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mx-auto mb-5 shadow-sm">
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="1 4 1 10 7 10"></polyline>
@@ -795,16 +816,19 @@
     </div>
 
     <h3 class="text-xl font-bold text-slate-900 mb-2">Khôi phục tài khoản?</h3>
-    <p class="text-slate-500 mb-6">
-      Bạn có chắc chắn muốn khôi phục <strong>{{ userToRestore()?.fullName }}</strong>?
-      <span class="block mt-1 text-sm text-emerald-600">Tài khoản sẽ xuất hiện lại trong danh sách chính.</span>
+    <p class="text-[14px] text-slate-500 mb-2">
+      Bạn có chắc chắn muốn khôi phục tài khoản của <strong class="text-slate-800">{{ userToRestore()?.fullName }}</strong>?
     </p>
+    <div class="text-[13px] px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 mb-6">
+      Tài khoản sẽ xuất hiện lại trong danh sách chính và có thể đăng nhập được.
+    </div>
 
     <div class="flex gap-3">
       <button (click)="closeRestoreModal()"
-        class="flex-1 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Đóng</button>
+        class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-sm font-bold transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">Đóng</button>
       <button (click)="confirmRestoreUser()"
-        class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">
+        class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/25 focus:outline-none focus:ring-4 focus:ring-emerald-500/30 flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
         Khôi phục
       </button>
     </div>
@@ -815,31 +839,32 @@
 <div *ngIf="isConfirmModalOpen()"
   class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-all">
   <div
-    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
+    class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-slate-100 animate-in fade-in zoom-in-95">
     <!-- Dynamic Icon -->
-    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
+    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-5 border shadow-sm"
       [ngClass]="{
-        'bg-rose-100 text-rose-600': confirmConfig()?.action === 'BULK_DELETE' || confirmConfig()?.action === 'BULK_BLOCK'
+        'bg-rose-50 text-rose-600 border-rose-100': confirmConfig()?.action === 'BULK_DELETE' || confirmConfig()?.action === 'BULK_BLOCK',
+        'bg-slate-100 text-slate-600 border-slate-200': !(confirmConfig()?.action === 'BULK_DELETE' || confirmConfig()?.action === 'BULK_BLOCK')
       }">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     </div>
 
-    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ confirmConfig()?.title }}</h3>
-    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2">
+    <h3 class="text-xl font-bold text-slate-900 mb-2">{{ confirmConfig()?.title }}</h3>
+    <p class="text-[14px] text-slate-500 mb-6 leading-relaxed px-2">
       {{ confirmConfig()?.message }}
     </p>
 
     <div class="flex justify-center gap-3">
       <button (click)="closeConfirmModal()"
-        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
+        class="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 text-sm transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-200">
         Đóng
       </button>
 
       <button (click)="onConfirmAction()"
-        class="flex-1 px-4 py-3.5 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all">
+        class="flex-1 px-4 py-2.5 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 text-sm shadow-lg shadow-rose-600/25 transition-all focus:outline-none focus:ring-4 focus:ring-rose-500/30">
         Xác nhận
       </button>
     </div>

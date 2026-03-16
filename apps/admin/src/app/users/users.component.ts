@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
-import { User, UserService } from '@kindergarten-warehouse/data-access';
+import { User, UserService, AdminUpdateUserRequest, UserRole, UserCreationRequest } from '@kindergarten-warehouse/data-access';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -112,6 +112,8 @@ export class UsersComponent implements OnInit {
   pageSize$ = toObservable(this.pageSize);
   sortColumn$ = toObservable(this.sortColumn);
   sortDirection$ = toObservable(this.sortDirection);
+  refreshTrigger = signal(0);
+  refreshTrigger$ = toObservable(this.refreshTrigger);
 
   constructor() {
     this.initFromUrl();
@@ -144,12 +146,13 @@ export class UsersComponent implements OnInit {
         this.pageSize$,
         this.sortColumn$,
         this.sortDirection$,
+        this.refreshTrigger$,
       ])
         .pipe(
           takeUntilDestroyed(this.destroyRef),
           debounceTime(50), // Small debounce to batch synchronous signal updates
           switchMap(
-            ([query, roles, statuses, page, size, sortCol, sortDir]) => {
+            ([query, roles, statuses, page, size, sortCol, sortDir]: [string, Set<string>, Set<string>, number, number, string, string, number]) => {
               this.isLoading.set(true);
               this.updateUrl();
 
@@ -164,7 +167,7 @@ export class UsersComponent implements OnInit {
                   roleStr,
                   statusStr,
                   sortCol,
-                  sortDir
+                  sortDir as 'asc' | 'desc'
                 )
                 .pipe(finalize(() => this.isLoading.set(false)));
             }
@@ -249,8 +252,7 @@ export class UsersComponent implements OnInit {
 
   // loadUsers() corresponds to the reactive pipeline now. We keep it as a no-op or explicit refresh if needed.
   loadUsers() {
-    // Handled reactively by combineLatest in ngOnInit.
-    // If an explicit refresh is needed, we could use a Subject, but for now it's fine.
+    this.refreshTrigger.update(v => v + 1);
   }
 
   // Filter Helpers
@@ -420,7 +422,7 @@ export class UsersComponent implements OnInit {
           // or we can explicitly force parameter update if needed.
           // Since we removed explicit loadUsers() which was a no-op, we must trigger the pipeline.
           // To trigger combineLatest, we can quickly toggle and re-toggle currentPage to itself.
-          this.currentPage.set(this.currentPage()); // This triggers the combineLatest pipeline
+          this.loadUsers(); // This triggers the combineLatest pipeline
           this.selectedIds.set(new Set());
         },
         error: (err) => {
@@ -461,7 +463,7 @@ export class UsersComponent implements OnInit {
             `Đã chuyển ${selected.size} người dùng vào thùng rác`,
             'success'
           );
-          this.currentPage.set(this.currentPage()); // Trigger reload
+          this.loadUsers(); // Trigger reload
           this.selectedIds.set(new Set());
         },
         error: (err) => {
@@ -578,24 +580,28 @@ export class UsersComponent implements OnInit {
 
     const formVal = this.userForm.value;
 
-    const requestData: Record<string, unknown> = {
-      fullName: formVal.fullName,
-      email: formVal.email,
-      username: formVal.username,
-      roles: formVal.roles,
-      status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
-    };
-
     if (this.isEditMode()) {
       // Update User
+      const updateData: AdminUpdateUserRequest = {
+        fullName: formVal.fullName || '',
+        email: formVal.email || '',
+        username: formVal.username || '',
+        // Primary role (legacy compat)
+        role: (formVal.roles && formVal.roles.length > 0 ? formVal.roles[0] : 'USER') as UserRole,
+        // Multi-role (new)
+        roles: formVal.roles ?? ['USER'],
+        // BE requires status as enum string, NOT isActive boolean
+        status: (formVal.isActive ?? true) ? 'ACTIVE' : 'BLOCKED',
+      };
+
       this.userService
-        .updateUser(String(formVal.id), requestData)
+        .updateUser(String(formVal.id), updateData)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
             if (res.code === 200 || res.result) {
               this.toastService.show('User updated successfully', 'success');
-              this.currentPage.set(this.currentPage()); // Trigger reload
+              this.loadUsers(); // Trigger reload
               this.closeUserModal();
             } else {
               this.toastService.show(res.message || 'Update failed', 'error');
@@ -610,15 +616,22 @@ export class UsersComponent implements OnInit {
         });
     } else {
       // Create new user
-      requestData.password = formVal.password;
+      const createData: UserCreationRequest = {
+        fullName: formVal.fullName || '',
+        email: formVal.email || '',
+        username: formVal.username || '',
+        roles: formVal.roles ?? [],
+        status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
+        password: formVal.password || '',
+      };
 
       this.userService
-        .createUser(requestData)
+        .createUser(createData)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
             this.toastService.show('User created successfully', 'success');
-            this.currentPage.set(this.currentPage()); // Trigger reload
+            this.loadUsers(); // Trigger reload
             this.closeUserModal();
           },
           error: (err) => {
@@ -765,7 +778,7 @@ export class UsersComponent implements OnInit {
           res.message || 'Updated status successfully',
           'success'
         );
-        this.currentPage.set(this.currentPage()); // Trigger reload
+        this.loadUsers(); // Trigger reload
         this.closeBlockModal();
       });
   }
@@ -795,7 +808,7 @@ export class UsersComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((res) => {
           this.toastService.showResponse(res);
-          this.currentPage.set(this.currentPage()); // Trigger reload
+          this.loadUsers(); // Trigger reload
           this.closeDeleteModal();
         });
     }
@@ -856,7 +869,7 @@ export class UsersComponent implements OnInit {
         .subscribe({
           next: () => {
             this.toastService.show('User restored successfully', 'success');
-            this.currentPage.set(this.currentPage()); // Trigger reload
+            this.loadUsers(); // Trigger reload
             this.closeRestoreModal();
           },
           error: () => {
