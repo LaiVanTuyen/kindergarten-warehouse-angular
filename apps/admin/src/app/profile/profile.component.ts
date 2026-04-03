@@ -10,11 +10,12 @@ import {
   UpdateProfileRequest,
   ChangePasswordRequest,
 } from '@kindergarten-warehouse/data-access';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BreadcrumbComponent],
   templateUrl: './profile.component.html',
   styles: [],
 })
@@ -116,7 +117,7 @@ export class ProfileComponent implements OnInit {
       this.userService.uploadAvatar(file).subscribe({
         next: (response) => {
           this.isUploadingAvatar = false; // Stop loading
-          this.toastService.show('Avatar updated successfully!', 'success');
+          this.toastService.show('Cập nhật ảnh đại diện thành công!', 'success');
 
           if (response.result) {
             // Format URL before saving
@@ -163,7 +164,7 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateProfile(request).subscribe({
       next: (response) => {
-        this.toastService.show('Profile updated successfully!', 'success');
+        this.toastService.show('Cập nhật hồ sơ thành công!', 'success');
         this.initialUser = { ...this.user };
 
         // Update local user state via AuthService if the response contains the updated user
@@ -196,7 +197,7 @@ export class ProfileComponent implements OnInit {
 
     this.userService.changePassword(request).subscribe({
       next: () => {
-        this.toastService.show('Password changed successfully!', 'success');
+        this.toastService.show('Đổi mật khẩu thành công!', 'success');
 
         // Reset form state properly to remove validation errors
         if (this.passwordForm) {

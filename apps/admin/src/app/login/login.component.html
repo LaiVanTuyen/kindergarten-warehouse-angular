@@ -1,44 +1,96 @@
-<div class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <div class="flex justify-center mb-6">
-            <h1 class="text-3xl font-bold text-blue-600">K-Admin</h1>
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 relative overflow-hidden">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+        <!-- Logo / Brand -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-white">K-Admin</h1>
+            <p class="text-slate-400 text-sm mt-1">Hệ thống quản lý Mầm non</p>
         </div>
 
-        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Login</h2>
+        <!-- Card -->
+        <div class="bg-white/[0.06] backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-8">
+            <h2 class="text-xl font-bold text-white mb-1">Đăng nhập</h2>
+            <p class="text-slate-400 text-sm mb-8">Nhập thông tin đăng nhập để tiếp tục</p>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" id="email" formControlName="email"
-                    class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    [ngClass]="{'border-red-500': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
-                    placeholder="admin@example.com" />
-                <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-                    class="mt-1 text-sm text-red-500">
-                    <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required.</span>
-                    <span *ngIf="loginForm.get('email')?.errors?.['pattern']">Please enter a valid email (e.g.
-                        user@domain.com).</span>
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Địa chỉ email</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <input type="email" id="email" formControlName="email"
+                            class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            [ngClass]="{'border-red-400 focus:ring-red-400': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
+                            placeholder="admin@kindergarten.com" />
+                    </div>
+                    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+                        class="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span *ngIf="loginForm.get('email')?.errors?.['required']">Email không được để trống.</span>
+                        <span *ngIf="loginForm.get('email')?.errors?.['pattern']">Vui lòng nhập địa chỉ email hợp lệ.</span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mb-6">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" formControlName="password"
-                    class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    [ngClass]="{'border-red-500': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
-                    placeholder="********" />
-                <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-                    class="mt-1 text-sm text-red-500">
-                    Password is required.
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Mật khẩu</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <input type="password" id="password" formControlName="password"
+                            class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            [ngClass]="{'border-red-400 focus:ring-red-400': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
+                            placeholder="••••••••" />
+                    </div>
+                    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+                        class="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Mật khẩu không được để trống.
+                    </div>
                 </div>
-            </div>
 
+                <!-- Error message from server -->
+                <div *ngIf="errorMessage"
+                    class="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ errorMessage }}
+                </div>
 
+                <!-- Submit Button -->
+                <button type="submit" [disabled]="loginForm.invalid || isLoading"
+                    class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
+                    <span *ngIf="isLoading" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+                </button>
+            </form>
+        </div>
 
-            <button type="submit" [disabled]="loginForm.invalid"
-                class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                Sign In
-            </button>
-        </form>
+        <p class="text-center text-slate-600 text-xs mt-8">© 2026 K-Admin • Hệ thống quản lý mầm non</p>
     </div>
 </div>

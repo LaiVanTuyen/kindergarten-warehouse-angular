@@ -19,7 +19,6 @@ import { BannerSliderComponent } from '../banner-slider/banner-slider.component'
   imports: [
     CommonModule,
     RouterModule,
-    TranslatePipe,
     ResourceCardComponent,
     BannerSliderComponent,
   ],
@@ -45,7 +44,7 @@ export class HomeComponent {
 
   // Get latest 4 resources
   latestResources$ = this.resourceService
-    .getResources({ page: 1, size: 4, status: 'APPROVED' })
+    .getResources({ page: 1, size: 4 })
     .pipe(
       map((res) => res.data.content),
       catchError((err) => {

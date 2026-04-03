@@ -12,6 +12,7 @@ import { AuditLogService } from '@kindergarten-warehouse/data-access';
 import { AuditLog, AuditLogFilter } from '@kindergarten-warehouse/data-access';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
 import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormatTargetPipe } from '../shared/pipes/format-target.pipe';
 import { FormatDetailPipe } from '../shared/pipes/format-detail.pipe';
@@ -26,6 +27,7 @@ import { FormatDetailPipe } from '../shared/pipes/format-detail.pipe';
     HttpClientModule,
     PaginationComponent,
     MultiSelectFilterComponent,
+    BreadcrumbComponent,
     FormatTargetPipe,
     FormatDetailPipe,
   ],

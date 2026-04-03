@@ -1,5 +1,6 @@
 import { Component, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective, FormsModule],
+  imports: [CommonModule, RouterModule, NgxEchartsDirective, FormsModule],
   templateUrl: './dashboard.component.html',
   styles: [
     `
@@ -33,6 +34,20 @@ export class DashboardComponent {
   // Custom Date Range
   customStartDate = signal('');
   customEndDate = signal('');
+
+  // Custom dropdown state
+  dateDropdownOpen = signal(false);
+
+  dateOptions = [
+    { value: 'this_year', label: '📅 Năm nay' },
+    { value: 'last_7_days', label: '🕓 7 ngày qua' },
+    { value: 'this_month', label: '📅 Tháng này' },
+    { value: 'custom', label: '⚙️ Tuỳ chỉnh' },
+  ];
+
+  getDateFilterLabel(): string {
+    return this.dateOptions.find(o => o.value === this.dateFilter())?.label ?? '📅 Năm nay';
+  }
 
   // Resource View Modal
   isViewModalOpen = signal(false);
@@ -107,7 +122,7 @@ export class DashboardComponent {
 
     if (filter === 'last_7_days') {
       // 7-Day Mock Data (Mon - Sun)
-      xAxisData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      xAxisData = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
       // Randomize data to make graphs distinct
       resourceData = [5, 8, 3, 12, 6, 9, 7];
       viewData = [150, 230, 220, 180, 260, 310, 290];
@@ -122,7 +137,7 @@ export class DashboardComponent {
       }));
     } else if (filter === 'this_month') {
       // 4 Weeks Data
-      xAxisData = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      xAxisData = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
       resourceData = [12, 19, 15, 25];
       viewData = [3200, 4100, 3800, 5600];
       userData = [8, 12, 10, 15];
@@ -135,7 +150,7 @@ export class DashboardComponent {
       }));
     } else if (filter === 'custom') {
       // Custom Range Mock
-      xAxisData = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'];
+      xAxisData = ['Ngày 1', 'Ngày 2', 'Ngày 3', 'Ngày 4', 'Ngày 5'];
       resourceData = [5, 10, 8, 15, 12];
       viewData = [800, 1200, 1100, 1500, 1300];
       userData = [2, 4, 3, 6, 5];
@@ -149,18 +164,18 @@ export class DashboardComponent {
     } else {
       // 12-Month Mock Data (Jan - Dec)
       xAxisData = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
+        'Thg 1',
+        'Thg 2',
+        'Thg 3',
+        'Thg 4',
+        'Thg 5',
+        'Thg 6',
+        'Thg 7',
+        'Thg 8',
+        'Thg 9',
+        'Thg 10',
+        'Thg 11',
+        'Thg 12',
       ];
       // Distinct patterns for each chart
       resourceData = [15, 20, 25, 18, 22, 30, 35, 28, 40, 45, 50, 55]; // Steady growth with dips

@@ -754,18 +754,18 @@ export class CategoriesComponent {
     if (this.viewMode() === 'trash') {
       this.isPermanentDelete.set(true);
       this.pendingItem = { type: 'category', id, action: 'delete' };
-      this.deleteModalTitle.set('Permanently Delete Category?');
+      this.deleteModalTitle.set('Xóa vĩnh viễn Danh mục?');
       this.deleteModalMessage.set(
-        'This will <b>permanently delete</b> this category and all its contents.<br/><span class="text-rose-600 font-bold">This action CANNOT be undone.</span>'
+        'Điều này sẽ <b>xóa vĩnh viễn</b> danh mục này và tất cả nội dung bên trong.<br/><span class="text-rose-600 font-bold">Hành động này KHÔNG THỂ hoàn tác.</span>'
       );
       this.isConfirmationModalOpen.set(true);
       return;
     }
     this.isPermanentDelete.set(false);
     this.pendingItem = { type: 'category', id, action: 'delete' };
-    this.deleteModalTitle.set('Delete Category?');
+    this.deleteModalTitle.set('Xóa Danh mục?');
     this.deleteModalMessage.set(
-      'Deleting this Category will also hide all its Topics and Resources.<br/><span class="text-blue-600 font-bold">You can restore them later.</span>'
+      'Việc xóa Danh mục này sẽ ẩn tất cả các Chủ đề và Tài nguyên bên trong.<br/><span class="text-blue-600 font-bold">Bạn có thể khôi phục lại sau.</span>'
     );
     this.isConfirmationModalOpen.set(true);
   }
@@ -774,18 +774,18 @@ export class CategoriesComponent {
     if (this.viewMode() === 'trash') {
       this.isPermanentDelete.set(true);
       this.pendingItem = { type: 'topic', id: topic.id, action: 'delete' };
-      this.deleteModalTitle.set('Permanently Delete Topic?');
+      this.deleteModalTitle.set('Xóa vĩnh viễn Chủ đề?');
       this.deleteModalMessage.set(
-        'This will <b>permanently delete</b> this topic.<br/><span class="text-rose-600 font-bold">This action CANNOT be undone.</span>'
+        'Điều này sẽ <b>xóa vĩnh viễn</b> chủ đề này.<br/><span class="text-rose-600 font-bold">Hành động này KHÔNG THỂ hoàn tác.</span>'
       );
       this.isConfirmationModalOpen.set(true);
       return;
     }
     this.isPermanentDelete.set(false);
     this.pendingItem = { type: 'topic', id: topic.id, action: 'delete' };
-    this.deleteModalTitle.set('Delete Topic?');
+    this.deleteModalTitle.set('Xóa Chủ đề?');
     this.deleteModalMessage.set(
-      'Are you sure you want to delete this topic?<br/><span class="text-blue-600 font-bold">You can restore it later.</span>'
+      'Bạn có chắc chắn muốn xóa chủ đề này?<br/><span class="text-blue-600 font-bold">Bạn có thể khôi phục lại sau.</span>'
     );
     this.isConfirmationModalOpen.set(true);
   }

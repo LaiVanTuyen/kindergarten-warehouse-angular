@@ -174,13 +174,13 @@
               <th class="px-6 py-5 w-20">Icon</th>
               <th class="px-6 py-5 w-1/4 cursor-pointer hover:text-blue-600 transition-colors"
                 (click)="toggleSort('name')">
-                Name
+                Tên
                 <span *ngIf="sortColumn() === 'name'" class="ml-1">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
               </th>
-              <th class="px-6 py-5 w-1/3">Description</th>
-              <th class="px-6 py-5 text-center">Status</th>
-              <th class="px-6 py-5 text-center">Topics</th>
-              <th class="px-6 py-5 text-right pr-8">Actions</th>
+              <th class="px-6 py-5 w-1/3">Mô tả</th>
+              <th class="px-6 py-5 text-center">Trạng thái</th>
+              <th class="px-6 py-5 text-center">Chủ đề</th>
+              <th class="px-6 py-5 text-right pr-8">Thao tác</th>
             </tr>
           </thead>
           <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
@@ -404,7 +404,7 @@
                             </button>
                             <button (click)="confirmDeleteTopic(topic)"
                               class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-                              title="Delete Topic">
+                              title="Xóa chủ đề">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -422,7 +422,7 @@
                           <ng-container *ngIf="viewMode() === 'trash'">
                             <button (click)="confirmRestore('topic', topic.id)"
                               class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              title="Restore Topic">
+                              title="Khôi phục chủ đề">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -432,7 +432,7 @@
                             </button>
                             <button (click)="confirmDeleteTopic(topic)"
                               class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
-                              title="Delete Permanently">
+                              title="Xóa vĩnh viễn">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">

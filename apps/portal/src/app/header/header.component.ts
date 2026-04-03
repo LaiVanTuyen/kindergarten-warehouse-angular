@@ -22,7 +22,7 @@ import { TranslatePipe } from '../pipes/translate.pipe';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './header.component.html',
   styles: [],
 })

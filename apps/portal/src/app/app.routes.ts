@@ -26,6 +26,11 @@ export const appRoutes: Route[] = [
       import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./register/register.component').then((m) => m.RegisterComponent),
+  },
+  {
     path: 'about',
     loadComponent: () =>
       import('./about/about.component').then((m) => m.AboutComponent),
@@ -41,20 +46,10 @@ export const appRoutes: Route[] = [
       import('./settings/settings.component').then((m) => m.SettingsComponent),
   },
   {
-    path: 'profile',
-    loadComponent: () =>
-      import('./profile/profile.component').then((m) => m.ProfileComponent),
-  },
-  {
     path: 'favorites',
     loadComponent: () =>
       import('./favorites/favorites.component').then(
         (m) => m.FavoritesComponent
       ),
-  },
-  {
-    path: 'settings',
-    loadComponent: () =>
-      import('./settings/settings.component').then((m) => m.SettingsComponent),
   },
 ];
