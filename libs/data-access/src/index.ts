@@ -10,7 +10,11 @@ export * from './lib/services/user.service';
 export * from './lib/services/translation.service';
 export * from './lib/services/audit-log.service';
 export * from './lib/services/auth.service';
+export * from './lib/services/favorites.service';
+export * from './lib/services/comment.service';
+export * from './lib/services/resource-download.service';
 export * from './lib/guards/auth.guard';
+export * from './lib/guards/role.guard';
 export * from './lib/interceptors/auth.interceptor';
 export * from './lib/utils/resource.utils';
 

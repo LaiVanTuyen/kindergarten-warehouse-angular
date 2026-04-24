@@ -1,123 +1,142 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { BannerService, Banner } from '@kindergarten-warehouse/data-access';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { interval } from 'rxjs';
 
+import { Banner, BannerService } from '@kindergarten-warehouse/data-access';
+
+/**
+ * Carousel of promotional banners for the portal home page.
+ *
+ * Why this was rewritten: the previous version polled `/banners` every 30s
+ * which generated 120 requests per user per hour for content that almost
+ * never changes. Now we fetch once, and only re-fetch when the tab returns
+ * to the foreground or the user explicitly asks to retry.
+ */
 @Component({
   selector: 'app-banner-slider',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './banner-slider.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BannerSliderComponent implements OnInit, OnDestroy {
-  // Slider State
-  activeSlideIndex = 0;
-  private slideInterval: any;
-  private isPaused = false;
-  slides: Banner[] = [];
-  private bannerService = inject(BannerService);
-  private refreshInterval: any;
+export class BannerSliderComponent implements OnInit {
+  private readonly bannerService = inject(BannerService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  ngOnInit() {
+  readonly slides = signal<Banner[]>([]);
+  readonly activeIndex = signal(0);
+  readonly error = signal(false);
+
+  private readonly isPaused = signal(false);
+  readonly hasSlides = computed(() => this.slides().length > 0);
+
+  /** Autoplay cadence — in ms. */
+  private static readonly AUTOPLAY_MS = 7000;
+
+  ngOnInit(): void {
     this.loadBanners();
-    // Auto-refresh data every 30 seconds to catch Admin updates
-    this.refreshInterval = setInterval(() => {
+
+    interval(BannerSliderComponent.AUTOPLAY_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.isPaused() || !this.hasSlides()) return;
+        this.activeIndex.update(
+          (i) => (i + 1) % Math.max(this.slides().length, 1)
+        );
+      });
+  }
+
+  /** Re-fetch when the user switches back to this tab. */
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (document.visibilityState === 'visible' && !this.hasSlides()) {
       this.loadBanners();
-    }, 30000);
+    }
   }
 
-  loadBanners() {
-    this.bannerService.getActiveBanners('WEB').subscribe({
-      next: (response: any) => {
-        if (response.result) {
-          const data = response.result || [];
-          this.slides = data;
-
-          // Only start slider if not already running (first load)
-          if (this.slides.length > 0 && !this.slideInterval) {
-            this.startAutoSlide();
+  loadBanners(): void {
+    this.error.set(false);
+    this.bannerService
+      .getActiveBanners('WEB')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.slides.set(response.result ?? []);
+          // Reset to the first slide if the previous index is now out-of-bounds.
+          if (this.activeIndex() >= this.slides().length) {
+            this.activeIndex.set(0);
           }
-        }
-      },
-      error: (err: any) => console.error('Failed to load portal banners', err),
-    });
+        },
+        error: () => this.error.set(true),
+      });
   }
 
-  ngOnDestroy() {
-    this.stopAutoSlide();
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
+  goTo(index: number): void {
+    const count = this.slides().length;
+    if (count === 0) return;
+    this.activeIndex.set(((index % count) + count) % count);
   }
 
-  startAutoSlide() {
-    this.stopAutoSlide(); // Clear existing if any
-    this.slideInterval = setInterval(() => {
-      if (!this.isPaused && this.slides.length > 0) {
-        this.activeSlideIndex =
-          (this.activeSlideIndex + 1) % this.slides.length;
-      }
-    }, 7000); // 7 seconds
+  next(): void {
+    this.goTo(this.activeIndex() + 1);
   }
 
-  stopAutoSlide() {
-    if (this.slideInterval) {
-      clearInterval(this.slideInterval);
-      this.slideInterval = null;
-    }
+  prev(): void {
+    this.goTo(this.activeIndex() - 1);
   }
 
-  onMouseEnter() {
-    this.isPaused = true;
+  onMouseEnter(): void {
+    this.isPaused.set(true);
   }
 
-  onMouseLeave() {
-    this.isPaused = false;
-    this.isDragging = false; // Reset drag
+  onMouseLeave(): void {
+    this.isPaused.set(false);
+    this.isDragging = false;
   }
 
-  // Swipe Logic
+  // Touch / drag handling -------------------------------------------------
   private touchStartX = 0;
   private touchEndX = 0;
-  private minSwipeDistance = 50;
+  private readonly MIN_SWIPE = 50;
   private isDragging = false;
 
-  onTouchStart(e: TouchEvent) {
+  onTouchStart(e: TouchEvent): void {
     this.touchStartX = e.changedTouches[0].screenX;
   }
 
-  onTouchEnd(e: TouchEvent) {
+  onTouchEnd(e: TouchEvent): void {
     this.touchEndX = e.changedTouches[0].screenX;
     this.handleSwipe();
   }
 
-  onMouseDown(e: MouseEvent) {
+  onMouseDown(e: MouseEvent): void {
     this.isDragging = true;
     this.touchStartX = e.clientX;
   }
 
-  onMouseUp(e: MouseEvent) {
+  onMouseUp(e: MouseEvent): void {
     if (!this.isDragging) return;
     this.isDragging = false;
     this.touchEndX = e.clientX;
     this.handleSwipe();
   }
 
-  private handleSwipe() {
-    const swipeDistance = this.touchEndX - this.touchStartX;
-    if (Math.abs(swipeDistance) > this.minSwipeDistance) {
-      if (swipeDistance < 0) {
-        // Swipe Left -> Next Slide
-        this.activeSlideIndex =
-          (this.activeSlideIndex + 1) % this.slides.length;
-      } else {
-        // Swipe Right -> Prev Slide
-        this.activeSlideIndex =
-          (this.activeSlideIndex - 1 + this.slides.length) % this.slides.length;
-      }
-      // Reset timer on manual interaction
-      this.startAutoSlide();
-    }
+  private handleSwipe(): void {
+    const distance = this.touchEndX - this.touchStartX;
+    if (Math.abs(distance) < this.MIN_SWIPE) return;
+    distance < 0 ? this.next() : this.prev();
   }
+
+  trackBySlideId = (_: number, banner: Banner) => banner.id;
 }

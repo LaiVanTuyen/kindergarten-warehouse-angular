@@ -84,6 +84,46 @@ export class ResourceService {
   }
 
   /**
+   * List the resources owned by the currently authenticated user
+   * (teacher "My Uploads" page). Unlike `getResources` — which hits
+   * `/admin/resources` — this uses `/me/resources` so it respects the
+   * caller's identity on the backend without requiring admin scope.
+   *
+   * GET /me/resources?page&size&status&keyword
+   */
+  listMyResources(params: {
+    page?: number;
+    size?: number;
+    status?: string | string[];
+    keyword?: string;
+    sort?: string;
+  }): Observable<RestResponse<PaginatedResponse<Resource>>> {
+    let httpParams = new HttpParams()
+      .set('page', Math.max(0, (params.page ?? 1) - 1))
+      .set('size', params.size ?? 12);
+    if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+    if (params.status) {
+      const statuses = Array.isArray(params.status)
+        ? params.status
+        : [params.status];
+      statuses.forEach((s) => (httpParams = httpParams.append('status', s)));
+    }
+    return this.http
+      .get<RestResponse<PaginatedResponse<Resource>>>(
+        `${this.apiUrl}/me/resources`,
+        { params: httpParams }
+      )
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
    * Get Resource by Slug
    * GET /resources/:slug
    */

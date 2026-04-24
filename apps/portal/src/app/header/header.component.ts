@@ -1,145 +1,133 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  inject,
-  OnInit,
-  OnDestroy,
   ElementRef,
   HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { FormsModule } from '@angular/forms'; // Import FormsModule if using ngModel, or just use input event
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
-  TranslationService,
-  Lang,
   AuthService,
+  FavoritesService,
+  Lang,
+  TranslationService,
 } from '@kindergarten-warehouse/data-access';
-import { TranslatePipe } from '../pipes/translate.pipe';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './header.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HeaderComponent implements OnInit, OnDestroy {
-  private router = inject(Router);
-  translationService = inject(TranslationService);
+export class HeaderComponent implements OnInit {
+  // Services ---------------------------------------------------------------
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly favorites = inject(FavoritesService);
+  private readonly eRef = inject(ElementRef<HTMLElement>);
+  readonly translationService = inject(TranslationService);
 
-  isMobileMenuOpen = false;
-  searchQuery = '';
-  private searchSubject = new Subject<string>();
-  private searchSubscription?: Subscription;
+  // Reactive user state ----------------------------------------------------
+  readonly currentUser = this.authService.currentUser;
+  readonly isLoggedIn = computed(() => this.currentUser() !== null);
+  readonly isTeacher = this.authService.isTeacher;
+  readonly favoriteCount = this.favorites.count;
 
-  // Favorites (mock for now, or read from localStorage if implemented)
-  hasFavorites = false;
+  readonly userName = computed(() => this.currentUser()?.fullName ?? '');
+  readonly userAvatar = computed(() =>
+    this.authService.formatAssetUrl(this.currentUser()?.avatarUrl)
+  );
+  readonly userInitials = computed<string>(() => {
+    const name = this.currentUser()?.fullName?.trim();
+    if (!name) return 'ME';
+    const [first = '', second = ''] = name.split(/\s+/);
+    return (second ? first[0] + second[0] : first.slice(0, 2)).toUpperCase();
+  });
 
-  ngOnInit() {
-    this.searchSubscription = this.searchSubject
-      .pipe(debounceTime(500), distinctUntilChanged())
-      .subscribe((term) => {
-        this.performSearch(term);
-      });
+  // UI state (local) -------------------------------------------------------
+  readonly isMobileMenuOpen = signal(false);
+  readonly isUserMenuOpen = signal(false);
+  readonly searchQuery = signal('');
 
-    // Check favorites on init (simple check)
-    this.checkFavorites();
+  // Debounced search -------------------------------------------------------
+  private readonly searchInput$ = new Subject<string>();
 
-    // Check Auth Status
-    this.authService.isLoggedIn$.subscribe((status) => {
-      this.isLoggedIn = status;
-    });
-
-    this.authService.currentUser$.subscribe((user) => {
-      if (user && user.fullName) {
-        // Extract initials
-        const names = user.fullName.split(' ');
-        if (names.length >= 2) {
-          this.userInitials = (names[0][0] + names[1][0]).toUpperCase();
-        } else {
-          this.userInitials = names[0].substring(0, 2).toUpperCase();
-        }
-        this.userName = user.fullName;
-        this.userAvatar = user.avatarUrl || '';
-        this.userRole = user.roles?.[0] || user.role || 'User'; // Fallback logic
-      } else {
-        this.userInitials = 'ME';
-        this.userName = '';
-      }
-    });
-    // Initial check (optional, as BehaviorSubject emits initial value)
+  ngOnInit(): void {
+    this.searchInput$
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        takeUntilDestroyed()
+      )
+      .subscribe((term) => this.runSearch(term));
   }
 
-  ngOnDestroy() {
-    this.searchSubscription?.unsubscribe();
+  // Search -----------------------------------------------------------------
+  onSearchInput(term: string): void {
+    this.searchQuery.set(term);
+    this.searchInput$.next(term);
   }
 
-  onSearchInput(term: string) {
-    this.searchQuery = term;
-    this.searchSubject.next(term);
+  clearSearch(): void {
+    this.searchQuery.set('');
+    this.searchInput$.next('');
   }
 
-  clearSearch() {
-    this.searchQuery = '';
-    this.searchSubject.next('');
-  }
-
-  performSearch(term: string) {
+  private runSearch(term: string): void {
     this.router.navigate(['/resources'], {
       queryParams: { search: term || null },
       queryParamsHandling: 'merge',
     });
   }
 
-  toggleMobileMenu() {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  // Menus ------------------------------------------------------------------
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update((v) => !v);
   }
 
-  closeMobileMenu() {
-    this.isMobileMenuOpen = false;
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 
-  setLang(lang: Lang) {
-    this.translationService.setLanguage(lang);
+  toggleUserMenu(): void {
+    this.isUserMenuOpen.update((v) => !v);
   }
 
-  // Auth State
-  isLoggedIn = false;
-  userInitials = '';
-  userAvatar = '';
-  userName = '';
-  userRole = '';
-  isUserMenuOpen = false;
-  private authService = inject(AuthService);
-  private eRef = inject(ElementRef);
+  closeUserMenu(): void {
+    this.isUserMenuOpen.set(false);
+  }
 
   @HostListener('document:click', ['$event'])
-  clickout(event: Event) {
-    if (!this.eRef.nativeElement.contains(event.target)) {
+  handleOutsideClick(event: Event): void {
+    if (!this.eRef.nativeElement.contains(event.target as Node)) {
       this.closeUserMenu();
-      this.closeMobileMenu(); // Also close mobile menu if clicking outside
+      this.closeMobileMenu();
     }
   }
 
-  toggleUserMenu() {
-    this.isUserMenuOpen = !this.isUserMenuOpen;
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
+    this.closeUserMenu();
+    this.closeMobileMenu();
   }
 
-  closeUserMenu() {
-    this.isUserMenuOpen = false;
+  // Language / auth --------------------------------------------------------
+  setLang(lang: Lang): void {
+    this.translationService.setLanguage(lang);
   }
 
-  checkFavorites() {
-    // TODO: Implement actual check against LocalStorage
-    const favorites = localStorage.getItem('favorites');
-    this.hasFavorites = favorites ? JSON.parse(favorites).length > 0 : false;
-  }
-
-  logout() {
+  logout(): void {
+    this.closeUserMenu();
     this.authService.logout('Hẹn gặp lại bạn! 👋');
-    this.router.navigate(['/login']);
   }
 }

@@ -26,7 +26,14 @@ export interface User {
 export interface LoginRequest {
   email: string;
   password: string;
-  // Wait, user requested strict password. Let's make it strict string.
+}
+
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  username?: string;
+  phoneNumber?: string;
 }
 
 export interface AuthResponse {

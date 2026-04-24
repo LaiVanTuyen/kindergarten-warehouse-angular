@@ -1,77 +1,104 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
-  OnInit,
   Output,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-import { Resource, getResourceBadgeClass } from '@kindergarten-warehouse/data-access';
-import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
+import {
+  AuthService,
+  FavoritesService,
+  Resource,
+  ToastService,
+  getResourceBadgeClass,
+} from '@kindergarten-warehouse/data-access';
+import { RatingStarsComponent } from '../shared/rating-stars/rating-stars.component';
 
 @Component({
   selector: 'app-resource-card',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RatingStarsComponent],
   templateUrl: './resource-card.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ResourceCardComponent implements OnInit {
-  @Input({ required: true }) resource!: Resource;
+export class ResourceCardComponent {
+  private readonly favorites = inject(FavoritesService);
+  private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
+
+  private readonly resourceSignal = signal<Resource | null>(null);
+
+  @Input({ required: true })
+  set resource(value: Resource) {
+    this.resourceSignal.set(value);
+  }
+  get resource(): Resource {
+    return this.resourceSignal()!;
+  }
+
   @Output() view = new EventEmitter<void>();
   @Output() download = new EventEmitter<void>();
 
-  readonly starTemplate = [1, 2, 3, 4, 5];
+  protected readonly imageError = signal(false);
 
-  isFavorite = false;
-  hasImageError = false;
+  /** Local heart state derives from the shared FavoritesService signal. */
+  protected readonly isFavorited = computed(() => {
+    const r = this.resourceSignal();
+    return r ? this.favorites.isFavorited(r.id) : false;
+  });
 
-  private toastService = inject(ToastService);
-  private authService = inject(AuthService);
+  /**
+   * Normalized display type (merges YouTube + raw fileType). Typed as `string`
+   * so the template can compare against legacy values like 'AUDIO' that the
+   * backend historically returned before the fileType enum was narrowed.
+   */
+  protected readonly rType = computed<string>(() => {
+    const r = this.resourceSignal();
+    if (!r) return '';
+    if (r.resourceType === 'YOUTUBE') return 'VIDEO';
+    return r.fileType || 'OTHER';
+  });
 
-  ngOnInit() {
-    this.checkFavorite();
-  }
-
-  /** Trả về loại tài nguyên chuẩn hóa để dùng trong template */
-  get rType(): string {
-    if (!this.resource) return '';
-    if (this.resource.resourceType === 'YOUTUBE') return 'VIDEO';
-    return this.resource.fileType || 'OTHER';
-  }
-
-  /** Label ngắn gọn hiển thị bên cạnh icon loại tài liệu */
-  get displayType(): string {
-    if (!this.resource) return '';
-    if (this.resource.resourceType === 'YOUTUBE') return 'Video';
-    switch (this.resource.fileType) {
-      case 'VIDEO':     return 'Video';
-      case 'PDF':       return 'PDF';
-      case 'DOCUMENT':  return 'Word';
-      case 'EXCEL':     return 'Excel';
-      case 'POWERPOINT': return 'PPT';
-      case 'IMAGE':     return 'Ảnh';
-      case 'OTHER':     return 'File';
-      default:          return this.resource.fileExtension || 'File';
+  protected readonly displayType = computed(() => {
+    const r = this.resourceSignal();
+    if (!r) return '';
+    if (r.resourceType === 'YOUTUBE') return 'Video';
+    switch (r.fileType) {
+      case 'VIDEO':
+        return 'Video';
+      case 'PDF':
+        return 'PDF';
+      case 'DOCUMENT':
+        return 'Word';
+      case 'EXCEL':
+        return 'Excel';
+      case 'POWERPOINT':
+        return 'PPT';
+      case 'IMAGE':
+        return 'Ảnh';
+      case 'OTHER':
+        return 'File';
+      default:
+        return r.fileExtension || 'File';
     }
-  }
+  });
 
-  /** Badge color class — chỉ dùng cho loại tài nguyên không phải YOUTUBE */
-  get badgeClass(): string {
-    if (!this.resource) return 'bg-gray-50 text-gray-600 border-gray-200';
-    const type = this.resource.fileType || 'OTHER';
-    return getResourceBadgeClass(type);
-  }
+  protected readonly badgeClass = computed(() =>
+    getResourceBadgeClass(this.resourceSignal()?.fileType || 'OTHER')
+  );
 
-  /** Tự động lấy thumbnail: ưu tiên thumbnailUrl, nếu là youtube thì tự extract từ URL */
-  get autoThumbnail(): string | null {
-    if (!this.resource) return null;
-    if (this.resource.thumbnailUrl) return this.resource.thumbnailUrl;
-    if (this.resource.resourceType === 'YOUTUBE' && this.resource.fileUrl) {
-      const match = this.resource.fileUrl.match(
+  protected readonly autoThumbnail = computed<string | null>(() => {
+    const r = this.resourceSignal();
+    if (!r) return null;
+    if (r.thumbnailUrl) return this.auth.formatAssetUrl(r.thumbnailUrl);
+    if (r.resourceType === 'YOUTUBE' && r.fileUrl) {
+      const match = r.fileUrl.match(
         /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
       );
       if (match?.[1]) {
@@ -79,50 +106,57 @@ export class ResourceCardComponent implements OnInit {
       }
     }
     return null;
-  }
+  });
 
-  onView() {
+  protected readonly ratingValue = computed(() => {
+    const r = this.resourceSignal();
+    return Number(r?.averageRating ?? r?.rating ?? 0);
+  });
+
+  protected onView(): void {
     this.view.emit();
   }
 
-  onDownload(event: Event) {
+  protected onDownload(event: Event): void {
     event.stopPropagation();
+    event.preventDefault();
     this.download.emit();
   }
 
-  onImageError() {
-    this.hasImageError = true;
+  protected onImageError(): void {
+    this.imageError.set(true);
   }
 
-  toggleFavorite(event: Event) {
+  protected toggleFavorite(event: Event): void {
     event.stopPropagation();
+    event.preventDefault();
 
-    if (!this.authService.isLoggedIn()) {
-      this.toastService.show('Vui lòng đăng nhập để lưu yêu thích', 'info');
+    const r = this.resourceSignal();
+    if (!r) return;
+
+    if (!this.auth.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để lưu yêu thích', 'info');
       return;
     }
 
-    this.isFavorite = !this.isFavorite;
-
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-
-    if (this.isFavorite) {
-      if (!favorites.includes(this.resource.id)) {
-        favorites.push(this.resource.id);
-        this.toastService.show('Đã thêm vào danh sách yêu thích', 'success');
-      }
-    } else {
-      const index = favorites.indexOf(this.resource.id);
-      if (index > -1) {
-        favorites.splice(index, 1);
-        this.toastService.show('Đã xóa khỏi danh sách yêu thích', 'info');
-      }
-    }
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }
-
-  checkFavorite() {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    this.isFavorite = favorites.includes(this.resource.id);
+    const willFavorite = !this.favorites.isFavorited(r.id);
+    this.favorites.toggle(r.id).subscribe({
+      next: (favorited) => {
+        this.toast.show(
+          favorited
+            ? 'Đã thêm vào danh sách yêu thích'
+            : 'Đã xoá khỏi danh sách yêu thích',
+          favorited ? 'success' : 'info'
+        );
+      },
+      error: () => {
+        this.toast.show(
+          willFavorite
+            ? 'Không thể lưu yêu thích. Vui lòng thử lại.'
+            : 'Không thể xoá yêu thích. Vui lòng thử lại.',
+          'error'
+        );
+      },
+    });
   }
 }

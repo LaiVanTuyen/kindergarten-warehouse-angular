@@ -1,16 +1,47 @@
-<div class="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
-    <div class="mb-6 relative">
-        <div class="absolute inset-0 bg-blue-100 rounded-full scale-125 opacity-20 animate-pulse"></div>
-        <img [src]="imageSrc || 'assets/images/empty-state.svg'" class="w-48 h-48 object-contain relative z-10"
-            alt="Empty State" onerror="this.src='https://cdn-icons-png.flaticon.com/512/7486/7486777.png'">
-        <!-- Fallback icon -->
+<div class="flex flex-col items-center justify-center text-center animate-fade-in-up"
+  [class.py-16]="!compact" [class.py-10]="compact">
+  <!-- Icon (preferred) or image illustration -->
+  <div *ngIf="icon; else asImage"
+    class="flex items-center justify-center rounded-full mb-5 ring-1 ring-inset"
+    [class.w-24]="!compact" [class.h-24]="!compact"
+    [class.w-16]="compact"  [class.h-16]="compact"
+    [ngClass]="{
+      'bg-pink-50 text-pink-400 ring-pink-100':     tone === 'pink',
+      'bg-amber-50 text-amber-400 ring-amber-100':  tone === 'amber',
+      'bg-sky-50 text-sky-400 ring-sky-100':        tone === 'sky',
+      'bg-slate-50 text-slate-400 ring-slate-100':  tone === 'neutral'
+    }"
+    aria-hidden="true">
+    <i [class]="icon" [class.text-5xl]="!compact" [class.text-3xl]="compact"></i>
+  </div>
+
+  <ng-template #asImage>
+    <div class="mb-6 relative" [class.w-48]="!compact" [class.h-48]="!compact"
+      [class.w-32]="compact" [class.h-32]="compact">
+      <img [src]="imageSrc || 'assets/images/empty-state.svg'" class="w-full h-full object-contain"
+        alt="" role="presentation"
+        onerror="this.onerror=null;this.src='https://cdn-icons-png.flaticon.com/512/7486/7486777.png'">
     </div>
+  </ng-template>
 
-    <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ title || ('empty.title' | translate) }}</h3>
-    <p class="text-gray-500 max-w-sm mx-auto mb-8">{{ message || ('empty.message' | translate) }}</p>
+  <h3 class="font-bold text-gray-900 mb-2"
+    [class.text-xl]="!compact" [class.text-lg]="compact">
+    {{ title || ('empty.title' | translate) }}
+  </h3>
+  <p class="text-gray-500 max-w-md mx-auto"
+    [class.mb-8]="actionLabel" [class.text-base]="!compact" [class.text-sm]="compact">
+    {{ message || ('empty.message' | translate) }}
+  </p>
 
-    <button *ngIf="actionLabel" (click)="action.emit()"
-        class="px-8 py-3 rounded-full bg-primary-blue text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        {{ actionLabel }}
-    </button>
+  <!-- CTA: routerLink takes precedence over event emit. -->
+  <a *ngIf="actionLabel && actionRoute" [routerLink]="actionRoute"
+    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
+    <i *ngIf="actionIcon" [class]="actionIcon" aria-hidden="true"></i>
+    {{ actionLabel }}
+  </a>
+  <button *ngIf="actionLabel && !actionRoute" type="button" (click)="action.emit()"
+    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
+    <i *ngIf="actionIcon" [class]="actionIcon" aria-hidden="true"></i>
+    {{ actionLabel }}
+  </button>
 </div>

@@ -1,20 +1,31 @@
 import { TestBed } from '@angular/core/testing';
-import { AppComponent } from './app';
-import { NxWelcome } from './nx-welcome';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideToastr } from 'ngx-toastr';
 
-describe('App', () => {
+import { AppComponent } from './app';
+import { API_URL } from '@kindergarten-warehouse/data-access';
+
+describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent, NxWelcome],
-      providers: [provideRouter([])],
+      imports: [AppComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideNoopAnimations(),
+        provideToastr(),
+        { provide: API_URL, useValue: '/api/v1' },
+      ],
     }).compileComponents();
   });
 
-  it('should render header', () => {
+  it('renders the header and footer shell', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-header')).toBeTruthy();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-header')).toBeTruthy();
+    expect(el.querySelector('router-outlet')).toBeTruthy();
   });
 });
