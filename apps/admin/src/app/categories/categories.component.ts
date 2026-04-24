@@ -13,7 +13,9 @@ import {
   FormBuilder,
   FormControl,
   ReactiveFormsModule,
+  FormsModule,
   Validators,
+  FormGroup,
 } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
@@ -28,14 +30,18 @@ import {
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { ToastService } from '@kindergarten-warehouse/data-access';
 
+import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
+
 @Component({
   selector: 'app-admin-categories',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     PaginationComponent,
     BreadcrumbComponent,
+    MultiSelectFilterComponent,
   ],
   templateUrl: './categories.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,6 +109,16 @@ export class CategoriesComponent {
   sortColumn = signal<'name' | 'createdAt'>('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
 
+  // Filter State
+  statusFilter = signal<Set<string>>(new Set());
+  activeFilterDropdown = signal<string | null>(null);
+  showFilters = signal<boolean>(false);
+
+  statusOptions = [
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Inactive', value: 'INACTIVE' },
+  ];
+
   // Delete Modal State
   deleteModalTitle = signal('');
   deleteModalMessage = signal('');
@@ -166,6 +182,11 @@ export class CategoriesComponent {
     if (params['search'])
       this.searchControl.setValue(params['search'], { emitEvent: false }); // Avoid double trigger
 
+    if (params['status']) {
+      const statuses = params['status'].split(',');
+      this.statusFilter.set(new Set(statuses));
+    }
+
     // Initialize (Start at page 1 or restored page)
     this.loadData();
 
@@ -189,17 +210,7 @@ export class CategoriesComponent {
     });
 
     this.topicForm.get('name')?.valueChanges.subscribe((name) => {
-      if (!this.isEditMode() && name) {
-        // Topics don't have a slug field in the form yet based on previous file view?
-        // Checking HTML... Topic has name, description, categoryId.
-        // Wait, looking at the previous view_file of HTML...
-        // Line 183: <div class="text-[10px] text-gray-400 font-mono mt-0.5">{{ topic.slug }}</div>
-        // But Topic Modal Form (lines 359-421) DOES NOT have a slug input!
-        // So I should only do this for Category for now, or check if Topic needs a slug field added.
-        // The user request "Logic UX - Slug Generation" mentioned "Name" -> "Slug".
-        // In the screenshots, Edit Category has a slug field.
-        // I will focus on Category first.
-      }
+      // Logic for slug if needed
     });
   }
 
@@ -219,7 +230,7 @@ export class CategoriesComponent {
 
   updateUrl() {
     // 2. Update URL when state changes
-    const queryParams = {
+    const queryParams: any = {
       mode: this.viewMode(),
       page: this.currentPageCategories(),
       size: this.pageSize(),
@@ -227,6 +238,12 @@ export class CategoriesComponent {
       dir: this.sortDirection(),
       search: this.searchControl.value || null, // Remove if empty
     };
+
+    if (this.statusFilter().size > 0) {
+      queryParams['status'] = Array.from(this.statusFilter()).join(',');
+    } else {
+      queryParams['status'] = null;
+    }
 
     this.router.navigate([], {
       relativeTo: this.route,
@@ -236,9 +253,58 @@ export class CategoriesComponent {
     });
   }
 
+  // Filter Helpers
+  removeStatusFilter(status: string) {
+    const current = this.statusFilter();
+    const newSet = new Set(current);
+    newSet.delete(status);
+    this.statusFilter.set(newSet);
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadData();
+  }
+
+  clearStatusFilter() {
+    this.statusFilter.set(new Set());
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadData();
+  }
+
+  resetFilters() {
+    this.searchControl.reset('', { emitEvent: false });
+    this.statusFilter.set(new Set());
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadData();
+  }
+
+  onStatusChange(selected: Set<string>) {
+    this.statusFilter.set(selected);
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadData();
+  }
+
+  toggleStatusDropdown() {
+    this.activeFilterDropdown.update((current) =>
+      current === 'status' ? null : 'status'
+    );
+  }
+
   setViewMode(mode: CategoryViewMode) {
     this.viewMode.set(mode);
     this.currentPageCategories.set(1);
+
+    // If switching to trash, clear status filter as it's not relevant (items are deleted)
+    // Or keep it if we want to filter deleted items by their original status?
+    // Usually 'Trash' implies 'Deleted', so 'Active' property might not be the primary filter.
+    // Let's clear status filter for simplicity or keep it if user wants to find 'Active but Deleted' items (rare).
+    // I will keep it but it might return empty if backend logic enforces deleted=true AND status=ACTIVE.
+    // Actually, backend might ignore status if deleted=true, or enforce both.
+    // Let's reset filters when switching modes to avoid confusion.
+    this.statusFilter.set(new Set());
+
     this.updateUrl(); // Sync URL
 
     // Clear topics cache when switching modes because the 'isDeleted' filter changes
@@ -359,6 +425,13 @@ export class CategoriesComponent {
 
   getTopicsForCategory(categoryId: string): Topic[] {
     return this.topics().filter((t) => t.categoryId === categoryId);
+  }
+
+  onPageSizeChange(newSize: number) {
+    this.pageSize.set(Number(newSize));
+    this.currentPageCategories.set(1);
+    this.updateUrl();
+    this.loadCategories();
   }
 
   onCategoryPageChange(page: number) {
@@ -681,18 +754,18 @@ export class CategoriesComponent {
     if (this.viewMode() === 'trash') {
       this.isPermanentDelete.set(true);
       this.pendingItem = { type: 'category', id, action: 'delete' };
-      this.deleteModalTitle.set('Permanently Delete Category?');
+      this.deleteModalTitle.set('Xóa vĩnh viễn Danh mục?');
       this.deleteModalMessage.set(
-        'This will <b>permanently delete</b> this category and all its contents.<br/><span class="text-rose-600 font-bold">This action CANNOT be undone.</span>'
+        'Điều này sẽ <b>xóa vĩnh viễn</b> danh mục này và tất cả nội dung bên trong.<br/><span class="text-rose-600 font-bold">Hành động này KHÔNG THỂ hoàn tác.</span>'
       );
       this.isConfirmationModalOpen.set(true);
       return;
     }
     this.isPermanentDelete.set(false);
     this.pendingItem = { type: 'category', id, action: 'delete' };
-    this.deleteModalTitle.set('Delete Category?');
+    this.deleteModalTitle.set('Xóa Danh mục?');
     this.deleteModalMessage.set(
-      'Deleting this Category will also hide all its Topics and Resources.<br/><span class="text-blue-600 font-bold">You can restore them later.</span>'
+      'Việc xóa Danh mục này sẽ ẩn tất cả các Chủ đề và Tài nguyên bên trong.<br/><span class="text-blue-600 font-bold">Bạn có thể khôi phục lại sau.</span>'
     );
     this.isConfirmationModalOpen.set(true);
   }
@@ -701,18 +774,18 @@ export class CategoriesComponent {
     if (this.viewMode() === 'trash') {
       this.isPermanentDelete.set(true);
       this.pendingItem = { type: 'topic', id: topic.id, action: 'delete' };
-      this.deleteModalTitle.set('Permanently Delete Topic?');
+      this.deleteModalTitle.set('Xóa vĩnh viễn Chủ đề?');
       this.deleteModalMessage.set(
-        'This will <b>permanently delete</b> this topic.<br/><span class="text-rose-600 font-bold">This action CANNOT be undone.</span>'
+        'Điều này sẽ <b>xóa vĩnh viễn</b> chủ đề này.<br/><span class="text-rose-600 font-bold">Hành động này KHÔNG THỂ hoàn tác.</span>'
       );
       this.isConfirmationModalOpen.set(true);
       return;
     }
     this.isPermanentDelete.set(false);
     this.pendingItem = { type: 'topic', id: topic.id, action: 'delete' };
-    this.deleteModalTitle.set('Delete Topic?');
+    this.deleteModalTitle.set('Xóa Chủ đề?');
     this.deleteModalMessage.set(
-      'Are you sure you want to delete this topic?<br/><span class="text-blue-600 font-bold">You can restore it later.</span>'
+      'Bạn có chắc chắn muốn xóa chủ đề này?<br/><span class="text-blue-600 font-bold">Bạn có thể khôi phục lại sau.</span>'
     );
     this.isConfirmationModalOpen.set(true);
   }

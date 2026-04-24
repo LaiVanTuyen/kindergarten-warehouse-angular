@@ -16,14 +16,10 @@ export class AdminLayoutComponent {
 
   isProfileOpen = signal(false);
   isSidebarOpen = signal(false);
+  isSidebarCollapsed = signal(false);
 
   // Expose currentUser for the template
   currentUser$ = this.authService.currentUser$;
-
-  // Computed initials (or use a pipe/method in template if simpler)
-  // Since we use async pipe in template, we can just use a helper method or *ngIf
-
-  // constructor(private authService: AuthService) {} // Removed constructor injection
 
   toggleProfile() {
     this.isProfileOpen.update((v) => !v);
@@ -31,6 +27,10 @@ export class AdminLayoutComponent {
 
   toggleSidebar() {
     this.isSidebarOpen.update((v) => !v);
+  }
+
+  onSidebarCollapsed(collapsed: boolean) {
+    this.isSidebarCollapsed.set(collapsed);
   }
 
   logout() {

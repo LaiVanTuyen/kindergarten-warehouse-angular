@@ -1,219 +1,223 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex flex-col lg:flex-row gap-8">
+<div class="h-full flex flex-col overflow-hidden">
+    <!-- Dark Banner Header -->
+    <div class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-6 relative flex justify-between items-center flex-shrink-0">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="space-y-1">
+            <app-breadcrumb></app-breadcrumb>
+            <h1 class="text-2xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
+            <p class="text-slate-400 mt-1 text-sm">Quản lý thông tin cá nhân và bảo mật tài khoản của bạn.</p>
+        </div>
+    </div>
 
-        <!-- LEFT COLUMN: IDENTIFIER (30%) -->
-        <div class="lg:w-[30%] space-y-6">
-            <div
-                class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+        <div class="flex flex-col lg:flex-row gap-8">
 
-                <!-- Hidden File Input -->
-                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept="image/*">
+            <!-- LEFT COLUMN: IDENTIFIER (30%) -->
+            <div class="lg:w-[30%] space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
 
-                <!-- Avatar Section -->
+                    <!-- Hidden File Input -->
+                    <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept="image/*">
 
-                <div role="button" tabindex="0" (keydown.enter)="fileInput.click()" (keydown.space)="fileInput.click()"
-                    class="relative group cursor-pointer w-32 h-32 mx-auto block rounded-full focus:outline-none focus:ring-4 focus:ring-blue-100"
-                    (click)="fileInput.click()" title="Change Avatar">
-                    <!-- Main Image -->
-                    <img [src]="user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.name + '&background=random'"
-                        (error)="handleImageError()" alt="Profile Avatar"
-                        class="w-full h-full rounded-full object-cover border-4 border-white shadow-lg ring-1 ring-gray-100 transition-transform group-hover:scale-105">
+                    <!-- Avatar Section -->
+                    <div role="button" tabindex="0" (keydown.enter)="fileInput.click()" (keydown.space)="fileInput.click()"
+                        class="relative group cursor-pointer w-32 h-32 mx-auto block rounded-full focus:outline-none focus:ring-4 focus:ring-blue-100"
+                        (click)="fileInput.click()" title="Đổi ảnh đại diện">
+                        <!-- Main Image -->
+                        <img [src]="user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.name + '&background=random'"
+                            (error)="handleImageError()" alt="Ảnh đại diện"
+                            class="w-full h-full rounded-full object-cover border-4 border-white shadow-lg ring-1 ring-gray-100 transition-transform group-hover:scale-105">
 
-                    <!-- Loading Overlay -->
-                    <div *ngIf="isUploadingAvatar"
-                        class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm z-10">
-                        <div class="animate-spin h-8 w-8 border-3 border-white border-t-transparent rounded-full"></div>
+                        <!-- Loading Overlay -->
+                        <div *ngIf="isUploadingAvatar"
+                            class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm z-10">
+                            <div class="animate-spin h-8 w-8 border-3 border-white border-t-transparent rounded-full"></div>
+                        </div>
+
+                        <!-- Camera Upload Button -->
+                        <button *ngIf="!isUploadingAvatar"
+                            class="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 transition-all z-20"
+                            title="Đổi ảnh đại diện">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
                     </div>
 
-                    <!-- Camera Upload Button -->
-                    <button *ngIf="!isUploadingAvatar"
-                        class="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 transition-all z-20"
-                        title="Change Avatar">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                    <!-- Identity -->
+                    <h2 class="mt-4 text-xl font-bold text-gray-900">{{ user.name }}</h2>
+                    <div class="mt-2 flex flex-wrap justify-center gap-2">
+                        <span *ngFor="let role of user.role.split(', ')"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                            {{ role }}
+                        </span>
+                    </div>
+
+                    <p class="mt-4 text-sm text-gray-400">
+                        Tham gia: {{ user.joinedDate | date:'dd/MM/yyyy' }}
+                    </p>
+
+                </div>
+            </div>
+
+
+            <!-- RIGHT COLUMN: CONFIGURATION (70%) -->
+            <div class="lg:w-[70%] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+
+                <!-- Tabs -->
+                <div class="border-b border-gray-100 flex">
+                    <button (click)="activeTab = 'general'" [class.text-blue-600]="activeTab === 'general'"
+                        [class.border-blue-600]="activeTab === 'general'" [class.font-semibold]="activeTab === 'general'"
+                        class="flex-1 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-blue-500 transition-colors">
+                        Thông tin chung
+                    </button>
+                    <button (click)="activeTab = 'security'" [class.text-blue-600]="activeTab === 'security'"
+                        [class.border-blue-600]="activeTab === 'security'" [class.font-semibold]="activeTab === 'security'"
+                        class="flex-1 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-blue-500 transition-colors">
+                        Bảo mật & Mật khẩu
                     </button>
                 </div>
 
-                <!-- Identity -->
-                <h2 class="mt-4 text-xl font-bold text-gray-900">{{ user.name }}</h2>
-                <div class="mt-2 flex flex-wrap justify-center gap-2">
-                    <span *ngFor="let role of user.role.split(', ')"
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {{ role }}
-                    </span>
+                <!-- Content Area -->
+                <div class="p-8">
+
+                    <!-- GENERAL TAB -->
+                    <form #profileForm="ngForm" *ngIf="activeTab === 'general'" class="animate-fade-in"
+                        (ngSubmit)="saveProfile()">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Cài đặt hồ sơ</h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Họ và tên -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Họ và tên <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" [(ngModel)]="user.name" name="fullName" required minlength="2"
+                                    maxlength="100" #nameModel="ngModel"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                    [class.border-red-500]="nameModel.invalid && (nameModel.dirty || nameModel.touched)">
+
+                                <div *ngIf="nameModel.invalid && (nameModel.dirty || nameModel.touched)"
+                                    class="mt-1 text-xs text-red-500">
+                                    <span *ngIf="nameModel.errors?.['required']">Họ và tên không được để trống.</span>
+                                    <span *ngIf="nameModel.errors?.['minlength']">Tên phải có ít nhất 2 ký tự.</span>
+                                </div>
+                            </div>
+
+                            <!-- Số điện thoại -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                                <input type="tel" [(ngModel)]="user.phone" name="phone"
+                                    pattern="(84|0[3|5|7|8|9])+([0-9]{8})\b" #phoneModel="ngModel"
+                                    placeholder="0912 345 678"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                    [class.border-red-500]="phoneModel.invalid && (phoneModel.dirty || phoneModel.touched)">
+
+                                <div *ngIf="phoneModel.invalid && (phoneModel.dirty || phoneModel.touched)"
+                                    class="mt-1 text-xs text-red-500">
+                                    <span *ngIf="phoneModel.errors?.['pattern']">Số điện thoại không hợp lệ (VD: 0912345678).</span>
+                                </div>
+                            </div>
+
+                            <!-- Giới thiệu -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Giới thiệu bản thân</label>
+                                <textarea rows="4" [(ngModel)]="user.bio" name="bio" maxlength="500" #bioModel="ngModel"
+                                    placeholder="Một vài thông tin về bạn..."
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-red-500" *ngIf="bioModel.value?.length >= 500">Đã đạt giới hạn ký tự!</p>
+                                    <p class="text-xs text-gray-400 ml-auto">{{ bioModel.value?.length || 0 }}/500 ký tự</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Button Area -->
+                        <div class="mt-8 flex justify-end border-t border-gray-50 pt-6">
+                            <button type="submit" [disabled]="profileForm.invalid || !hasChanges || isSavingProfile"
+                                class="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center gap-2">
+                                <span *ngIf="isSavingProfile"
+                                    class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                {{ isSavingProfile ? 'Đang lưu...' : 'Lưu thay đổi' }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- SECURITY TAB -->
+                    <form #passwordForm="ngForm" *ngIf="activeTab === 'security'" class="animate-fade-in"
+                        (ngSubmit)="updatePassword()">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Đổi mật khẩu</h3>
+                        <p class="text-sm text-gray-500 mb-6">Hãy sử dụng mật khẩu dài, ngẫu nhiên để bảo vệ tài khoản của bạn một cách tốt nhất.</p>
+
+                        <div class="space-y-5 max-w-lg">
+                            <!-- Mật khẩu hiện tại -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu hiện tại</label>
+                                <input type="password" [(ngModel)]="currentPassword" name="currentPassword" required
+                                    placeholder="••••••••" #currentPassModel="ngModel"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                    [class.border-red-500]="currentPassModel.invalid && (currentPassModel.dirty || currentPassModel.touched)">
+                                <div *ngIf="currentPassModel.invalid && (currentPassModel.dirty || currentPassModel.touched)"
+                                    class="mt-1 text-xs text-red-500">
+                                    <span *ngIf="currentPassModel.errors?.['required']">Vui lòng nhập mật khẩu hiện tại.</span>
+                                </div>
+                            </div>
+
+                            <!-- Mật khẩu mới -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu mới <span class="text-gray-400 font-normal">(tối thiểu 8 ký tự)</span></label>
+                                <input type="password" [(ngModel)]="newPassword" name="newPassword" required minlength="8"
+                                    pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&]).{8,}"
+                                    placeholder="Tối thiểu 8 ký tự..." #newPassModel="ngModel"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                    [class.border-red-500]="(newPassModel.invalid && (newPassModel.dirty || newPassModel.touched)) || (newPassword && currentPassword && newPassword === currentPassword)">
+
+                                <div *ngIf="newPassModel.invalid && (newPassModel.dirty || newPassModel.touched)"
+                                    class="mt-1 text-xs text-red-500">
+                                    <span *ngIf="newPassModel.errors?.['required']">Vui lòng nhập mật khẩu mới.</span>
+                                    <span *ngIf="newPassModel.errors?.['minlength']">Mật khẩu phải có ít nhất 8 ký tự.</span>
+                                    <span *ngIf="newPassModel.errors?.['pattern']">
+                                        Phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&).
+                                    </span>
+                                </div>
+
+                                <div *ngIf="newPassword && currentPassword && newPassword === currentPassword"
+                                    class="mt-1 text-xs text-red-500 font-medium">
+                                    Mật khẩu mới không được trùng với mật khẩu hiện tại!
+                                </div>
+                            </div>
+
+                            <!-- Xác nhận mật khẩu mới -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu mới</label>
+                                <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required
+                                    placeholder="Nhập lại mật khẩu mới..."
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                                    [class.border-red-500]="!passwordsMatch" [class.focus:ring-red-100]="!passwordsMatch">
+
+                                <p *ngIf="!passwordsMatch" class="mt-1 text-sm text-red-500 font-medium">
+                                    Mật khẩu xác nhận không khớp!
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Update Button Area -->
+                        <div class="mt-8 flex justify-end border-t border-gray-50 pt-6">
+                            <button type="submit"
+                                [disabled]="passwordForm.invalid || !isPasswordValid || isChangingPassword"
+                                class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-blue-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 flex items-center gap-2">
+                                <span *ngIf="isChangingPassword"
+                                    class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                {{ isChangingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu' }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <p class="mt-4 text-sm text-gray-400">
-                    Joined: {{ user.joinedDate | date:'mediumDate' }}
-                </p>
-
             </div>
-        </div>
-
-
-        <!-- RIGHT COLUMN: CONFIGURATION (70%) -->
-        <div class="lg:w-[70%] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-
-            <!-- Tabs -->
-            <div class="border-b border-gray-100 flex">
-                <button (click)="activeTab = 'general'" [class.text-blue-600]="activeTab === 'general'"
-                    [class.border-blue-600]="activeTab === 'general'" [class.font-semibold]="activeTab === 'general'"
-                    class="flex-1 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-blue-500 transition-colors">
-                    General Information
-                </button>
-                <button (click)="activeTab = 'security'" [class.text-blue-600]="activeTab === 'security'"
-                    [class.border-blue-600]="activeTab === 'security'" [class.font-semibold]="activeTab === 'security'"
-                    class="flex-1 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-blue-500 transition-colors">
-                    Security & Password
-                </button>
-            </div>
-
-            <!-- Content Area -->
-            <div class="p-8">
-
-                <!-- GENRAL TAB -->
-                <form #profileForm="ngForm" *ngIf="activeTab === 'general'" class="animate-fade-in"
-                    (ngSubmit)="saveProfile()">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-6">Profile Settings</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Full Name -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" [(ngModel)]="user.name" name="fullName" required minlength="2"
-                                maxlength="100" #nameModel="ngModel"
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                [class.border-red-500]="nameModel.invalid && (nameModel.dirty || nameModel.touched)">
-
-                            <div *ngIf="nameModel.invalid && (nameModel.dirty || nameModel.touched)"
-                                class="mt-1 text-xs text-red-500">
-                                <span *ngIf="nameModel.errors?.['required']">Full name is required.</span>
-                                <span *ngIf="nameModel.errors?.['minlength']">Name must be at least 2
-                                    characters.</span>
-                            </div>
-                        </div>
-
-                        <!-- Phone -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                            <input type="tel" [(ngModel)]="user.phone" name="phone"
-                                pattern="(84|0[3|5|7|8|9])+([0-9]{8})\b" #phoneModel="ngModel"
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                [class.border-red-500]="phoneModel.invalid && (phoneModel.dirty || phoneModel.touched)">
-
-                            <div *ngIf="phoneModel.invalid && (phoneModel.dirty || phoneModel.touched)"
-                                class="mt-1 text-xs text-red-500">
-                                <span *ngIf="phoneModel.errors?.['pattern']">Invalid VN phone number format (e.g.,
-                                    0912345678).</span>
-                            </div>
-                        </div>
-
-                        <!-- Bio -->
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                            <textarea rows="4" [(ngModel)]="user.bio" name="bio" maxlength="500" #bioModel="ngModel"
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none"></textarea>
-                            <div class="flex justify-between mt-1">
-                                <p class="text-xs text-red-500" *ngIf="bioModel.value?.length >= 500">Max length
-                                    reached!</p>
-                                <p class="text-xs text-gray-400 ml-auto">{{ bioModel.value?.length || 0 }}/500
-                                    characters</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Save Button Area -->
-                    <div class="mt-8 flex justify-end border-t border-gray-50 pt-6">
-                        <button type="submit" [disabled]="profileForm.invalid || !hasChanges || isSavingProfile"
-                            class="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center gap-2">
-                            <span *ngIf="isSavingProfile"
-                                class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                            {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
-                        </button>
-                    </div>
-                </form>
-
-                <!-- SECURITY TAB -->
-                <form #passwordForm="ngForm" *ngIf="activeTab === 'security'" class="animate-fade-in"
-                    (ngSubmit)="updatePassword()">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-6">Change Password</h3>
-                    <p class="text-sm text-gray-500 mb-6">Ensure your account is using a long, random password to
-                        stay
-                        secure.</p>
-
-                    <div class="space-y-5 max-w-lg">
-                        <!-- Current Password -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                            <input type="password" [(ngModel)]="currentPassword" name="currentPassword" required
-                                placeholder="••••••••" #currentPassModel="ngModel"
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                [class.border-red-500]="currentPassModel.invalid && (currentPassModel.dirty || currentPassModel.touched)">
-                            <div *ngIf="currentPassModel.invalid && (currentPassModel.dirty || currentPassModel.touched)"
-                                class="mt-1 text-xs text-red-500">
-                                <span *ngIf="currentPassModel.errors?.['required']">Current password is
-                                    required.</span>
-                            </div>
-                        </div>
-
-                        <!-- New Password -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">New Password (Min 8
-                                chars)</label>
-                            <input type="password" [(ngModel)]="newPassword" name="newPassword" required minlength="8"
-                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&]).{8,}"
-                                placeholder="Min 8 characters..." #newPassModel="ngModel"
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                [class.border-red-500]="(newPassModel.invalid && (newPassModel.dirty || newPassModel.touched)) || (newPassword && currentPassword && newPassword === currentPassword)">
-
-                            <div *ngIf="newPassModel.invalid && (newPassModel.dirty || newPassModel.touched)"
-                                class="mt-1 text-xs text-red-500">
-                                <span *ngIf="newPassModel.errors?.['required']">New password is required.</span>
-                                <span *ngIf="newPassModel.errors?.['minlength']">Password must be at least 8
-                                    characters.</span>
-                                <span *ngIf="newPassModel.errors?.['pattern']">
-                                    Must contain uppercase, lowercase, number & special char (@$!%*?&).
-                                </span>
-                            </div>
-
-                            <div *ngIf="newPassword && currentPassword && newPassword === currentPassword"
-                                class="mt-1 text-xs text-red-500 font-medium">
-                                New password cannot be the same as current password!
-                            </div>
-                        </div>
-
-                        <!-- Confirm Password -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                            <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required
-                                placeholder="Min 8 characters..."
-                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                                [class.border-red-500]="!passwordsMatch" [class.focus:ring-red-100]="!passwordsMatch">
-
-                            <p *ngIf="!passwordsMatch" class="mt-1 text-sm text-red-500 font-medium">
-                                Passwords do not match!
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Update Button Area -->
-                    <div class="mt-8 flex justify-end border-t border-gray-50 pt-6">
-                        <button type="submit"
-                            [disabled]="passwordForm.invalid || !isPasswordValid || isChangingPassword"
-                            class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-blue-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 flex items-center gap-2">
-                            <span *ngIf="isChangingPassword"
-                                class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                            {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-
         </div>
     </div>
 </div>

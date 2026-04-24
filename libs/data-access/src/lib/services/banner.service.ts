@@ -13,7 +13,7 @@ export class BannerService {
 
   getAllBanners(page = 0, size = 10): Observable<ApiResponse<any>> {
     const params = new HttpParams()
-      .set('page', page.toString())
+      .set('page', (page - 1).toString())
       .set('size', size.toString())
       .set('sortBy', 'displayOrder')
       .set('sortDir', 'asc');

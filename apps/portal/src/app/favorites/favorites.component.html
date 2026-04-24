@@ -1,0 +1,50 @@
+<div class="min-h-screen bg-gray-50 pt-24 pb-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-gray-900">
+                Tài liệu yêu thích
+                <i class="ph-fill ph-heart text-red-500 ml-2 animate-pulse"></i>
+            </h1>
+            <p class="mt-2 text-gray-600">Danh sách các tài liệu bạn đã lưu lại để xem sau.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loading && isEmpty"
+            class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
+            <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                <i class="ph ph-heart-break text-4xl text-gray-300"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Chưa có tài liệu nào</h3>
+            <p class="text-gray-500 mb-8 text-center max-w-md">
+                Bạn chưa lưu tài liệu nào vào danh sách yêu thích. Hãy khám phá kho tài liệu và lưu lại những gì bạn
+                thích nhé!
+            </p>
+            <a routerLink="/resources"
+                class="px-6 py-3 bg-primary-600 text-white rounded-full font-bold shadow-lg hover:bg-primary-700 hover:shadow-xl transition-all click-scale">
+                Khám phá ngay
+            </a>
+        </div>
+
+        <!-- Grid Layout -->
+        <div *ngIf="!loading && !isEmpty" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <app-resource-card *ngFor="let resource of favoriteResources" [resource]="resource"
+                (click)="onRemoveFavorite()"></app-resource-card>
+            <!-- Note: click on card might trigger navigation, but favorite toggle inside card handles logic. 
+       We hook into change detection to refresh list perhaps using a shared service or event would be better? 
+       For now, simple reload on route enter is safer, or explicit event bubbling.
+       ResourceCard doesn't emit 'favoriteChanged' event yet but we can simply rely on user navigating away or manual refresh for MVP 
+       OR update ResourceCard to emit event. 
+       Wait, ResourceCard toggleFavorite stops propagation. 
+       Let's stick to simple display first. 
+      -->
+        </div>
+
+    </div>
+</div>

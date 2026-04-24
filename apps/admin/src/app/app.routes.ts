@@ -20,7 +20,7 @@ export const appRoutes: Route[] = [
       {
         path: 'dashboard',
         component: DashboardComponent,
-        data: { breadcrumb: 'Dashboard' },
+        data: { breadcrumb: 'Bảng điều khiển' },
       },
       {
         path: 'banners',
@@ -30,13 +30,13 @@ export const appRoutes: Route[] = [
       {
         path: 'categories',
         component: CategoriesComponent,
-        data: { breadcrumb: 'Categories' },
+        data: { breadcrumb: 'Phân loại' },
       },
       {
         path: 'users',
         loadComponent: () =>
           import('./users/users.component').then((m) => m.UsersComponent),
-        data: { breadcrumb: 'Users' },
+        data: { breadcrumb: 'Người dùng' },
       },
       {
         path: 'resources',
@@ -44,7 +44,7 @@ export const appRoutes: Route[] = [
           import('./resources/resources.component').then(
             (m) => m.ResourcesComponent
           ),
-        data: { breadcrumb: 'Resources' },
+        data: { breadcrumb: 'Tài nguyên' },
       },
       {
         path: 'audit-logs',
@@ -52,13 +52,13 @@ export const appRoutes: Route[] = [
           import('./audit-logs/audit-logs.component').then(
             (m) => m.AuditLogsComponent
           ),
-        data: { breadcrumb: 'Audit Logs' },
+        data: { breadcrumb: 'Nhật ký' },
       },
       {
         path: 'profile',
         loadComponent: () =>
           import('./profile/profile.component').then((m) => m.ProfileComponent),
-        data: { breadcrumb: 'My Profile' },
+        data: { breadcrumb: 'Hồ sơ cá nhân' },
       },
     ],
   },

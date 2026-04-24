@@ -19,7 +19,6 @@ import { BannerSliderComponent } from '../banner-slider/banner-slider.component'
   imports: [
     CommonModule,
     RouterModule,
-    TranslatePipe,
     ResourceCardComponent,
     BannerSliderComponent,
   ],
@@ -45,7 +44,7 @@ export class HomeComponent {
 
   // Get latest 4 resources
   latestResources$ = this.resourceService
-    .getResources({ page: 0, size: 4, status: 'APPROVED' })
+    .getResources({ page: 1, size: 4 })
     .pipe(
       map((res) => res.data.content),
       catchError((err) => {
@@ -72,9 +71,52 @@ export class HomeComponent {
   }
 
   downloadResource(resource: Resource) {
-    if (resource.fileUrl) {
-      this.openInNewTab(resource.fileUrl);
-    }
+    if (!resource || !resource.id) return;
+
+    this.resourceService.downloadFile(resource.id).subscribe({
+      next: (response) => {
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = 'tai_lieu_mac_dinh.pdf';
+
+        if (contentDisposition) {
+          const regex = /filename\*=UTF-8''(.+)/;
+          const matches = regex.exec(contentDisposition);
+          if (matches != null && matches[1]) {
+            filename = decodeURIComponent(matches[1]);
+          } else {
+            const fallbackRegex = /filename="?([^"]+)"?/;
+            const fallbackMatches = fallbackRegex.exec(contentDisposition);
+            if (fallbackMatches != null && fallbackMatches[1]) {
+              filename = fallbackMatches[1];
+            }
+          }
+        } else if (resource.title) {
+          const ext = resource.fileUrl?.split('.').pop() || 'pdf';
+          filename = `${resource.title}.${ext}`;
+        }
+
+        const blob = response.body;
+        if (blob) {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }
+
+        resource.downloadCount = (resource.downloadCount || 0) + 1;
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+        // Fallback
+        if (resource.fileUrl) {
+          this.openInNewTab(resource.fileUrl);
+        }
+      },
+    });
   }
 
   // Wrapper for testing safety

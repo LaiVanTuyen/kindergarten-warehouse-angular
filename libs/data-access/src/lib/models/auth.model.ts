@@ -16,7 +16,7 @@ export interface User {
   updatedAt?: string; // Added for Metadata
   createdBy?: string; // Added for Metadata
   updatedBy?: string; // Added for Metadata
-  lastActive?: string | Date; // Replaces lastLogin
+  lastActive?: string | null; // ISO 8601 DateTime or null if user never logged in (may lag ~10min due to cache)
   phoneNumber?: string;
   bio?: string;
   isDeleted?: boolean;
@@ -48,8 +48,10 @@ export interface AdminUpdateUserRequest {
   fullName: string;
   email: string;
   username: string;
-  role: UserRole;
-  isActive: boolean;
+  role: UserRole;       // Primary role (legacy, kept for compatibility)
+  roles?: string[];     // Multi-role support
+  status: UserStatus;   // 'ACTIVE' | 'BLOCKED' — required by BE
+  isActive?: boolean;   // Kept as optional for backward compat
   isDeleted?: boolean;
   password?: string;
 }

@@ -33,30 +33,32 @@ export class LoginComponent {
     password: ['', [Validators.required]],
   });
 
+  isLoading = false;
+  errorMessage = '';
+
   onSubmit(): void {
-    if (this.loginForm.invalid) {
-      return;
-    }
+    if (this.loginForm.invalid) return;
+    this.isLoading = true;
+    this.errorMessage = '';
 
     this.authService.login(this.loginForm.value).subscribe({
       next: (response: any) => {
+        this.isLoading = false;
         const user = response.user;
         if (user && user.role !== 'ADMIN') {
           this.toastService.show(
-            'Access Denied: Admin privileges required.',
+            'Trướt quyền truy cập: Yêu cầu quyền Quản trị viên.',
             'error'
           );
-          this.authService.logout(undefined, false); // Clear local session without API call
+          this.authService.logout(undefined, false);
           return;
         }
-
-        this.toastService.show(response.message || 'Welcome back!', 'success');
+        this.toastService.show('Chào mừng trở lại! 👋', 'success');
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        // Error is handled by AuthInterceptor (throws error to here)
-        const msg = err.message || 'Login failed';
-        this.toastService.show(msg, 'error');
+        this.isLoading = false;
+        this.errorMessage = err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
         console.error('Login failed', err);
       },
     });

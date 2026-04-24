@@ -24,19 +24,19 @@
             [routerLinkActiveOptions]="{ exact: true }"
             class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-house text-lg mb-0.5"></i>
-            {{ 'header.home' | translate }}
+            Trang chủ
           </a>
 
           <a routerLink="/resources" routerLinkActive="bg-pink-50 text-primary-pink font-bold"
             class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-books text-lg mb-0.5"></i>
-            {{ 'header.resources' | translate }}
+            Tài liệu
           </a>
 
           <a routerLink="/about" routerLinkActive="bg-pink-50 text-primary-pink font-bold"
             class="px-4 py-2 rounded-full transition-colors flex items-center gap-2 hover:text-primary-pink">
             <i class="ph ph-info text-lg mb-0.5"></i>
-            {{ 'header.about' | translate }}
+            Về chúng tôi
           </a>
         </nav>
       </div>
@@ -51,7 +51,7 @@
             <i class="ph ph-magnifying-glass text-xl"></i>
           </button>
           <input type="text" [value]="searchQuery" (input)="onSearchInput($any($event.target).value)"
-            [placeholder]="'list.search' | translate"
+            placeholder="Tìm kiếm..."
             class="w-full pl-10 pr-8 py-2 rounded-full border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all text-sm font-medium text-gray-700 placeholder-gray-400" />
 
           <!-- Clear Button -->
@@ -104,7 +104,7 @@
 
               <!-- Name & Chevron (Hidden on small mobile) -->
               <div class="hidden md:flex flex-col items-start gap-0.5 text-left">
-                <span class="text-xs text-gray-400 font-bold leading-none">Welcome</span>
+                <span class="text-xs text-gray-400 font-bold leading-none">Xin chào</span>
                 <span class="text-sm text-gray-700 font-bold leading-none max-w-[100px] truncate">{{ userName }}</span>
               </div>
               <i
@@ -118,7 +118,7 @@
               <!-- User Info Section -->
               <div class="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                 <p class="text-sm font-bold text-gray-900 truncate">{{ userName }}</p>
-                <p class="text-xs text-gray-500">View Profile</p>
+                <p class="text-xs text-gray-500">Xem hồ sơ</p>
               </div>
 
               <!-- Menu Items -->
@@ -126,18 +126,23 @@
                 <a routerLink="/profile" (click)="closeUserMenu()"
                   class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors cursor-pointer">
                   <i class="ph ph-user text-lg"></i>
-                  My Profile
+                  Hồ sơ của tôi
+                </a>
+                <a routerLink="/favorites" (click)="closeUserMenu()"
+                  class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors cursor-pointer">
+                  <i class="ph ph-heart text-lg"></i>
+                  Yêu thích
                 </a>
                 <a routerLink="/settings" (click)="closeUserMenu()"
                   class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors cursor-pointer">
                   <i class="ph ph-gear text-lg"></i>
-                  Settings
+                  Cài đặt
                 </a>
                 <div class="border-t border-gray-50 my-1"></div>
                 <button (click)="logout()"
                   class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-bold">
                   <i class="ph ph-sign-out text-lg"></i>
-                  Log Out
+                  Đăng xuất
                 </button>
               </div>
             </div>
@@ -146,7 +151,7 @@
 
         <a *ngIf="!isLoggedIn" routerLink="/login"
           class="hidden sm:flex items-center px-6 py-2.5 rounded-full bg-gradient-to-r from-primary-pink to-secondary-600 text-white text-sm font-bold shadow-md hover:shadow-lg hover:from-pink-600 hover:to-secondary-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0 border-transparent">
-          {{ 'header.login' | translate }}
+          Đăng nhập
         </a>
       </div>
     </div>
@@ -162,7 +167,7 @@
           <i class="ph ph-magnifying-glass text-xl"></i>
         </span>
         <input type="text" [value]="searchQuery" (input)="onSearchInput($any($event.target).value)"
-          [placeholder]="'list.search' | translate"
+          placeholder="Tìm kiếm..."
           class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all font-medium" />
         <button *ngIf="searchQuery" (click)="clearSearch()"
           class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500">
@@ -175,22 +180,22 @@
           [routerLinkActiveOptions]="{ exact: true }"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors">
           <i class="ph ph-house text-xl"></i>
-          {{ 'header.home' | translate }}
+          Trang chủ
         </a>
         <a routerLink="/resources" (click)="closeMobileMenu()" routerLinkActive="bg-primary-50 text-primary-500"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors">
           <i class="ph ph-books text-xl"></i>
-          {{ 'header.resources' | translate }}
+          Tài liệu
         </a>
         <a routerLink="/about" (click)="closeMobileMenu()" routerLinkActive="bg-primary-50 text-primary-500"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors">
           <i class="ph ph-info text-xl"></i>
-          {{ 'header.about' | translate }}
+          Về chúng tôi
         </a>
         <a routerLink="/favorites" (click)="closeMobileMenu()" routerLinkActive="bg-primary-50 text-primary-500"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors">
           <i class="ph ph-heart text-xl"></i>
-          Favorites
+          Yêu thích
         </a>
       </nav>
 
@@ -203,7 +208,7 @@
         </div>
         <a routerLink="/login" (click)="closeMobileMenu()"
           class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-pink to-secondary-600 text-white text-sm font-bold shadow-sm">
-          {{ 'header.login' | translate }}
+          Đăng nhập
         </a>
       </div>
     </div>

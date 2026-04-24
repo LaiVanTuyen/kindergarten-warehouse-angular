@@ -60,7 +60,7 @@ export class LoginComponent {
         .subscribe({
           next: (response: any) => {
             this.toastService.show(
-              response.message || 'Welcome back!',
+              'Đăng nhập thành công! Chào mừng trở lại.',
               'success'
             );
             const returnUrl =
@@ -70,7 +70,7 @@ export class LoginComponent {
           error: (err: any) => {
             // Error is handled by AuthInterceptor (throws error to here)
             // Show toast from here as requested/planned
-            const msg = err.message || 'Login failed';
+            const msg = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
             this.toastService.show(msg, 'error');
             console.error('Login failed', err);
           },

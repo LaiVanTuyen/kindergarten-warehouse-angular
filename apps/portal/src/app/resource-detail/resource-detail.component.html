@@ -37,6 +37,34 @@
         </ol>
       </nav>
 
+      <!-- Rejection Warning Alert -->
+      <div *ngIf="resource.status === 'REJECTED'"
+        class="mb-8 p-6 bg-rose-50 rounded-2xl border-l-4 border-rose-500 shadow-sm flex items-start gap-4">
+        <div class="p-3 bg-rose-100 text-rose-600 rounded-full flex-shrink-0 mt-1">
+          <i class="ph-fill ph-warning-circle text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-rose-800 text-lg mb-1">Tài liệu đã bị từ chối phê duyệt</h3>
+          <p class="text-rose-700 font-medium mb-3">
+            <strong>Lý do:</strong> {{ resource.rejectionReason || 'Không có lý do cụ thể.' }}
+          </p>
+          <p class="text-sm text-rose-600 opacity-90 flex items-center gap-1.5">
+            <i class="ph-bold ph-info"></i>
+            Vui lòng nhấn nút <span
+              class="font-bold border border-rose-200 bg-white px-1.5 py-0.5 rounded text-xs mx-1">Chỉnh sửa</span> (nếu
+            có) để cập nhật lại file hoặc nội dung.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pending Info Alert -->
+      <div *ngIf="resource.status === 'PENDING'"
+        class="mb-8 p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-400 shadow-sm flex items-center gap-3">
+        <i class="ph-fill ph-hourglass-high text-amber-500 text-2xl"></i>
+        <p class="text-amber-800 font-medium">Tài liệu của bạn đang trong trạng thái chờ Ban Quản Trị phê duyệt. Sẽ
+          không hiển thị công khai cho đến khi được duyệt.</p>
+      </div>
+
       <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2">
           <div class="bg-gray-50 p-4 lg:p-8 flex items-center justify-center min-h-[400px]">
@@ -64,17 +92,17 @@
             </ng-container>
 
             <!-- Fallback / Placeholder (Hidden on Mobile if we want to prioritize download, but 'lg:flex' handles visibility logic) -->
-            <ng-container *ngIf="!['VIDEO', 'AUDIO'].includes(resource.type) && !canPreviewDoc(resource)">
+            <ng-container *ngIf="!['VIDEO', 'AUDIO'].includes(resource.type || '') && !canPreviewDoc(resource)">
               <!-- Main Container: Hidden on mobile to save space, visible on large screens -->
               <div
                 class="hidden lg:flex flex-col items-center justify-center w-full aspect-[4/3] rounded-3xl p-8 text-center relative overflow-hidden transition-all duration-500 hover:shadow-xl"
                 [ngClass]="{
-                    'bg-emerald-50': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type),
-                    'bg-blue-50': ['WORD', 'DOC', 'DOCX'].includes(resource.type),
-                    'bg-orange-50': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type),
+                    'bg-emerald-50': ['EXCEL', 'XLS', 'XLSX'].includes(resource.type || ''),
+                    'bg-blue-50': ['WORD', 'DOC', 'DOCX', 'DOCUMENT'].includes(resource.type || ''),
+                    'bg-orange-50': ['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || ''),
                     'bg-rose-50': resource.type === 'PDF',
                     'bg-purple-50': resource.type === 'IMAGE',
-                    'bg-gray-100': !['EXCEL','WORD','PPT','POWERPOINT','PDF','IMAGE'].includes(resource.type)
+                    'bg-gray-100': !['EXCEL','WORD','PPT','POWERPOINT','PDF','IMAGE','DOCUMENT'].includes(resource.type || '')
                 }">
                 <!-- ... existing content ... -->
                 <!-- Background decoration -->
@@ -96,13 +124,15 @@
                     class="w-32 h-32 flex items-center justify-center animate-bounce-slow">
                     <i *ngIf="resource.type === 'PDF'"
                       class="ph-fill ph-file-pdf text-8xl text-rose-500 drop-shadow-xl"></i>
-                    <i *ngIf="['WORD', 'DOC', 'DOCX'].includes(resource.type)"
+                    <i *ngIf="['WORD', 'DOC', 'DOCX', 'DOCUMENT'].includes(resource.type || '')"
                       class="ph-fill ph-file-doc text-8xl text-blue-500 drop-shadow-xl"></i>
-                    <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type)"
+                    <i *ngIf="['EXCEL', 'XLS', 'XLSX'].includes(resource.type || '')"
                       class="ph-fill ph-file-xls text-8xl text-emerald-500 drop-shadow-xl"></i>
-                    <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type)"
+                    <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || '')"
                       class="ph-fill ph-presentation text-8xl text-orange-500 drop-shadow-xl"></i>
-                    <i *ngIf="!['PDF','WORD','DOC','DOCX','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT','IMAGE'].includes(resource.type)"
+                    <i *ngIf="resource.type === 'IMAGE'"
+                      class="ph-fill ph-image text-8xl text-purple-500 drop-shadow-xl"></i>
+                    <i *ngIf="!['PDF','WORD','DOC','DOCX','DOCUMENT','EXCEL','XLS','XLSX','PPT','PPTX','POWERPOINT','IMAGE'].includes(resource.type || '')"
                       class="ph-fill ph-file-text text-8xl text-gray-400 drop-shadow-xl"></i>
                   </div>
                 </div>
@@ -124,7 +154,7 @@
                 class="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl flex flex-col items-center justify-center text-white p-10 shadow-lg">
                 <i class="ph-fill ph-music-notes text-8xl mb-6 drop-shadow-md animate-pulse"></i>
                 <h3 class="text-2xl font-bold mb-2">{{ resource.title }}</h3>
-                <p class="opacity-80 mb-6">Audio Preview</p>
+                <p class="opacity-80 mb-6">Nghe thử</p>
                 <audio [src]="getSafeVideoUrl(resource.fileUrl)" controls
                   class="w-full max-w-sm backdrop-blur-md bg-white/20 rounded-full p-2"></audio>
               </div>
@@ -136,18 +166,19 @@
             <div class="flex items-center gap-3 mb-4">
               <span class="px-3 py-1 rounded-full text-xs font-bold" [ngClass]="{
               'bg-lime-100 text-lime-600': resource.type === 'VIDEO',
-              'bg-orange-100 text-orange-600': ['PDF','WORD','EXCEL','PPT','PPTX','POWERPOINT'].includes(resource.type),
+              'bg-orange-100 text-orange-600': ['PDF','WORD','EXCEL','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || ''),
               'bg-purple-100 text-purple-600': resource.type === 'AUDIO',
               'bg-rose-100 text-rose-500': resource.type === 'IMAGE',
-              'bg-blue-50 text-secondary-600': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT'].includes(resource.type)
+              'bg-blue-50 text-secondary-600': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || '')
             }">
                 <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-video mr-1"></i>
-                <i *ngIf="['PDF','WORD','EXCEL'].includes(resource.type)" class="ph-fill ph-file-text mr-1"></i>
-                <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type)"
+                <i *ngIf="['PDF','WORD','EXCEL','DOCUMENT'].includes(resource.type || '')"
+                  class="ph-fill ph-file-text mr-1"></i>
+                <i *ngIf="['PPT', 'PPTX', 'POWERPOINT'].includes(resource.type || '')"
                   class="ph-fill ph-presentation mr-1"></i>
                 <i *ngIf="resource.type === 'AUDIO'" class="ph-fill ph-music-note mr-1"></i>
                 <i *ngIf="resource.type === 'IMAGE'" class="ph-fill ph-image mr-1"></i>
-                <i *ngIf="!['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT'].includes(resource.type)"
+                <i *ngIf="!['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT','DOCUMENT'].includes(resource.type || '')"
                   class="ph-fill ph-file mr-1"></i>
                 {{ resource.type }}
               </span>
@@ -163,16 +194,18 @@
                 <span class="text-xs font-medium text-secondary-500">Lượt tải</span>
               </div>
               <!-- Rating Stars -->
-              <div class="flex items-center text-yellow-400" *ngIf="resource.rating">
-                <span class="font-bold text-gray-700 mr-2 ml-2 text-sm mt-[2px] leading-none">{{ resource.rating
-                  }}</span>
+              <div class="flex items-center text-yellow-400" *ngIf="resource.averageRating || resource.rating">
+                <span class="font-bold text-gray-700 mr-2 ml-2 text-sm mt-[2px] leading-none">{{ resource.averageRating
+                  || resource.rating }}</span>
                 <div class="flex gap-0.5">
                   <!-- Manual Loop for Stars in Detail Page -->
                   <ng-container *ngFor="let star of [1,2,3,4,5]">
-                    <i *ngIf="resource.rating >= star" class="ph-fill ph-star text-yellow-400 text-base"></i>
-                    <i *ngIf="resource.rating < star && resource.rating > (star - 1)"
+                    <i *ngIf="(resource.averageRating || resource.rating || 0) >= star"
+                      class="ph-fill ph-star text-yellow-400 text-base"></i>
+                    <i *ngIf="(resource.averageRating || resource.rating || 0) < star && (resource.averageRating || resource.rating || 0) > (star - 1)"
                       class="ph-fill ph-star-half text-yellow-400 text-base"></i>
-                    <i *ngIf="resource.rating <= (star - 1)" class="ph ph-star text-gray-300 text-base"></i>
+                    <i *ngIf="(resource.averageRating || resource.rating || 0) <= (star - 1)"
+                      class="ph ph-star text-gray-300 text-base"></i>
                   </ng-container>
                 </div>
               </div>
@@ -197,10 +230,10 @@
               <div class="flex-1">
                 <p class="text-xs text-gray-400 font-bold mb-0.5 uppercase tracking-wide">Đăng bởi</p>
                 <h4 class="font-bold text-gray-900 text-lg hover:text-primary-pink cursor-pointer transition-colors">{{
-                  resource.uploader || 'Admin' }}</h4>
+                  resource.createdBy || resource.uploader || 'Admin' }}</h4>
                 <button (click)="followAuthor(resource.uploader || 'Admin')"
                   class="px-3 py-1 rounded-full border-2 border-primary-500 text-primary-500 text-xs font-bold hover:bg-primary-50 transition-all flex items-center gap-1">
-                  <i class="ph-bold ph-plus"></i> Follow
+                  <i class="ph-bold ph-plus"></i> Theo dõi
                 </button>
               </div>
               <!-- Optional: Just date below -->
@@ -311,7 +344,7 @@
                     }}</label>
                   <textarea id="comment-content" [(ngModel)]="newCommentContent" rows="3"
                     class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-blue/20 focus:border-primary-blue outline-none transition-all resize-none"
-                    placeholder="Share your thoughts..."></textarea>
+                    placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
                 </div>
 
                 <div class="flex justify-end">

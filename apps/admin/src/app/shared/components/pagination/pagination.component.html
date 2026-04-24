@@ -1,17 +1,17 @@
-<div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
-    <span class="text-sm text-slate-500">
-        Showing {{ startItem() }} to {{ endItem() }} of {{ totalItems() }} {{ itemName() }}
-    </span>
+<div class="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
     <div class="flex gap-2">
         <button [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)"
             class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white hover:bg-slate-50 disabled:opacity-50 transition-colors">Previous</button>
 
-        <ng-container *ngFor="let page of pages">
-            <button (click)="onPageChange(page)"
+        <ng-container *ngFor="let page of pages; trackBy: trackByIndex">
+            <button *ngIf="page !== '...'" (click)="onPageClick(page)"
                 class="px-3 py-1.5 border rounded-lg text-sm font-medium transition-colors"
                 [ngClass]="currentPage() === page ? 'bg-slate-800 text-white border-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
                 {{ page }}
             </button>
+            <span *ngIf="page === '...'" class="px-3 py-1.5 text-slate-400 font-bold select-none">
+                ...
+            </span>
         </ng-container>
 
         <button [disabled]="currentPage() >= totalPages()" (click)="onPageChange(currentPage() + 1)"

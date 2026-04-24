@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
-import { switchMap, map, of, combineLatest } from 'rxjs';
+import { switchMap, map, of, combineLatest, tap } from 'rxjs';
 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -49,9 +49,14 @@ export class ResourceDetailComponent {
   resource$ = this.route.paramMap.pipe(
     switchMap((params) => {
       const slug = params.get('slug');
-      return this.resourceService
-        .getResource(slug || '')
-        .pipe(map((res) => res.data));
+      return this.resourceService.getResource(slug || '').pipe(
+        map((res) => res.data),
+        tap((resource) => {
+          if (resource && resource.id) {
+            this.resourceService.incrementViewCount(resource.id).subscribe();
+          }
+        })
+      );
     })
   );
 
@@ -84,7 +89,7 @@ export class ResourceDetailComponent {
   // I will add `getAllTopicsMock` to `general.service.ts` first.
 
   relatedResources$ = this.resourceService
-    .getResources({ page: 0, size: 4 })
+    .getResources({ page: 1, size: 4 })
     .pipe(map((res) => res.data.content));
 
   isYouTube(url: string | undefined): boolean {
@@ -117,8 +122,18 @@ export class ResourceDetailComponent {
 
   canPreviewDoc(resource: Resource): boolean {
     if (!resource.fileUrl) return false;
-    const type = resource.type; // Assuming type is still mapped or checks need update
-    return ['PDF', 'WORD', 'DOC', 'DOCX'].includes(type);
+    const type = resource.type || '';
+    return [
+      'PDF',
+      'WORD',
+      'DOC',
+      'DOCX',
+      'DOCUMENT',
+      'EXCEL',
+      'PPT',
+      'PPTX',
+      'POWERPOINT',
+    ].includes(type);
   }
 
   // Pastel colors for avatars
@@ -165,9 +180,55 @@ export class ResourceDetailComponent {
   isDownloading = false;
 
   downloadResource(resource: Resource) {
-    if (resource.fileUrl) {
-      window.open(resource.fileUrl, '_blank');
-    }
+    if (!resource || !resource.id) return;
+    this.isDownloading = true;
+
+    this.resourceService.downloadFile(resource.id).subscribe({
+      next: (response) => {
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = 'tai_lieu_mac_dinh.pdf';
+
+        if (contentDisposition) {
+          const regex = /filename\*=UTF-8''(.+)/;
+          const matches = regex.exec(contentDisposition);
+          if (matches != null && matches[1]) {
+            filename = decodeURIComponent(matches[1]);
+          } else {
+            const fallbackRegex = /filename="?([^"]+)"?/;
+            const fallbackMatches = fallbackRegex.exec(contentDisposition);
+            if (fallbackMatches != null && fallbackMatches[1]) {
+              filename = fallbackMatches[1];
+            }
+          }
+        } else if (resource.title) {
+          const ext = resource.fileUrl?.split('.').pop() || 'pdf';
+          filename = `${resource.title}.${ext}`;
+        }
+
+        const blob = response.body;
+        if (blob) {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }
+
+        resource.downloadCount = (resource.downloadCount || 0) + 1;
+        this.isDownloading = false;
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+        this.isDownloading = false;
+        // Fallback
+        if (resource.fileUrl) {
+          window.open(resource.fileUrl, '_blank');
+        }
+      },
+    });
   }
 
   submitComment(resource: Resource) {

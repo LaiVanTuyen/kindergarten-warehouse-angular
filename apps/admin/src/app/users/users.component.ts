@@ -12,23 +12,26 @@ import { SkeletonTableComponent } from '../shared/components/skeleton-table/skel
 import {
   FormBuilder,
   ReactiveFormsModule,
+  FormsModule,
   Validators,
   FormControl,
 } from '@angular/forms';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import { User, UserService, AdminUpdateUserRequest, UserRole, UserCreationRequest } from '@kindergarten-warehouse/data-access';
 import {
-  UserService,
-  User,
-  UserRole,
-  UserStatus,
-  AdminUpdateUserRequest,
-  ApiResponse,
-} from '@kindergarten-warehouse/data-access';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { timer } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  finalize,
+} from 'rxjs/operators';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
+import { DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+
+import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
 
 @Component({
   selector: 'app-admin-users',
@@ -36,10 +39,12 @@ import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     PaginationComponent,
     SkeletonTableComponent,
     BreadcrumbComponent,
     EmptyStateComponent,
+    MultiSelectFilterComponent,
   ],
   templateUrl: './users.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,13 +57,14 @@ import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
     `,
   ],
 })
-export class UsersComponent {
+export class UsersComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   toastService = inject(ToastService);
   userService = inject(UserService);
   authService = inject(AuthService);
+  destroyRef = inject(DestroyRef);
 
   // -- State Signals --
   loggedInUser = toSignal(this.authService.currentUser$);
@@ -72,54 +78,117 @@ export class UsersComponent {
   currentPage = signal(1);
   pageSize = signal(10);
 
-  // Filter Signals (Driven by FormControls)
+  // Filter Signals
   searchQuery = signal('');
-  roleFilter = signal<'ALL' | UserRole>('ALL');
-  statusFilter = signal<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>('ALL');
+  roleFilter = signal<Set<string>>(new Set());
+  statusFilter = signal<Set<string>>(new Set());
+  activeFilterDropdown = signal<string | null>(null);
+  showFilters = signal(false);
+
+  // Filter Options
+  roleOptions = [
+    { label: 'Quản trị viên (Admin)', value: 'ADMIN' },
+    { label: 'Người dùng', value: 'USER' },
+    { label: 'Giáo viên', value: 'TEACHER' },
+  ];
+
+  statusOptions = [
+    { label: 'Hoạt động', value: 'ACTIVE' },
+    { label: 'Đã khóa', value: 'BLOCKED' },
+  ];
 
   // Form Controls for UI
   searchControl = new FormControl<string>('', { nonNullable: true });
-  roleControl = new FormControl<'ALL' | UserRole>('ALL', { nonNullable: true });
-  statusControl = new FormControl<'ALL' | 'ACTIVE' | 'BLOCKED' | 'DELETED'>(
-    'ALL',
-    { nonNullable: true }
-  );
 
   // Sorting
   sortColumn = signal<'fullName' | 'createdAt' | 'lastActive'>('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
 
+  // -- Filter Observables --
+  searchQuery$ = toObservable(this.searchQuery);
+  roleFilter$ = toObservable(this.roleFilter);
+  statusFilter$ = toObservable(this.statusFilter);
+  currentPage$ = toObservable(this.currentPage);
+  pageSize$ = toObservable(this.pageSize);
+  sortColumn$ = toObservable(this.sortColumn);
+  sortDirection$ = toObservable(this.sortDirection);
+  refreshTrigger = signal(0);
+  refreshTrigger$ = toObservable(this.refreshTrigger);
+
   constructor() {
-    /* Form initialized inline */
     this.initFromUrl();
 
-    // -- Filter Subscriptions --
+    // 1. Handle Search Input specifically for debouncing
     this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((val) => {
-        this.searchQuery.set(val || '');
-        this.currentPage.set(1);
-        this.updateUrl();
-        this.loadUsers();
+        if (this.searchQuery() !== (val || '')) {
+          this.searchQuery.set(val || '');
+          this.currentPage.set(1);
+        }
       });
 
-    this.roleControl.valueChanges.subscribe((val) => {
-      this.roleFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.updateUrl();
-      this.loadUsers();
-    });
+    // 2. Centralized Reactive Data Pipeline
+    forkJoin([]).subscribe(); // Dummy to ensure import is used if needed later, will be removed. Actually, let's use combineLatest.
+  }
 
-    this.statusControl.valueChanges.subscribe((val) => {
-      this.statusFilter.set((val as any) || 'ALL');
-      this.currentPage.set(1);
-      this.updateUrl();
-      this.loadUsers();
-    });
+  ngOnInit() {
+    import('rxjs').then(({ combineLatest }) => {
+      combineLatest([
+        this.searchQuery$,
+        this.roleFilter$,
+        this.statusFilter$,
+        this.currentPage$,
+        this.pageSize$,
+        this.sortColumn$,
+        this.sortDirection$,
+        this.refreshTrigger$,
+      ])
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          debounceTime(50), // Small debounce to batch synchronous signal updates
+          switchMap(
+            ([query, roles, statuses, page, size, sortCol, sortDir]: [string, Set<string>, Set<string>, number, number, string, string, number]) => {
+              this.isLoading.set(true);
+              this.updateUrl();
 
-    // Initial load is triggered by initFromUrl if needed, or explicitly here if no params
-    // But loadUsers() updates URL, so let's call it to sync everything.
-    this.loadUsers();
+              const roleStr = Array.from(roles).join(',');
+              const statusStr = Array.from(statuses).join(',');
+
+              return this.userService
+                .getUsers(
+                  page,
+                  size,
+                  query,
+                  roleStr,
+                  statusStr,
+                  sortCol,
+                  sortDir as 'asc' | 'desc'
+                )
+                .pipe(finalize(() => this.isLoading.set(false)));
+            }
+          )
+        )
+        .subscribe({
+          next: (res) => {
+            if (res.result) {
+              this.users.set(res.result.content);
+              this.totalUsersCount.set(res.result.totalElements);
+            } else {
+              this.users.set([]);
+              this.totalUsersCount.set(0);
+            }
+          },
+          error: () => {
+            this.users.set([]);
+            this.totalUsersCount.set(0);
+          },
+        });
+    });
   }
 
   private initFromUrl() {
@@ -137,20 +206,18 @@ export class UsersComponent {
     }
 
     if (params['role']) {
-      const role = params['role'];
-      this.roleFilter.set(role);
-      this.roleControl.setValue(role, { emitEvent: false });
+      const roles = params['role'].split(',');
+      this.roleFilter.set(new Set(roles));
     }
 
     if (params['status']) {
-      const status = params['status'];
-      this.statusFilter.set(status);
-      this.statusControl.setValue(status, { emitEvent: false });
+      const statuses = params['status'].split(',');
+      this.statusFilter.set(new Set(statuses));
     }
   }
 
-  private updateUrl() {
-    const queryParams: any = {
+  updateUrl() {
+    const queryParams: Record<string, string | number | null> = {
       page: this.currentPage(),
       size: this.pageSize(),
       sort: this.sortColumn(),
@@ -158,19 +225,19 @@ export class UsersComponent {
     };
 
     if (this.searchQuery()) {
-      queryParams['search'] = this.searchQuery();
+      queryParams['q'] = this.searchQuery();
     } else {
-      queryParams['search'] = null;
+      queryParams['q'] = null;
     }
 
-    if (this.roleFilter() !== 'ALL') {
-      queryParams['role'] = this.roleFilter();
+    if (this.roleFilter().size > 0) {
+      queryParams['role'] = Array.from(this.roleFilter()).join(',');
     } else {
       queryParams['role'] = null;
     }
 
-    if (this.statusFilter() !== 'ALL') {
-      queryParams['status'] = this.statusFilter();
+    if (this.statusFilter().size > 0) {
+      queryParams['status'] = Array.from(this.statusFilter()).join(',');
     } else {
       queryParams['status'] = null;
     }
@@ -183,28 +250,50 @@ export class UsersComponent {
     });
   }
 
+  // loadUsers() corresponds to the reactive pipeline now. We keep it as a no-op or explicit refresh if needed.
   loadUsers() {
-    this.isLoading.set(true);
-    this.userService
-      .getUsers(
-        this.currentPage() - 1,
-        this.pageSize(),
-        this.searchQuery(),
-        this.roleFilter(),
-        this.statusFilter(), // Pass string status directly
-        this.sortColumn(),
-        this.sortDirection()
-      )
-      .subscribe({
-        next: (res) => {
-          if (res.result) {
-            this.users.set(res.result.content);
-            this.totalUsersCount.set(res.result.totalElements);
-          }
-          this.isLoading.set(false);
-        },
-        error: () => this.isLoading.set(false),
-      });
+    this.refreshTrigger.update(v => v + 1);
+  }
+
+  // Filter Helpers
+  toggleFilterDropdown(key: string) {
+    this.activeFilterDropdown.update((current) =>
+      current === key ? null : key
+    );
+  }
+
+  removeRoleFilter(role: string) {
+    const current = this.roleFilter();
+    const newSet = new Set(current);
+    newSet.delete(role);
+    this.roleFilter.set(newSet);
+    this.currentPage.set(1);
+  }
+
+  clearRoleFilter() {
+    this.roleFilter.set(new Set());
+    this.currentPage.set(1);
+  }
+
+  removeStatusFilter(status: string) {
+    const current = this.statusFilter();
+    const newSet = new Set(current);
+    newSet.delete(status);
+    this.statusFilter.set(newSet);
+    this.currentPage.set(1);
+  }
+
+  clearStatusFilter() {
+    this.statusFilter.set(new Set());
+    this.currentPage.set(1);
+  }
+
+  resetFilters() {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.searchQuery.set('');
+    this.roleFilter.set(new Set());
+    this.statusFilter.set(new Set());
+    this.currentPage.set(1);
   }
 
   // Derived Statistics
@@ -247,21 +336,6 @@ export class UsersComponent {
   showPassword = signal(false);
   currentUser = signal<User | null>(null);
 
-  resetFilters() {
-    this.searchControl.setValue('', { emitEvent: false });
-    this.roleControl.setValue('ALL', { emitEvent: false });
-    this.statusControl.setValue('ALL', { emitEvent: false });
-
-    // Update signals manually since events are suppressed
-    this.searchQuery.set('');
-    this.roleFilter.set('ALL');
-    this.statusFilter.set('ALL');
-
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadUsers();
-  }
-
   toggleSort(column: 'fullName' | 'createdAt' | 'lastActive') {
     if (this.sortColumn() === column) {
       this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -269,8 +343,6 @@ export class UsersComponent {
       this.sortColumn.set(column);
       this.sortDirection.set('desc');
     }
-    this.updateUrl();
-    this.loadUsers();
   }
 
   // -- Bulk Selection --
@@ -320,36 +392,44 @@ export class UsersComponent {
     if (selected.size === 0) return;
 
     this.openConfirmModal(
-      'Block Selected Users?',
-      `Are you sure you want to BLOCK ${selected.size} selected users? They will lose access.`,
+      'Khóa Người dùng đã chọn?',
+      `Bạn có chắc chắn muốn KHÓA ${selected.size} người dùng đã chọn? Họ sẽ mất quyền truy cập.`,
       'BULK_BLOCK'
     );
   }
 
   executeBulkBlock() {
     const selected = this.selectedIds();
-    // Implementation for Bulk Block (Looping or Bulk API if available)
-    // For now, let's just loop sequentially as mockup
-    // Real implementation should utilize forkJoin or a specific bulk endpoint
-    let completed = 0;
-    const total = selected.size;
+    if (selected.size === 0) return;
 
-    selected.forEach((id) => {
-      this.userService.blockUser(String(id)).subscribe({
+    this.isLoading.set(true);
+    const requests = Array.from(selected).map((id) =>
+      this.userService.blockUser(String(id))
+    );
+
+    forkJoin(requests)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoading.set(false))
+      )
+      .subscribe({
         next: () => {
-          completed++;
-          if (completed === total) {
-            this.toastService.show(
-              `${total} users blocked/unblocked`,
-              'success'
-            );
-            this.loadUsers();
-            this.selectedIds.set(new Set());
-          }
+          this.toastService.show(
+            `${selected.size} người dùng đã bị khóa/mở khóa`,
+            'success'
+          );
+          // Let the reactive pipeline trigger the reload if we had a dedicated refresh subject,
+          // or we can explicitly force parameter update if needed.
+          // Since we removed explicit loadUsers() which was a no-op, we must trigger the pipeline.
+          // To trigger combineLatest, we can quickly toggle and re-toggle currentPage to itself.
+          this.loadUsers(); // This triggers the combineLatest pipeline
+          this.selectedIds.set(new Set());
         },
-        error: (err) => console.error(err),
+        error: (err) => {
+          console.error(err);
+          this.toastService.show('Không thể xử lý người dùng', 'error');
+        },
       });
-    });
   }
 
   bulkDelete() {
@@ -357,30 +437,40 @@ export class UsersComponent {
     if (selected.size === 0) return;
 
     this.openConfirmModal(
-      'Delete Selected Users?',
-      `Are you sure you want to DELETE ${selected.size} selected users? This cannot be undone.`,
+      'Xóa Người dùng đã chọn?',
+      `Bạn có chắc chắn muốn XÓA ${selected.size} người dùng đã chọn? Thao tác này không thể hoàn tác.`,
       'BULK_DELETE'
     );
   }
 
   executeBulkDelete() {
     const selected = this.selectedIds();
-    let completed = 0;
-    const total = selected.size;
+    if (selected.size === 0) return;
 
-    selected.forEach((id) => {
-      this.userService.deleteUser(String(id)).subscribe({
+    this.isLoading.set(true);
+    const requests = Array.from(selected).map((id) =>
+      this.userService.deleteUser(String(id))
+    );
+
+    forkJoin(requests)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoading.set(false))
+      )
+      .subscribe({
         next: () => {
-          completed++;
-          if (completed === total) {
-            this.toastService.show(`${total} users moved to bin`, 'success');
-            this.loadUsers();
-            this.selectedIds.set(new Set());
-          }
+          this.toastService.show(
+            `Đã chuyển ${selected.size} người dùng vào thùng rác`,
+            'success'
+          );
+          this.loadUsers(); // Trigger reload
+          this.selectedIds.set(new Set());
         },
-        error: (err) => console.error(err),
+        error: (err) => {
+          console.error(err);
+          this.toastService.show('Lỗi khi xóa người dùng', 'error');
+        },
       });
-    });
   }
 
   // GENERIC CONFIRMATION MODAL STATE
@@ -490,52 +580,67 @@ export class UsersComponent {
 
     const formVal = this.userForm.value;
 
-    const requestData: any = {
-      fullName: formVal.fullName,
-      email: formVal.email,
-      username: formVal.username,
-      roles: formVal.roles,
-      status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
-    };
-
     if (this.isEditMode()) {
       // Update User
-      // Prepare request object matching AdminUpdateUserRequest
-      this.userService.updateUser(String(formVal.id), requestData).subscribe({
-        next: (res) => {
-          if (res.code === 200 || res.result) {
-            this.toastService.show('User updated successfully', 'success');
-            this.loadUsers();
-            this.closeUserModal();
-          } else {
-            this.toastService.show(res.message || 'Update failed', 'error');
-          }
-        },
-        error: (err) => {
-          this.toastService.show(
-            err.error?.message || 'Failed to update user',
-            'error'
-          );
-        },
-      });
+      const updateData: AdminUpdateUserRequest = {
+        fullName: formVal.fullName || '',
+        email: formVal.email || '',
+        username: formVal.username || '',
+        // Primary role (legacy compat)
+        role: (formVal.roles && formVal.roles.length > 0 ? formVal.roles[0] : 'USER') as UserRole,
+        // Multi-role (new)
+        roles: formVal.roles ?? ['USER'],
+        // BE requires status as enum string, NOT isActive boolean
+        status: (formVal.isActive ?? true) ? 'ACTIVE' : 'BLOCKED',
+      };
+
+      this.userService
+        .updateUser(String(formVal.id), updateData)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            if (res.code === 200 || res.result) {
+              this.toastService.show('User updated successfully', 'success');
+              this.loadUsers(); // Trigger reload
+              this.closeUserModal();
+            } else {
+              this.toastService.show(res.message || 'Update failed', 'error');
+            }
+          },
+          error: (err) => {
+            this.toastService.show(
+              err.error?.message || 'Failed to update user',
+              'error'
+            );
+          },
+        });
     } else {
       // Create new user
-      // Pass password for creation
-      requestData.password = formVal.password;
+      const createData: UserCreationRequest = {
+        fullName: formVal.fullName || '',
+        email: formVal.email || '',
+        username: formVal.username || '',
+        roles: formVal.roles ?? [],
+        status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
+        password: formVal.password || '',
+      };
 
-      this.userService.createUser(requestData).subscribe({
-        next: (res) => {
-          this.toastService.show('User created successfully', 'success');
-          this.loadUsers();
-          this.closeUserModal();
-        },
-        error: (err) => {
-          this.toastService.show(
-            err.error?.message || 'Failed to create user',
-            'error'
-          );
-        },
-      });
+      this.userService
+        .createUser(createData)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.toastService.show('User created successfully', 'success');
+            this.loadUsers(); // Trigger reload
+            this.closeUserModal();
+          },
+          error: (err) => {
+            this.toastService.show(
+              err.error?.message || 'Failed to create user',
+              'error'
+            );
+          },
+        });
     }
   }
 
@@ -585,19 +690,22 @@ export class UsersComponent {
 
     // Step 1: Initiate (Send OTP)
     if (this.resetStep() === 'INIT') {
-      this.userService.initiatePasswordReset(user.id).subscribe({
-        next: (res) => {
-          this.toastService.show('OTP sent to user email', 'success');
-          this.resetStep.set('OTP');
-          this.startOtpTimer();
-        },
-        error: (err) => {
-          this.toastService.show(
-            err.error?.message || 'Failed to send OTP',
-            'error'
-          );
-        },
-      });
+      this.userService
+        .initiatePasswordReset(user.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.toastService.show('OTP sent to user email', 'success');
+            this.resetStep.set('OTP');
+            this.startOtpTimer();
+          },
+          error: (err) => {
+            this.toastService.show(
+              err.error?.message || 'Failed to send OTP',
+              'error'
+            );
+          },
+        });
       return;
     }
 
@@ -609,31 +717,34 @@ export class UsersComponent {
       }
 
       const otp = this.otpControl.value || '';
-      this.userService.completePasswordReset(user.id, otp).subscribe({
-        next: (res) => {
-          const newPass = res.result;
+      this.userService
+        .completePasswordReset(user.id, otp)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            const newPass = res.result;
 
-          if (newPass) {
-            this.toastService.show(
-              `Success! New Password: ${newPass}`,
-              'success'
-            );
-          } else {
-            this.toastService.show(
-              'Success! New password sent to user email.',
-              'success'
-            );
-          }
+            if (newPass) {
+              this.toastService.show(
+                `Success! New Password: ${newPass}`,
+                'success'
+              );
+            } else {
+              this.toastService.show(
+                'Success! New password sent to user email.',
+                'success'
+              );
+            }
 
-          this.closeResetModal();
-        },
-        error: (err) => {
-          this.toastService.show(
-            err.error?.message || 'Invalid OTP or Reset Failed',
-            'error'
-          );
-        },
-      });
+            this.closeResetModal();
+          },
+          error: (err) => {
+            this.toastService.show(
+              err.error?.message || 'Invalid OTP or Reset Failed',
+              'error'
+            );
+          },
+        });
     }
   }
 
@@ -659,15 +770,17 @@ export class UsersComponent {
     const user = this.userToBlock();
     if (!user) return;
 
-    this.userService.blockUser(String(user.id)).subscribe((res) => {
-      // Assuming showResponse or show handles generic ApiResponse
-      this.toastService.show(
-        res.message || 'Updated status successfully',
-        'success'
-      );
-      this.loadUsers();
-      this.closeBlockModal();
-    });
+    this.userService
+      .blockUser(String(user.id))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => {
+        this.toastService.show(
+          res.message || 'Updated status successfully',
+          'success'
+        );
+        this.loadUsers(); // Trigger reload
+        this.closeBlockModal();
+      });
   }
 
   // -- Close Modals --
@@ -690,11 +803,14 @@ export class UsersComponent {
   confirmDeleteUser() {
     const user = this.userToDelete();
     if (user) {
-      this.userService.deleteUser(String(user.id)).subscribe((res) => {
-        this.toastService.showResponse(res);
-        this.loadUsers();
-        this.closeDeleteModal();
-      });
+      this.userService
+        .deleteUser(String(user.id))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((res) => {
+          this.toastService.showResponse(res);
+          this.loadUsers(); // Trigger reload
+          this.closeDeleteModal();
+        });
     }
   }
 
@@ -715,7 +831,7 @@ export class UsersComponent {
 
   // OTP Timer
   otpCountdown = signal(0);
-  private timerSub: any;
+  private timerSub: ReturnType<typeof setInterval> | null = null;
 
   startOtpTimer() {
     this.otpCountdown.set(300); // 5 minutes
@@ -747,22 +863,32 @@ export class UsersComponent {
   confirmRestoreUser() {
     const user = this.userToRestore();
     if (user) {
-      this.userService.restoreUser(String(user.id)).subscribe({
-        next: (res) => {
-          this.toastService.show('User restored successfully', 'success');
-          this.loadUsers();
-          this.closeRestoreModal();
-        },
-        error: (err) => {
-          this.toastService.show('Failed to restore user', 'error');
-        },
-      });
+      this.userService
+        .restoreUser(String(user.id))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.toastService.show('User restored successfully', 'success');
+            this.loadUsers(); // Trigger reload
+            this.closeRestoreModal();
+          },
+          error: () => {
+            this.toastService.show('Failed to restore user', 'error');
+          },
+        });
     }
   }
 
   closeRestoreModal() {
     this.isRestoreModalOpen.set(false);
     this.userToRestore.set(null);
+  }
+
+  onPageSizeChange(newSize: number) {
+    this.pageSize.set(Number(newSize));
+    this.currentPage.set(1);
+    this.updateUrl();
+    this.loadUsers();
   }
 
   onPageChange(page: number) {

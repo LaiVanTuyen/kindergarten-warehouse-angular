@@ -7,7 +7,7 @@ export type Lang = 'en' | 'vi';
   providedIn: 'root',
 })
 export class TranslationService {
-  private currentLangSubject = new BehaviorSubject<Lang>('en');
+  private currentLangSubject = new BehaviorSubject<Lang>('vi');
   currentLang$ = this.currentLangSubject.asObservable();
 
   private translations: Record<Lang, Record<string, string>> = {

@@ -6,38 +6,58 @@ export interface Resource {
   description: string;
   fileUrl: string;
   thumbnailUrl?: string; // Mapped from backend column
-  fileType?: string; // Mapped from backend column
   fileExtension?: string;
-  fileSize?: string; // Assuming mapped to string for display or number from BE
+
+  fileSize?: number; // Bytes
+  duration?: string; // "MM:SS" or "HH:MM:SS"
   viewsCount: number;
   downloadCount: number;
   topicId: string;
   createdById?: number; // User Id assumed number based on Users table
-  isActive: boolean;
+  createdBy?: string; // Username from API
   isDeleted: boolean;
+  visibility: 'PUBLIC' | 'PRIVATE'; // New field from spec
+  isFavorited?: boolean; // New field from spec
   createdAt: string;
   updatedAt?: string;
+  updatedBy?: string; // Metadata field
   slug: string;
   highlights?: string[]; // JSON mapped to string array
+  ageGroups?: AgeGroup[]; // New field from spec
 
   // Enums or Union types
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  type:
+  // Enums or Union types
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
+  rejectionReason?: string | null;
+  // Mapped from backend resourceType
+  resourceType?: 'FILE' | 'YOUTUBE' | 'EXTERNAL_LINK';
+
+  // Mapped from backend fileType (or type)
+  fileType?:
     | 'VIDEO'
     | 'DOCUMENT'
-    | 'PDF'
     | 'EXCEL'
-    | 'WORD'
-    | 'AUDIO'
+    | 'PDF'
+    | 'POWERPOINT'
     | 'IMAGE'
-    | 'PPT'
-    | 'POWERPOINT';
+    | 'OTHER';
+
+  // Legacy/UI Binding (can be same as fileType or combined)
+  type?: string;
 
   // Relations (optional depending on API response depth)
   comments?: Comment[];
-  rating?: number; // Calculated or from View
+  rating?: number; // Keep for backward compat if needed
+  averageRating?: number; // From Spec
   uploader?: string; // Helpers
   uploaderAvatar?: string; // Helpers
+  topic?: {
+    id: string | number;
+    name: string;
+    slug: string; // Added for strict typing
+    categoryId: string | number;
+    categoryName?: string;
+  };
 }
 
 // ResourceComment merged into Comment in interaction.model.ts
@@ -49,21 +69,29 @@ export interface CreateResourceRequest {
   description: string;
   topicId: string;
   ageGroupIds: string; // Comma separated
+  username: string; // Required by spec
+  duration?: string; // "MM:SS" or "HH:MM:SS"
 }
 
 export interface UpdateResourceRequest {
   title?: string;
   description?: string;
   topicId?: string;
-  ageGroupIds?: string;
-  file?: File; // If re-uploading
+  ageGroupIds?: string | string[]; // List<Long> but sent as query params usually string or multi-value
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
+  file?: File; // If re-uploading (not in update spec but good to keep if needed)
+  youtubeLink?: string;
+  fileType?: string;
+  duration?: string; // New field
 }
 
 // Response Wrappers
 export interface RestResponse<T> {
-  status?: string; // 'OK', etc. if your API sends this
+  code?: number; // Spec uses 'code': 1000
+  status?: string;
   message?: string;
-  data: T;
+  result?: T; // Spec uses 'result' instead of 'data'
+  data: T; // Keep for backward compatibility if needed
 }
 
 export interface PaginatedResponse<T> {
@@ -78,15 +106,21 @@ export interface PaginatedResponse<T> {
 export interface ResourceFilterParams {
   page?: number;
   size?: number;
-  topicId?: string;
-  categoryId?: string;
-  ageGroupId?: string;
+  topicId?: string | string[];
+  categoryId?: string | string[];
+  ageGroupId?: string | string[];
   keyword?: string;
-  topic?: string; // slug
-  category?: string; // slug
-  ages?: string; // slugs
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
-  type?: string;
+  topic?: string | string[]; // Deprecated: use topicSlugs
+  category?: string | string[]; // Deprecated: use categorySlugs
+  ages?: string | string[]; // Deprecated: use ageSlugs
+  status?: string | string[]; // Can be PENDING, APPROVED, REJECTED, DELETED, HIDDEN
+  type?: string | string[]; // Deprecated: use types
+  sort?: string;
+  // New Multi-select Params
+  topicSlugs?: string[];
+  categorySlugs?: string[];
+  ageSlugs?: string[];
+  types?: string[];
 }
 
 export interface Category {
