@@ -13,7 +13,8 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink, Title } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import {
   AuthService,
   extractErrorMessage,

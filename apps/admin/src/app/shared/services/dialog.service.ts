@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
-import { Dialog, DialogConfig } from '@angular/cdk/dialog';
+import { Dialog, DialogConfig, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -73,7 +73,7 @@ export class DialogService {
     component: ComponentType<C>,
     data?: D,
     destroyRef?: DestroyRef,
-    options: Partial<DialogConfig<D>> = {}
+    options: Partial<DialogConfig<any, any, any>> = {}
   ): Observable<R | undefined> {
     const src$ = this.cdk.open<R, D, C>(component, {
       data,

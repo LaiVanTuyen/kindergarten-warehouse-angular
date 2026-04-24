@@ -11,7 +11,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink, Title } from '@angular/router';
+import { RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import {
   AuthService,
   extractErrorMessage,
