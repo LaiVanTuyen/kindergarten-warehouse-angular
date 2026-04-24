@@ -1,96 +1,227 @@
-<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 relative overflow-hidden">
-    <!-- Background decorations -->
-    <div class="absolute inset-0 pointer-events-none">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+<app-auth-shell subtitle="Đăng nhập để tiếp tục quản trị">
+  <h2 class="text-xl font-bold text-kindy-ink mb-1">
+    Chào mừng trở lại! 👋
+  </h2>
+  <p class="text-kindy-ink-soft text-sm mb-6">
+    Vui lòng nhập thông tin đăng nhập của bạn.
+  </p>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    novalidate
+    class="space-y-5"
+  >
+    <!-- Email -->
+    <div>
+      <label
+        for="login-email"
+        class="block text-sm font-medium text-kindy-ink mb-2"
+      >
+        Địa chỉ email
+      </label>
+      <div class="relative">
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-kindy-ink-soft pointer-events-none"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </span>
+        <input
+          id="login-email"
+          type="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          autofocus
+          formControlName="email"
+          placeholder="your.name@example.com"
+          aria-describedby="login-email-error"
+          [attr.aria-invalid]="
+            form.controls.email.invalid && form.controls.email.touched
+              ? 'true'
+              : null
+          "
+          class="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-kindy-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent transition-all"
+          [class.border-kindy-coral-strong]="
+            form.controls.email.invalid && form.controls.email.touched
+          "
+        />
+      </div>
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p
+          id="login-email-error"
+          role="alert"
+          aria-live="polite"
+          class="mt-1.5 text-xs text-kindy-coral-strong"
+        >
+          @if (form.controls.email.errors?.['required']) {
+            Vui lòng nhập email.
+          } @else if (form.controls.email.errors?.['email']) {
+            Email không đúng định dạng.
+          }
+        </p>
+      }
     </div>
 
-    <div class="w-full max-w-md relative z-10">
-        <!-- Logo / Brand -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-            </div>
-            <h1 class="text-3xl font-bold text-white">K-Admin</h1>
-            <p class="text-slate-400 text-sm mt-1">Hệ thống quản lý Mầm non</p>
-        </div>
-
-        <!-- Card -->
-        <div class="bg-white/[0.06] backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-8">
-            <h2 class="text-xl font-bold text-white mb-1">Đăng nhập</h2>
-            <p class="text-slate-400 text-sm mb-8">Nhập thông tin đăng nhập để tiếp tục</p>
-
-            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
-                <!-- Email -->
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Địa chỉ email</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <input type="email" id="email" formControlName="email"
-                            class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            [ngClass]="{'border-red-400 focus:ring-red-400': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
-                            placeholder="admin@kindergarten.com" />
-                    </div>
-                    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-                        class="mt-1.5 text-xs text-red-400 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        <span *ngIf="loginForm.get('email')?.errors?.['required']">Email không được để trống.</span>
-                        <span *ngIf="loginForm.get('email')?.errors?.['pattern']">Vui lòng nhập địa chỉ email hợp lệ.</span>
-                    </div>
-                </div>
-
-                <!-- Password -->
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Mật khẩu</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <input type="password" id="password" formControlName="password"
-                            class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            [ngClass]="{'border-red-400 focus:ring-red-400': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
-                            placeholder="••••••••" />
-                    </div>
-                    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-                        class="mt-1.5 text-xs text-red-400 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        Mật khẩu không được để trống.
-                    </div>
-                </div>
-
-                <!-- Error message from server -->
-                <div *ngIf="errorMessage"
-                    class="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                    {{ errorMessage }}
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" [disabled]="loginForm.invalid || isLoading"
-                    class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
-                    <span *ngIf="isLoading" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
-                </button>
-            </form>
-        </div>
-
-        <p class="text-center text-slate-600 text-xs mt-8">© 2026 K-Admin • Hệ thống quản lý mầm non</p>
+    <!-- Password -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <label
+          for="login-password"
+          class="block text-sm font-medium text-kindy-ink"
+        >
+          Mật khẩu
+        </label>
+        <a
+          routerLink="/forgot-password"
+          class="text-xs font-medium text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline focus:outline-none focus:ring-2 focus:ring-kindy-sky rounded-md px-1"
+        >
+          Quên mật khẩu?
+        </a>
+      </div>
+      <div class="relative">
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-kindy-ink-soft pointer-events-none"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+        </span>
+        <input
+          id="login-password"
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          formControlName="password"
+          placeholder="Ít nhất 8 ký tự"
+          aria-describedby="login-password-error"
+          [attr.aria-invalid]="
+            form.controls.password.invalid && form.controls.password.touched
+              ? 'true'
+              : null
+          "
+          class="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl text-kindy-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent transition-all"
+          [class.border-kindy-coral-strong]="
+            form.controls.password.invalid && form.controls.password.touched
+          "
+        />
+        <button
+          type="button"
+          (click)="togglePassword()"
+          [attr.aria-label]="showPassword() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          [attr.aria-pressed]="showPassword()"
+          class="absolute inset-y-0 right-0 flex items-center pr-3 text-kindy-ink-soft hover:text-kindy-sidebar focus:outline-none focus:text-kindy-sidebar"
+        >
+          @if (showPassword()) {
+            <svg
+              aria-hidden="true"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+              />
+            </svg>
+          } @else {
+            <svg
+              aria-hidden="true"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          }
+        </button>
+      </div>
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p
+          id="login-password-error"
+          role="alert"
+          aria-live="polite"
+          class="mt-1.5 text-xs text-kindy-coral-strong"
+        >
+          Vui lòng nhập mật khẩu.
+        </p>
+      }
     </div>
-</div>
+
+    <!-- Server error -->
+    @if (errorMessage(); as msg) {
+      <div
+        role="alert"
+        aria-live="assertive"
+        class="flex items-start gap-2 p-3 bg-kindy-coral-soft/40 border border-kindy-coral-soft rounded-xl text-kindy-coral-strong text-sm"
+      >
+        <svg
+          aria-hidden="true"
+          class="w-4 h-4 flex-shrink-0 mt-0.5"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+    }
+
+    <!-- Submit -->
+    <button
+      type="submit"
+      [disabled]="form.invalid || isLoading()"
+      class="w-full py-3 px-4 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white font-semibold rounded-xl shadow-md shadow-kindy-sidebar/20 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+    >
+      @if (isLoading()) {
+        <span
+          aria-hidden="true"
+          class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+        ></span>
+      }
+      {{ isLoading() ? 'Đang đăng nhập…' : 'Đăng nhập' }}
+    </button>
+  </form>
+</app-auth-shell>

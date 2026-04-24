@@ -1,92 +1,191 @@
-<div class="flex h-screen bg-gray-100">
+<!-- Skip link for keyboard users -->
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-kindy-sidebar focus:text-white focus:rounded-lg"
+>
+  Bỏ qua tới nội dung chính
+</a>
+
+<div class="flex h-screen bg-kindy-cream">
 
   <!-- Mobile Sidebar Overlay -->
-  <div *ngIf="isSidebarOpen()" (click)="isSidebarOpen.set(false)"
-    class="fixed inset-0 bg-gray-900/50 z-20 lg:hidden backdrop-blur-sm transition-opacity">
-  </div>
+  @if (isSidebarOpen()) {
+    <div
+      (click)="closeMobileSidebar()"
+      class="fixed inset-0 bg-kindy-ink/40 z-20 lg:hidden backdrop-blur-sm transition-opacity"
+      aria-hidden="true"
+    ></div>
+  }
 
   <!-- Sidebar -->
   <aside
-    class="fixed inset-y-0 left-0 z-30 bg-white transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none flex-shrink-0"
-    [ngClass]="[
-      isSidebarOpen() ? 'translate-x-0' : '-translate-x-full',
-      isSidebarCollapsed() ? 'w-20' : 'w-64'
-    ]">
-    <app-sidebar class="h-full" (collapsedChange)="onSidebarCollapsed($event)"></app-sidebar>
+    class="fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none flex-shrink-0"
+    [class.translate-x-0]="isSidebarOpen()"
+    [class.-translate-x-full]="!isSidebarOpen()"
+  >
+    <app-sidebar
+      class="h-full"
+      [collapsed]="isSidebarCollapsed()"
+      (toggleCollapsed)="toggleSidebarCollapsed()"
+    />
   </aside>
 
-  <!-- Main Content -->
+  <!-- Main Content Area -->
   <div class="flex-1 flex flex-col overflow-hidden w-full">
     <!-- Topbar -->
-    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 z-10 relative">
-
-      <div class="flex items-center gap-3">
-        <!-- Mobile Toggle Button -->
-        <button (click)="toggleSidebar()" class="p-2 -ml-2 mr-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <header
+      class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 z-10 relative"
+    >
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- Mobile hamburger -->
+        <button
+          type="button"
+          (click)="toggleSidebar()"
+          class="p-2 -ml-2 text-kindy-ink-soft hover:bg-kindy-surface-soft rounded-lg lg:hidden focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+          [attr.aria-label]="isSidebarOpen() ? 'Đóng menu' : 'Mở menu'"
+          [attr.aria-expanded]="isSidebarOpen()"
+          aria-controls="admin-sidebar"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
 
-        <h2 class="text-lg lg:text-xl font-semibold text-gray-800 truncate">
+        <h1 class="text-lg lg:text-xl font-bold font-display text-kindy-ink truncate">
           Trang quản trị
-        </h2>
+        </h1>
       </div>
 
-      <div class="flex items-center space-x-4 relative" *ngIf="currentUser$ | async as user">
-        <span class="text-sm text-gray-500 hidden sm:block">Xin chào, {{ user.fullName }}</span>
+      @if (currentUser(); as user) {
+        <div class="flex items-center gap-3 relative">
+          <span class="text-sm text-kindy-ink-soft hidden sm:block">
+            Xin chào,
+            <span class="font-semibold text-kindy-ink">{{ user.fullName }}</span>
+          </span>
 
-        <!-- Avatar Button -->
-        <button (click)="toggleProfile()"
-          class="w-8 h-8 rounded-full bg-admin-navy text-white flex items-center justify-center font-bold hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 overflow-hidden relative">
-
-          <img *ngIf="user.avatarUrl" [src]="getAvatarUrl(user.avatarUrl)" alt="User Avatar"
-            class="w-full h-full object-cover">
-          <span *ngIf="!user.avatarUrl">{{ getUserInitials(user.fullName) }}</span>
-
-        </button>
-
-        <!-- Profile Popup — dùng position:fixed + z-[9999] để luôn nằm trên mọi stacking context -->
-        <div *ngIf="isProfileOpen()"
-          class="fixed right-4 top-16 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999] transform transition-all duration-200 origin-top-right">
-          <!-- User Info Header -->
-          <div class="px-4 py-3 border-b border-gray-100">
-            <p class="text-sm font-medium text-gray-900">{{ user.fullName }}</p>
-            <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
-            <p class="text-xs text-blue-500 font-semibold mt-1">{{ user.role }}</p>
-          </div>
-
-          <!-- Menu Items -->
-          <a routerLink="/profile"
-            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-            (click)="isProfileOpen.set(false)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            Hồ sơ cá nhân
-          </a>
-
-          <button (click)="logout()"
-            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Đăng xuất
+          <!-- Avatar button -->
+          <button
+            #profileButton
+            type="button"
+            (click)="toggleProfile()"
+            [attr.aria-expanded]="isProfileOpen()"
+            aria-haspopup="menu"
+            aria-controls="admin-profile-menu"
+            aria-label="Mở menu hồ sơ"
+            class="w-9 h-9 rounded-full bg-kindy-sidebar text-white flex items-center justify-center font-bold hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar overflow-hidden"
+          >
+            @if (user.avatarUrl) {
+              <img
+                [src]="avatarUrl()"
+                alt=""
+                class="w-full h-full object-cover"
+              />
+            } @else {
+              <span aria-hidden="true">{{ userInitials() }}</span>
+            }
           </button>
+
+          <!-- Profile menu -->
+          @if (isProfileOpen()) {
+            <div
+              #profileMenu
+              id="admin-profile-menu"
+              role="menu"
+              aria-label="Menu hồ sơ"
+              class="absolute right-0 top-12 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 origin-top-right"
+            >
+              <!-- User summary -->
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="text-sm font-semibold text-kindy-ink truncate">
+                  {{ user.fullName }}
+                </p>
+                <p class="text-xs text-kindy-ink-soft truncate">
+                  {{ user.email }}
+                </p>
+                <p class="text-xs text-kindy-sidebar-active font-semibold mt-1">
+                  {{ user.roles?.join(', ') || user.role || '—' }}
+                </p>
+              </div>
+
+              <a
+                routerLink="/profile"
+                role="menuitem"
+                class="px-4 py-2 text-sm text-kindy-ink hover:bg-kindy-surface-soft flex items-center gap-2 focus:outline-none focus:bg-kindy-surface-soft"
+                (click)="isProfileOpen.set(false)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                Hồ sơ cá nhân
+              </a>
+
+              <button
+                type="button"
+                role="menuitem"
+                (click)="logout()"
+                class="w-full text-left px-4 py-2 text-sm text-kindy-coral-strong hover:bg-kindy-coral-soft/50 flex items-center gap-2 focus:outline-none focus:bg-kindy-coral-soft/50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Đăng xuất
+              </button>
+            </div>
+          }
         </div>
-      </div>
+      }
     </header>
-    <!-- Content Area -->
-    <main class="flex-1 overflow-hidden bg-gray-100 p-4 lg:p-6 relative flex flex-col">
-      <router-outlet></router-outlet>
+
+    <!-- Breadcrumb strip -->
+    <div class="bg-white/70 border-b border-gray-100 px-4 lg:px-6 py-2">
+      <app-breadcrumb />
+    </div>
+
+    <!-- Content -->
+    <main
+      id="main-content"
+      tabindex="-1"
+      class="flex-1 overflow-y-auto bg-kindy-cream p-4 lg:p-6"
+    >
+      <router-outlet />
     </main>
   </div>
 </div>

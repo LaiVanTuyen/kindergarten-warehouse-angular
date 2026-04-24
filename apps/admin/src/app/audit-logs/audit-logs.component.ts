@@ -1,369 +1,234 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
 import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormControl,
-  FormGroup,
-} from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
-import { AuditLogService } from '@kindergarten-warehouse/data-access';
-import { AuditLog, AuditLogFilter } from '@kindergarten-warehouse/data-access';
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AuditLog,
+  AuditLogFilter,
+  AuditLogService,
+  ToastService,
+  downloadCsv,
+} from '@kindergarten-warehouse/data-access';
+import { PageHeaderComponent } from '../shared/components/page-header/page-header.component';
+import { StatusPillComponent, StatusPillTone } from '../shared/components/status-pill/status-pill.component';
+import { SearchInputComponent } from '../shared/components/search-input/search-input.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../shared/components/pagination/pagination.component';
-import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
-import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { FormatTargetPipe } from '../shared/pipes/format-target.pipe';
-import { FormatDetailPipe } from '../shared/pipes/format-detail.pipe';
+import { DrawerComponent } from '../shared/components/drawer/drawer.component';
+import { handleHttpError } from '../shared/utils/rx-operators';
+import { setupUrlSync } from '../shared/utils/url-sync';
+
+const ACTION_TONES: Record<string, StatusPillTone> = {
+  LOGIN: 'teacher',
+  LOGOUT: 'neutral',
+  CREATE: 'approved',
+  UPDATE: 'pending',
+  DELETE: 'rejected',
+  APPROVE: 'approved',
+  REJECT: 'rejected',
+  UPLOAD: 'teacher',
+  RESTORE: 'active',
+  BLOCK: 'rejected',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  LOGIN: 'Đăng nhập',
+  LOGOUT: 'Đăng xuất',
+  CREATE: 'Tạo',
+  UPDATE: 'Cập nhật',
+  DELETE: 'Xoá',
+  APPROVE: 'Duyệt',
+  REJECT: 'Từ chối',
+  UPLOAD: 'Tải lên',
+  RESTORE: 'Khôi phục',
+  BLOCK: 'Khoá',
+};
 
 @Component({
   selector: 'app-audit-logs',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
+    DatePipe,
+    PageHeaderComponent,
+    StatusPillComponent,
+    SearchInputComponent,
+    EmptyStateComponent,
     PaginationComponent,
-    MultiSelectFilterComponent,
-    BreadcrumbComponent,
-    FormatTargetPipe,
-    FormatDetailPipe,
+    DrawerComponent,
   ],
   templateUrl: './audit-logs.component.html',
-  styles: [
-    `
-      :host {
-        display: block;
-        height: 100%;
-      }
-    `,
-  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AuditLogsComponent implements OnInit {
-  private auditLogService = inject(AuditLogService);
+export class AuditLogsComponent {
+  private service = inject(AuditLogService);
+  private toast = inject(ToastService);
+  private destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  // Data State
-  auditLogs = signal<AuditLog[]>([]);
-  totalLogs = signal(0);
-  loading = signal(false);
+  readonly isLoading = signal(true);
+  readonly isExporting = signal(false);
+  readonly logs = signal<AuditLog[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(20);
+  readonly selectedLog = signal<AuditLog | null>(null);
 
-  // Pagination & Sort State
-  currentPage = signal(1);
-  pageSize = signal(10);
-  sortDir = signal<'asc' | 'desc'>('desc');
+  readonly username = signal('');
+  readonly action = signal<string>('');
+  readonly startDate = signal<string>('');
+  readonly endDate = signal<string>('');
+  readonly sortDir = signal<'asc' | 'desc'>('desc');
 
-  // Filter State
-  filterForm = new FormGroup({
-    username: new FormControl(''),
-    startDate: new FormControl(''),
-    endDate: new FormControl(''),
-  });
-
-  actionFilter = signal<Set<string>>(new Set());
-  activeFilterDropdown = signal<string | null>(null);
-  showFilters = signal(false);
-
-  actionOptions = [
-    {
-      label: 'Đăng nhập',
-      value: 'LOGIN',
-      colorClass: 'text-purple-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
-    },
-    {
-      label: 'Tạo mới',
-      value: 'CREATE',
-      colorClass: 'text-emerald-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
-    },
-    {
-      label: 'Cập nhật',
-      value: 'UPDATE',
-      colorClass: 'text-blue-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
-    },
-    {
-      label: 'Xóa',
-      value: 'DELETE',
-      colorClass: 'text-rose-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
-    },
-    {
-      label: 'Khôi phục',
-      value: 'RESTORE',
-      colorClass: 'text-emerald-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
-    },
-    {
-      label: 'Phê duyệt',
-      value: 'APPROVE',
-      colorClass: 'text-emerald-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-    },
-    {
-      label: 'Từ chối',
-      value: 'REJECT',
-      colorClass: 'text-rose-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-    },
-    {
-      label: 'Di chuyển',
-      value: 'MOVE',
-      colorClass: 'text-amber-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="19 9 22 12 19 15"/><polyline points="9 19 12 22 15 19"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>',
-    },
-    {
-      label: 'Phê duyệt hl',
-      value: 'APPROVE_BULK',
-      colorClass: 'text-emerald-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/><polyline points="16 4 6 14.01 3 11.01"/></svg>',
-    },
-    {
-      label: 'Từ chối hl',
-      value: 'REJECT_BULK',
-      colorClass: 'text-rose-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="15" x2="9" y2="9"/></svg>',
-    },
-    {
-      label: 'Xóa hàng loạt',
-      value: 'DELETE_BULK',
-      colorClass: 'text-rose-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>',
-    },
-    {
-      label: 'Khôi phục hl',
-      value: 'RESTORE_BULK',
-      colorClass: 'text-emerald-600',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12h18"/></svg>',
-    },
+  readonly actionOptions = [
+    { value: '', label: 'Tất cả hành động' },
+    { value: 'LOGIN', label: 'Đăng nhập' },
+    { value: 'LOGOUT', label: 'Đăng xuất' },
+    { value: 'CREATE', label: 'Tạo' },
+    { value: 'UPDATE', label: 'Cập nhật' },
+    { value: 'DELETE', label: 'Xoá' },
+    { value: 'APPROVE', label: 'Duyệt' },
+    { value: 'REJECT', label: 'Từ chối' },
+    { value: 'UPLOAD', label: 'Tải lên' },
+    { value: 'RESTORE', label: 'Khôi phục' },
+    { value: 'BLOCK', label: 'Khoá' },
   ];
 
-  // Modal State
-  selectedLog = signal<AuditLog | null>(null);
-  isModalOpen = signal(false);
+  readonly hasFilters = computed(
+    () =>
+      !!(
+        this.username() ||
+        this.action() ||
+        this.startDate() ||
+        this.endDate()
+      )
+  );
 
-  ngOnInit() {
-    this.initFromUrl();
+  constructor() {
+    setupUrlSync({
+      fields: {
+        u: this.username,
+        action: this.action,
+        from: this.startDate,
+        to: this.endDate,
+        dir: this.sortDir,
+        page: this.page,
+      },
+      skipValues: [''],
+      router: this.router,
+      route: this.route,
+    });
 
-    // If no params, initial load done by initFromUrl -> loadLogs
-    // If initFromUrl set params, it called loadLogs
-
-    // Debounce filter changes
-    this.filterForm.valueChanges
-      .pipe(debounceTime(500), distinctUntilChanged())
-      .subscribe(() => {
-        this.currentPage.set(1);
-        this.updateUrl();
-        this.loadLogs();
+    // Filter change resets page and reloads, untracked to avoid loop.
+    effect(() => {
+      this.username();
+      this.action();
+      this.startDate();
+      this.endDate();
+      this.sortDir();
+      untracked(() => {
+        this.page.set(1);
+        this.load();
       });
-  }
-
-  private initFromUrl() {
-    const params = this.route.snapshot.queryParams;
-
-    if (params['page']) this.currentPage.set(Number(params['page']));
-    if (params['size']) this.pageSize.set(Number(params['size']));
-    if (params['sortDir']) this.sortDir.set(params['sortDir']);
-
-    if (params['username'])
-      this.filterForm.patchValue(
-        { username: params['username'] },
-        { emitEvent: false }
-      );
-    if (params['startDate'])
-      this.filterForm.patchValue(
-        { startDate: params['startDate'] },
-        { emitEvent: false }
-      );
-    if (params['endDate'])
-      this.filterForm.patchValue(
-        { endDate: params['endDate'] },
-        { emitEvent: false }
-      );
-
-    if (params['action']) {
-      const actions = params['action'].split(',');
-      this.actionFilter.set(new Set(actions));
-    }
-
-    this.loadLogs();
-  }
-
-  updateUrl() {
-    const queryParams: Record<string, string | number | null> = {
-      page: this.currentPage(),
-      size: this.pageSize(),
-      sortDir: this.sortDir(),
-    };
-
-    const formVal = this.filterForm.getRawValue();
-    if (formVal.username) queryParams['username'] = formVal.username;
-    if (formVal.startDate) queryParams['startDate'] = formVal.startDate;
-    if (formVal.endDate) queryParams['endDate'] = formVal.endDate;
-
-    if (this.actionFilter().size > 0) {
-      queryParams['action'] = Array.from(this.actionFilter()).join(',');
-    } else {
-      queryParams['action'] = null;
-    }
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: queryParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
     });
   }
 
-  loadLogs() {
-    this.loading.set(true);
-    const formVal = this.filterForm.getRawValue();
-
+  load() {
+    this.isLoading.set(true);
     const filters: AuditLogFilter = {
-      action:
-        this.actionFilter().size > 0
-          ? Array.from(this.actionFilter()).join(',')
-          : undefined,
-      username: formVal.username || undefined,
-      startDate: formVal.startDate || undefined,
-      endDate: formVal.endDate || undefined,
+      username: this.username() || undefined,
+      action: this.action() || undefined,
+      startDate: this.startDate() || undefined,
+      endDate: this.endDate() || undefined,
     };
-
-    this.auditLogService
-      .getAuditLogs(
-        this.currentPage(),
-        this.pageSize(),
-        filters,
-        this.sortDir()
+    this.service
+      .getAuditLogs(this.page(), this.pageSize(), filters, this.sortDir())
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được nhật ký.'),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe({
-        next: (res) => {
-          if (res.code === 1000 && res.result) {
-            this.auditLogs.set(res.result.content);
-            this.totalLogs.set(res.result.totalElements);
-          } else {
-            this.auditLogs.set([]);
-            this.totalLogs.set(0);
-          }
-          this.loading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load logs', err);
-          this.auditLogs.set([]);
-          this.loading.set(false);
-        },
+      .subscribe((res) => {
+        this.logs.set(res.result?.content || []);
+        this.total.set(res.result?.totalElements || 0);
+        this.isLoading.set(false);
       });
   }
 
-  onPageChange(page: number) {
-    this.currentPage.set(page);
-    this.updateUrl();
-    this.loadLogs();
+  onPageChange(p: number) {
+    this.page.set(p);
+    this.load();
   }
 
-  onPageSizeChange(newSize: number) {
-    this.pageSize.set(Number(newSize));
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadLogs();
-  }
-
-  toggleSort() {
+  toggleSortDir() {
     this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
-    this.updateUrl();
-    this.loadLogs();
-  }
-
-  // Filter Helpers
-  toggleFilterDropdown(key: string) {
-    this.activeFilterDropdown.update((current) =>
-      current === key ? null : key
-    );
-  }
-
-  removeActionFilter(action: string) {
-    const current = this.actionFilter();
-    const newSet = new Set(current);
-    newSet.delete(action);
-    this.actionFilter.set(newSet);
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadLogs();
-  }
-
-  clearActionFilter() {
-    this.actionFilter.set(new Set());
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadLogs();
   }
 
   resetFilters() {
-    this.filterForm.reset({}, { emitEvent: false });
-    this.actionFilter.set(new Set());
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadLogs();
+    this.username.set('');
+    this.action.set('');
+    this.startDate.set('');
+    this.endDate.set('');
   }
 
-  // Helper Methods
-  getActionColor(action: string): string {
-    switch (action) {
-      case 'LOGIN':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'CREATE':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'APPROVE':
-      case 'APPROVE_BULK':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'REJECT':
-      case 'REJECT_BULK':
-        return 'bg-rose-100 text-rose-700 border-rose-200';
-      case 'DELETE':
-      case 'DELETE_BULK':
-        return 'bg-rose-100 text-rose-700 border-rose-200';
-      case 'RESTORE':
-      case 'RESTORE_BULK':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'MOVE':
-        return 'bg-amber-100 text-amber-700 border-amber-200';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  }
-
-  formatActionText(action: string): string {
-    if (!action) return '';
-    return action
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
-  }
-
-  formatUserAgent(ua?: string): string {
-    if (!ua) return 'Unknown';
-    if (ua.includes('Windows')) return 'Windows';
-    if (ua.includes('Mac')) return 'macOS';
-    if (ua.includes('Linux')) return 'Linux';
-    if (ua.includes('Android')) return 'Android';
-    if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
-    return 'Other';
-  }
-
-  // Modal Actions
   openDetail(log: AuditLog) {
     this.selectedLog.set(log);
-    this.isModalOpen.set(true);
   }
 
-  closeModal() {
-    this.isModalOpen.set(false);
+  closeDetail() {
     this.selectedLog.set(null);
+  }
+
+  actionTone(action: string): StatusPillTone {
+    return ACTION_TONES[action] ?? 'neutral';
+  }
+  actionLabel(action: string): string {
+    return ACTION_LABELS[action] ?? action;
+  }
+
+  /**
+   * Export the currently-filtered result set (respecting filters but ignoring
+   * pagination; we refetch with a large page size so the export matches what
+   * the user sees).
+   */
+  exportCsv() {
+    this.isExporting.set(true);
+    const filters: AuditLogFilter = {
+      username: this.username() || undefined,
+      action: this.action() || undefined,
+      startDate: this.startDate() || undefined,
+      endDate: this.endDate() || undefined,
+    };
+    this.service
+      .getAuditLogs(1, 10_000, filters, this.sortDir())
+      .pipe(
+        handleHttpError(this.toast, 'Không xuất được file.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((res) => {
+        const rows = (res.result?.content || []).map((log) => ({
+          'Thời gian': log.timestamp,
+          'Người dùng': log.username,
+          'Hành động': this.actionLabel(log.action),
+          'Mã hành động': log.action,
+          'Đối tượng': log.target,
+          'Địa chỉ IP': log.ipAddress ?? '',
+          'Chi tiết': log.detail ?? '',
+        }));
+        const stamp = new Date().toISOString().slice(0, 10);
+        downloadCsv(`audit-logs-${stamp}.csv`, rows);
+        this.isExporting.set(false);
+        this.toast.show(`Đã xuất ${rows.length} dòng.`, 'success');
+      });
   }
 }

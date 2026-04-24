@@ -1,343 +1,431 @@
-import { Component, signal, effect, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
-import { FormsModule } from '@angular/forms';
+import {
+  AuthService,
+  DashboardPeriod,
+  DashboardService,
+  DashboardStats,
+  PendingResource,
+  TopicDistribution,
+  TopResource,
+  TopTeacher,
+  ToastService,
+  TrendSeries,
+  ActivityItem,
+  handleHttpError,
+} from '@kindergarten-warehouse/data-access';
+
+import { DashboardCardComponent } from '../shared/components/dashboard-card/dashboard-card.component';
+import {
+  StatCardComponent,
+  StatCardTone,
+} from '../shared/components/stat-card/stat-card.component';
+import { DateFilterComponent } from '../shared/components/date-filter/date-filter.component';
+import { PendingPreviewComponent } from './components/pending-preview.component';
+import {
+  TopListComponent,
+  TopListItem,
+} from './components/top-list.component';
+import { RecentActivityComponent } from './components/recent-activity.component';
+import { QuickActionsComponent } from './components/quick-actions.component';
+
+interface StatCardConfig {
+  label: string;
+  value: number;
+  iconPath: string;
+  tone: StatCardTone;
+  trend: number | null;
+  subLabel?: string;
+  linkTo?: string | null;
+  linkQueryParams?: Record<string, unknown> | null;
+}
+
+interface TrendChartConfig {
+  title: string;
+  option: EChartsOption;
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgxEchartsDirective, FormsModule],
-  templateUrl: './dashboard.component.html',
-  styles: [
-    `
-      :host {
-        display: block;
-        height: 100%;
-      }
-    `,
+  imports: [
+    NgxEchartsDirective,
+    DashboardCardComponent,
+    StatCardComponent,
+    DateFilterComponent,
+    PendingPreviewComponent,
+    TopListComponent,
+    RecentActivityComponent,
+    QuickActionsComponent,
   ],
+  templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
-  // Signals
-  dateFilter = signal('this_year');
+  private dashService = inject(DashboardService);
+  private toast = inject(ToastService);
+  private authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
 
-  // Stats Signal
-  stats = signal({
-    totalResources: 215,
-    totalViews: 1428,
-    totalUsers: 45,
-    pendingApprovals: 8,
+  // --- Filter state -------------------------------------------------------
+  readonly period = signal<DashboardPeriod>('this_year');
+  readonly startDate = signal<string>('');
+  readonly endDate = signal<string>('');
+
+  // --- Data signals -------------------------------------------------------
+  readonly stats = signal<DashboardStats | null>(null);
+  readonly trend = signal<TrendSeries | null>(null);
+  readonly pending = signal<PendingResource[]>([]);
+  readonly topResources = signal<TopResource[]>([]);
+  readonly topTeachers = signal<TopTeacher[]>([]);
+  readonly topicDistribution = signal<TopicDistribution[]>([]);
+  readonly activity = signal<ActivityItem[]>([]);
+
+  // --- Loading flags ------------------------------------------------------
+  readonly isLoadingStats = signal(true);
+  readonly isLoadingTrend = signal(true);
+  readonly isLoadingPending = signal(true);
+
+  // --- Current user (for welcome greeting) --------------------------------
+  readonly userName = computed(
+    () => this.authService.currentUserValue?.fullName?.split(' ').pop() || 'bạn'
+  );
+
+  // --- Stat cards config --------------------------------------------------
+  readonly statCards = computed<StatCardConfig[]>(() => {
+    const s = this.stats();
+    if (!s) return [];
+    return [
+      {
+        label: 'Tổng tài nguyên',
+        value: s.totalResources,
+        iconPath:
+          'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+        tone: 'sky',
+        trend: s.trendPct.resources,
+        linkTo: '/resources',
+      },
+      {
+        label: 'Tổng lượt xem',
+        value: s.totalViews,
+        iconPath:
+          'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
+        tone: 'coral',
+        trend: s.trendPct.views,
+        linkTo: null,
+      },
+      {
+        label: 'Tổng người dùng',
+        value: s.totalUsers,
+        iconPath:
+          'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
+        tone: 'mint',
+        trend: s.trendPct.users,
+        linkTo: '/users',
+      },
+      {
+        label: 'Chờ phê duyệt',
+        value: s.pendingApprovals,
+        iconPath: 'M12 8v4l3 3M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0',
+        tone: 'lavender',
+        trend: null,
+        subLabel: 'Cần xử lý',
+        linkTo: '/resources',
+        linkQueryParams: { status: 'PENDING' },
+      },
+    ];
   });
 
-  // Custom Date Range
-  customStartDate = signal('');
-  customEndDate = signal('');
-
-  // Custom dropdown state
-  dateDropdownOpen = signal(false);
-
-  dateOptions = [
-    { value: 'this_year', label: '📅 Năm nay' },
-    { value: 'last_7_days', label: '🕓 7 ngày qua' },
-    { value: 'this_month', label: '📅 Tháng này' },
-    { value: 'custom', label: '⚙️ Tuỳ chỉnh' },
-  ];
-
-  getDateFilterLabel(): string {
-    return this.dateOptions.find(o => o.value === this.dateFilter())?.label ?? '📅 Năm nay';
-  }
-
-  // Resource View Modal
-  isViewModalOpen = signal(false);
-  selectedResource = signal<any>(null);
-
-  // Chart Options Signals
-  resourceChartOption = signal<EChartsOption>({});
-  viewChartOption = signal<EChartsOption>({});
-  userChartOption = signal<EChartsOption>({});
-
-  // Pending Resources Signal
-  pendingResources = signal([
-    {
-      id: 1,
-      title: 'Learn Alphabet',
-      uploader: 'Jane Doe',
-      date: '2023-10-25',
-      thumbnail: '🅰️',
-      status: 'Pending',
-    },
-    {
-      id: 2,
-      title: 'Number Counting',
-      uploader: 'John Smith',
-      date: '2023-10-24',
-      thumbnail: '🔢',
-      status: 'Pending',
-    },
-    {
-      id: 3,
-      title: 'Colors & Shapes',
-      uploader: 'Emily R.',
-      date: '2023-10-23',
-      thumbnail: '🎨',
-      status: 'Pending',
-    },
-    {
-      id: 4,
-      title: 'Basic Science',
-      uploader: 'Sarah C.',
-      date: '2023-10-22',
-      thumbnail: '🧬',
-      status: 'Pending',
-    },
-    {
-      id: 5,
-      title: 'Story Time',
-      uploader: 'Sarah L.',
-      date: '2023-10-21',
-      thumbnail: '📖',
-      status: 'Pending',
-    },
-  ]);
-
-  constructor() {
-    // Effect to update chart when filter changes
-    effect(() => {
-      const filter = this.dateFilter();
-      this.updateDashboardData(filter);
-    });
-  }
-
-  setDateFilter(filter: string) {
-    this.dateFilter.set(filter);
-  }
-
-  updateDashboardData(filter: string) {
-    let xAxisData: string[];
-    let resourceData: number[];
-    let viewData: number[];
-    let userData: number[];
-
-    if (filter === 'last_7_days') {
-      // 7-Day Mock Data (Mon - Sun)
-      xAxisData = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
-      // Randomize data to make graphs distinct
-      resourceData = [5, 8, 3, 12, 6, 9, 7];
-      viewData = [150, 230, 220, 180, 260, 310, 290];
-      userData = [2, 1, 4, 3, 5, 4, 6];
-
-      // Update Stats for Week
-      this.stats.update(() => ({
-        totalResources: 50,
-        totalViews: 1640,
-        totalUsers: 25,
-        pendingApprovals: 8,
-      }));
-    } else if (filter === 'this_month') {
-      // 4 Weeks Data
-      xAxisData = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
-      resourceData = [12, 19, 15, 25];
-      viewData = [3200, 4100, 3800, 5600];
-      userData = [8, 12, 10, 15];
-
-      this.stats.update(() => ({
-        totalResources: 71,
-        totalViews: 16700,
-        totalUsers: 45,
-        pendingApprovals: 8,
-      }));
-    } else if (filter === 'custom') {
-      // Custom Range Mock
-      xAxisData = ['Ngày 1', 'Ngày 2', 'Ngày 3', 'Ngày 4', 'Ngày 5'];
-      resourceData = [5, 10, 8, 15, 12];
-      viewData = [800, 1200, 1100, 1500, 1300];
-      userData = [2, 4, 3, 6, 5];
-
-      this.stats.update(() => ({
-        totalResources: 50,
-        totalViews: 5900,
-        totalUsers: 20,
-        pendingApprovals: 8,
-      }));
-    } else {
-      // 12-Month Mock Data (Jan - Dec)
-      xAxisData = [
-        'Thg 1',
-        'Thg 2',
-        'Thg 3',
-        'Thg 4',
-        'Thg 5',
-        'Thg 6',
-        'Thg 7',
-        'Thg 8',
-        'Thg 9',
-        'Thg 10',
-        'Thg 11',
-        'Thg 12',
-      ];
-      // Distinct patterns for each chart
-      resourceData = [15, 20, 25, 18, 22, 30, 35, 28, 40, 45, 50, 55]; // Steady growth with dips
-      viewData = [
-        800, 1200, 1100, 1600, 2200, 2000, 3500, 3100, 4000, 4500, 5200, 5800,
-      ]; // Volatile growth
-      userData = [5, 8, 12, 15, 18, 22, 28, 32, 38, 45, 50, 60]; // Linear growth
-
-      // Update Stats for Year
-      this.stats.update(() => ({
-        totalResources: 215,
-        totalViews: 35000,
-        totalUsers: 325,
-        pendingApprovals: 8,
-      }));
-    }
-
-    // Mock System Health Updates (Simulate live data)
-    this.updateSystemHealth();
-
-    // Generate Chart Options
-    this.resourceChartOption.set(
-      this.getChartConfig(
-        'Resources',
-        xAxisData,
-        resourceData,
-        '#3B82F6',
-        'rgba(59, 130, 246'
-      )
-    ); // Blue
-    this.viewChartOption.set(
-      this.getChartConfig(
-        'Views',
-        xAxisData,
-        viewData,
-        '#EC4899',
-        'rgba(236, 72, 153'
-      )
-    ); // Pink
-    this.userChartOption.set(
-      this.getChartConfig(
-        'Users',
-        xAxisData,
-        userData,
-        '#22C55E',
-        'rgba(34, 197, 94'
-      )
-    ); // Green
-  }
-
-  // System Health Signals
-  systemHealth = signal({
-    cpuUsage: 45,
-    ramUsage: 62,
-    serverUptime: '24 days',
-    dbStatus: 'CONNECTED',
-    serverStatus: 'ONLINE',
+  // --- Trend charts -------------------------------------------------------
+  readonly trendCharts = computed<TrendChartConfig[]>(() => {
+    const t = this.trend();
+    if (!t) return [];
+    return [
+      {
+        title: 'Tài nguyên mới',
+        option: buildLineChart(t.xAxis, t.resources, '#FB7185', '251, 113, 133'),
+      },
+      {
+        title: 'Lượt xem',
+        option: buildLineChart(t.xAxis, t.views, '#60A5FA', '96, 165, 250'),
+      },
+      {
+        title: 'Người dùng mới',
+        option: buildLineChart(t.xAxis, t.users, '#34D399', '52, 211, 153'),
+      },
+    ];
   });
 
-  isRamWarning = computed(() => this.systemHealth().ramUsage > 80);
+  // --- Top lists as TopListItem -------------------------------------------
+  readonly topResourceItems = computed<TopListItem[]>(() =>
+    this.topResources().map((r) => ({
+      id: r.id,
+      label: r.title,
+      sublabel: r.topic,
+      imageUrl: r.thumbnailUrl || undefined,
+      fallbackInitial: initial(r.title),
+      metric: r.views,
+    }))
+  );
 
-  updateSystemHealth() {
-    // Simulate slight variations
-    const cpu = Math.floor(Math.random() * (60 - 30 + 1)) + 30; // 30-60%
-    const ram = Math.floor(Math.random() * (95 - 50 + 1)) + 50; // 50-95% (To test alert > 80)
+  readonly topTeacherItems = computed<TopListItem[]>(() =>
+    this.topTeachers().map((t) => ({
+      id: t.id,
+      label: t.fullName,
+      imageUrl: t.avatarUrl
+        ? this.authService.formatAvatarUrl(t.avatarUrl)
+        : undefined,
+      fallbackInitial: initials(t.fullName),
+      metric: t.uploadCount,
+    }))
+  );
 
-    this.systemHealth.update((s) => ({
-      ...s,
-      cpuUsage: cpu,
-      ramUsage: ram,
-    }));
-  }
-
-  // Helper to generate consistent ECharts config
-  getChartConfig(
-    seriesName: string,
-    xAxisData: string[],
-    seriesData: number[],
-    colorHex: string,
-    colorRgbaBase: string
-  ): EChartsOption {
+  // --- Pie chart ----------------------------------------------------------
+  readonly topicPieOption = computed<EChartsOption>(() => {
+    const data = this.topicDistribution();
     return {
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: '#fff',
-        textStyle: { color: '#333' },
-        axisPointer: {
-          type: 'line',
-          lineStyle: { type: 'dashed' },
-        },
-      },
-      grid: {
-        containLabel: true,
-        left: '10px',
-        right: '20px',
-        bottom: '3%',
-        top: '15%',
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false, // Standard Line Chart (Points on lines)
-        data: xAxisData,
-        axisLine: { lineStyle: { color: '#eee' } },
-        axisLabel: { color: '#94a3b8', fontSize: 10 },
-        axisTick: { show: false },
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } },
-        axisLabel: { color: '#94a3b8', fontSize: 10 },
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      legend: {
+        orient: 'vertical',
+        right: '0',
+        top: 'middle',
+        itemWidth: 10,
+        itemHeight: 10,
+        textStyle: { fontSize: 11, color: '#6B6684' },
       },
       series: [
         {
-          name: seriesName,
-          type: 'line',
-          data: seriesData,
-          smooth: true,
-          showSymbol: true,
-          symbolSize: 6,
-          itemStyle: { color: colorHex, borderColor: '#fff', borderWidth: 2 },
-          lineStyle: { width: 3, color: colorHex },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                { offset: 0, color: `${colorRgbaBase}, 0.2)` },
-                { offset: 1, color: `${colorRgbaBase}, 0.0)` },
-              ],
-            },
-          },
+          name: 'Chủ đề',
+          type: 'pie',
+          radius: ['48%', '72%'],
+          center: ['35%', '50%'],
+          avoidLabelOverlap: true,
+          itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          labelLine: { show: false },
+          data: data.map((d) => ({
+            value: d.count,
+            name: d.topic,
+            itemStyle: { color: d.color },
+          })),
         },
       ],
     };
+  });
+
+  constructor() {
+    // Any change to period (or to custom dates while on 'custom') triggers
+    // a reload of every widget. Non-custom dates are NOT tracked, so typing
+    // dates while period === 'this_year' does not cause re-fetches.
+    effect(() => {
+      const period = this.period();
+      if (period === 'custom') {
+        const start = this.startDate();
+        const end = this.endDate();
+        if (!start || !end) return;
+      }
+      this.loadAll(period);
+    });
   }
 
-  approveResource(id: number) {
-    this.pendingResources.update((list) => list.filter((r) => r.id !== id));
-    this.stats.update((s) => ({
-      ...s,
-      pendingApprovals: s.pendingApprovals - 1,
-    }));
+  // --- Public event handlers ---------------------------------------------
+
+  onPeriodChange(p: DashboardPeriod) {
+    this.period.set(p);
   }
 
-  rejectResource(id: number) {
-    this.pendingResources.update((list) => list.filter((r) => r.id !== id));
-    this.stats.update((s) => ({
-      ...s,
-      pendingApprovals: s.pendingApprovals - 1,
-    }));
+  onStartDateChange(value: string) {
+    this.startDate.set(value);
   }
 
-  viewResource(resource: any) {
-    this.selectedResource.set(resource);
-    this.isViewModalOpen.set(true);
+  onEndDateChange(value: string) {
+    this.endDate.set(value);
   }
 
-  closeViewModal() {
-    this.isViewModalOpen.set(false);
-    this.selectedResource.set(null);
+  onApprove(item: PendingResource) {
+    this.dashService
+      .approveResource(item.id)
+      .pipe(
+        handleHttpError(this.toast, 'Không thể phê duyệt. Vui lòng thử lại.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.pending.update((list) => list.filter((p) => p.id !== item.id));
+        this.stats.update((s) =>
+          s
+            ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
+            : s
+        );
+        this.toast.show(`Đã phê duyệt "${item.title}".`, 'success');
+      });
   }
+
+  onReject({ item, reason }: { item: PendingResource; reason: string }) {
+    this.dashService
+      .rejectResource(item.id, reason)
+      .pipe(
+        handleHttpError(this.toast, 'Không thể từ chối. Vui lòng thử lại.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.pending.update((list) => list.filter((p) => p.id !== item.id));
+        this.stats.update((s) =>
+          s
+            ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
+            : s
+        );
+        this.toast.show(`Đã từ chối "${item.title}".`, 'info');
+      });
+  }
+
+  // --- Data loading -------------------------------------------------------
+  private loadAll(period: DashboardPeriod) {
+    const range = {
+      startDate: this.startDate(),
+      endDate: this.endDate(),
+    };
+
+    this.isLoadingStats.set(true);
+    this.dashService
+      .getStats(period, range)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được số liệu tổng quan.'),
+        finalize(() => this.isLoadingStats.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((s) => this.stats.set(s));
+
+    this.isLoadingTrend.set(true);
+    this.dashService
+      .getTrend(period, range)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được biểu đồ xu hướng.'),
+        finalize(() => this.isLoadingTrend.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((t) => this.trend.set(t));
+
+    this.isLoadingPending.set(true);
+    this.dashService
+      .getPending(5)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được tài nguyên chờ duyệt.'),
+        finalize(() => this.isLoadingPending.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((p) => this.pending.set(p));
+
+    this.dashService
+      .getTopResources(period, 5)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được top tài nguyên.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((r) => this.topResources.set(r));
+
+    this.dashService
+      .getTopTeachers(period, 5)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được top giáo viên.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((t) => this.topTeachers.set(t));
+
+    this.dashService
+      .getTopicDistribution(period)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được phân bố chủ đề.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((d) => this.topicDistribution.set(d));
+
+    this.dashService
+      .getRecentActivity(8)
+      .pipe(
+        handleHttpError(this.toast, 'Không tải được hoạt động gần đây.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((a) => this.activity.set(a));
+  }
+}
+
+// ---------- Helpers ---------------------------------------------------------
+
+function buildLineChart(
+  xAxis: string[],
+  data: number[],
+  colorHex: string,
+  colorRgb: string
+): EChartsOption {
+  return {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: '#e5e7eb',
+      textStyle: { color: '#1F1A37', fontSize: 12 },
+      axisPointer: { type: 'line', lineStyle: { type: 'dashed' } },
+    },
+    grid: { containLabel: true, left: 8, right: 16, bottom: 8, top: 16 },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xAxis,
+      axisLine: { lineStyle: { color: '#e5e7eb' } },
+      axisLabel: { color: '#6B6684', fontSize: 10 },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { type: 'dashed', color: '#f3f4f6' } },
+      axisLabel: { color: '#6B6684', fontSize: 10 },
+    },
+    series: [
+      {
+        type: 'line',
+        data,
+        smooth: true,
+        showSymbol: true,
+        symbolSize: 6,
+        itemStyle: { color: colorHex, borderColor: '#fff', borderWidth: 2 },
+        lineStyle: { width: 3, color: colorHex },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: `rgba(${colorRgb}, 0.25)` },
+              { offset: 1, color: `rgba(${colorRgb}, 0)` },
+            ],
+          },
+        },
+      },
+    ],
+  };
+}
+
+function initial(text: string): string {
+  const t = text.trim();
+  return t ? t.charAt(0).toUpperCase() : '?';
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
 }

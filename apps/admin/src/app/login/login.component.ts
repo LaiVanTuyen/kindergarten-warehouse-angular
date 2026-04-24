@@ -1,66 +1,107 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormBuilder,
-  FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService, ToastService } from '@kindergarten-warehouse/data-access';
+import { ActivatedRoute, Router, RouterLink, Title } from '@angular/router';
+import {
+  ApiResponse,
+  AuthResponse,
+  AuthService,
+  LoginRequest,
+  ToastService,
+  extractErrorMessage,
+  isSafeInternalUrl,
+} from '@kindergarten-warehouse/data-access';
+import { AuthShellComponent } from '../shared/components/auth-shell/auth-shell.component';
+
+const REQUIRED_ROLE = 'ADMIN';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink, AuthShellComponent],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private toastService = inject(ToastService);
+  private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
+  private title = inject(Title);
 
-  loginForm: FormGroup = this.fb.group({
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.pattern('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'),
-      ],
-    ],
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal('');
+  readonly showPassword = signal(false);
+
+  readonly form = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
 
-  isLoading = false;
-  errorMessage = '';
+  ngOnInit(): void {
+    this.title.setTitle('Đăng nhập | Mầm Non Admin');
+    // Already-logged-in admin → bounce to returnUrl or dashboard.
+    if (this.authService.hasRole(REQUIRED_ROLE)) {
+      this.router.navigateByUrl(this.safeReturnUrl());
+    }
+  }
+
+  togglePassword(): void {
+    this.showPassword.update((v) => !v);
+  }
 
   onSubmit(): void {
-    if (this.loginForm.invalid) return;
-    this.isLoading = true;
-    this.errorMessage = '';
+    if (this.form.invalid || this.isLoading()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
-    this.authService.login(this.loginForm.value).subscribe({
-      next: (response: any) => {
-        this.isLoading = false;
-        const user = response.user;
-        if (user && user.role !== 'ADMIN') {
-          this.toastService.show(
-            'Trướt quyền truy cập: Yêu cầu quyền Quản trị viên.',
-            'error'
+    const credentials = this.form.getRawValue() as LoginRequest;
+
+    this.authService.login(credentials).subscribe({
+      next: (response: ApiResponse<AuthResponse>) => {
+        this.isLoading.set(false);
+        const user = response?.result?.user;
+        if (response?.code !== 1000 || !user) {
+          this.errorMessage.set(
+            response?.message || 'Email hoặc mật khẩu không đúng.'
           );
-          this.authService.logout(undefined, false);
           return;
         }
-        this.toastService.show('Chào mừng trở lại! 👋', 'success');
-        this.router.navigate(['/dashboard']);
+        if (!this.authService.hasAnyRole([REQUIRED_ROLE])) {
+          this.authService.logout(undefined, false);
+          this.errorMessage.set(
+            'Từ chối truy cập: Khu vực này chỉ dành cho quản trị viên.'
+          );
+          return;
+        }
+        this.toast.show(`Chào mừng trở lại, ${user.fullName}! 👋`, 'success');
+        this.router.navigateByUrl(this.safeReturnUrl());
       },
-      error: (err: any) => {
-        this.isLoading = false;
-        this.errorMessage = err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
-        console.error('Login failed', err);
+      error: (err: HttpErrorResponse) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(
+          extractErrorMessage(err, 'Đăng nhập thất bại. Vui lòng thử lại.')
+        );
       },
     });
+  }
+
+  private safeReturnUrl(): string {
+    const raw = this.route.snapshot.queryParamMap.get('returnUrl');
+    return isSafeInternalUrl(raw) ? (raw as string) : '/dashboard';
   }
 }

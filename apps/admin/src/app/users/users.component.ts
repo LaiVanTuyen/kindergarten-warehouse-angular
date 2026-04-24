@@ -1,918 +1,366 @@
 import {
+  ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
+  effect,
   inject,
   signal,
-  ChangeDetectionStrategy,
+  untracked,
 } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { PaginationComponent } from '../shared/components/pagination/pagination.component';
-import { SkeletonTableComponent } from '../shared/components/skeleton-table/skeleton-table.component';
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
-  FormBuilder,
-  ReactiveFormsModule,
-  FormsModule,
-  Validators,
-  FormControl,
-} from '@angular/forms';
-import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+  AuthService,
+  User,
+  UserService,
+  ToastService,
+} from '@kindergarten-warehouse/data-access';
+import { PageHeaderComponent } from '../shared/components/page-header/page-header.component';
+import { StatusPillComponent, StatusPillTone } from '../shared/components/status-pill/status-pill.component';
+import { AvatarComponent } from '../shared/components/avatar/avatar.component';
+import { SearchInputComponent } from '../shared/components/search-input/search-input.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
-import { User, UserService, AdminUpdateUserRequest, UserRole, UserCreationRequest } from '@kindergarten-warehouse/data-access';
+import { PaginationComponent } from '../shared/components/pagination/pagination.component';
+import { IconButtonComponent } from '../shared/components/icon-button/icon-button.component';
+import { SortHeaderComponent, SortState } from '../shared/components/sort-header/sort-header.component';
+import { RelativeTimePipe } from '../shared/pipes/relative-time.pipe';
+import { ConfirmDialogData } from '../shared/components/confirm-dialog/confirm-dialog.component';
+import { DialogService } from '../shared/services/dialog.service';
+import { handleHttpError } from '../shared/utils/rx-operators';
+import { setupUrlSync } from '../shared/utils/url-sync';
 import {
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-  finalize,
-} from 'rxjs/operators';
-import { toSignal, toObservable } from '@angular/core/rxjs-interop';
-import { ToastService, AuthService } from '@kindergarten-warehouse/data-access';
-import { DestroyRef, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
-
-import { MultiSelectFilterComponent } from '../shared/components/multi-select-filter/multi-select-filter.component';
+  UserFormDialogComponent,
+  UserFormDialogData,
+  UserFormDialogResult,
+} from './components/user-form-dialog.component';
+import {
+  PasswordResetDialogComponent,
+  PasswordResetDialogData,
+} from './components/password-reset-dialog.component';
 
 @Component({
-  selector: 'app-admin-users',
+  selector: 'app-users',
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
+    DatePipe,
     FormsModule,
-    PaginationComponent,
-    SkeletonTableComponent,
-    BreadcrumbComponent,
+    PageHeaderComponent,
+    StatusPillComponent,
+    AvatarComponent,
+    SearchInputComponent,
     EmptyStateComponent,
-    MultiSelectFilterComponent,
+    PaginationComponent,
+    IconButtonComponent,
+    SortHeaderComponent,
+    RelativeTimePipe,
   ],
   templateUrl: './users.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: [
-    `
-      :host {
-        display: block;
-        height: 100%;
-      }
-    `,
-  ],
 })
-export class UsersComponent implements OnInit {
-  private fb = inject(FormBuilder);
+export class UsersComponent {
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
+  private dialogs = inject(DialogService);
+  private destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  toastService = inject(ToastService);
-  userService = inject(UserService);
-  authService = inject(AuthService);
-  destroyRef = inject(DestroyRef);
 
-  // -- State Signals --
-  loggedInUser = toSignal(this.authService.currentUser$);
-  users = signal<User[]>([]);
-  isLoading = signal(false);
+  readonly currentUser = toSignal(this.authService.currentUser$, {
+    initialValue: null,
+  });
 
-  // Selection for bulk actions
-  selectedIds = signal<Set<number>>(new Set());
+  readonly isLoading = signal(true);
+  readonly users = signal<User[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(15);
 
-  // Pagination
-  currentPage = signal(1);
-  pageSize = signal(10);
+  readonly search = signal('');
+  readonly roleFilter = signal<string>('ALL');
+  readonly statusFilter = signal<string>('ALL');
+  readonly sortKey = signal<string>('createdAt');
+  readonly sortDir = signal<'asc' | 'desc'>('desc');
 
-  // Filter Signals
-  searchQuery = signal('');
-  roleFilter = signal<Set<string>>(new Set());
-  statusFilter = signal<Set<string>>(new Set());
-  activeFilterDropdown = signal<string | null>(null);
-  showFilters = signal(false);
+  readonly sortState = computed<SortState>(() => ({
+    key: this.sortKey(),
+    dir: this.sortDir(),
+  }));
 
-  // Filter Options
-  roleOptions = [
-    { label: 'Quản trị viên (Admin)', value: 'ADMIN' },
-    { label: 'Người dùng', value: 'USER' },
-    { label: 'Giáo viên', value: 'TEACHER' },
+  readonly roleOptions = [
+    { value: 'ALL', label: 'Tất cả vai trò' },
+    { value: 'ADMIN', label: 'Quản trị viên' },
+    { value: 'TEACHER', label: 'Giáo viên' },
+    { value: 'USER', label: 'Người dùng' },
   ];
 
-  statusOptions = [
-    { label: 'Hoạt động', value: 'ACTIVE' },
-    { label: 'Đã khóa', value: 'BLOCKED' },
+  readonly statusOptions = [
+    { value: 'ALL', label: 'Tất cả trạng thái' },
+    { value: 'ACTIVE', label: 'Đang hoạt động' },
+    { value: 'BLOCKED', label: 'Đã khoá' },
+    { value: 'DELETED', label: 'Đã xoá' },
   ];
 
-  // Form Controls for UI
-  searchControl = new FormControl<string>('', { nonNullable: true });
-
-  // Sorting
-  sortColumn = signal<'fullName' | 'createdAt' | 'lastActive'>('createdAt');
-  sortDirection = signal<'asc' | 'desc'>('desc');
-
-  // -- Filter Observables --
-  searchQuery$ = toObservable(this.searchQuery);
-  roleFilter$ = toObservable(this.roleFilter);
-  statusFilter$ = toObservable(this.statusFilter);
-  currentPage$ = toObservable(this.currentPage);
-  pageSize$ = toObservable(this.pageSize);
-  sortColumn$ = toObservable(this.sortColumn);
-  sortDirection$ = toObservable(this.sortDirection);
-  refreshTrigger = signal(0);
-  refreshTrigger$ = toObservable(this.refreshTrigger);
+  readonly hasFilters = computed(
+    () =>
+      !!(this.search() || this.roleFilter() !== 'ALL' || this.statusFilter() !== 'ALL')
+  );
 
   constructor() {
-    this.initFromUrl();
+    // URL sync must run before the first load so we hydrate from query params.
+    setupUrlSync({
+      fields: {
+        q: this.search,
+        role: this.roleFilter,
+        status: this.statusFilter,
+        sort: this.sortKey,
+        dir: this.sortDir,
+        page: this.page,
+      },
+      skipValues: ['', 'ALL'],
+      router: this.router,
+      route: this.route,
+    });
 
-    // 1. Handle Search Input specifically for debouncing
-    this.searchControl.valueChanges
+    // Any filter/sort change resets to page 1 and reloads.
+    // `page.set(1)` and `load()` run inside untracked() so this effect does
+    // NOT depend on `page`/`pageSize` — preventing an infinite loop when the
+    // pagination click advances to page 2.
+    effect(() => {
+      this.search();
+      this.roleFilter();
+      this.statusFilter();
+      this.sortKey();
+      this.sortDir();
+      untracked(() => {
+        this.page.set(1);
+        this.load();
+      });
+    });
+  }
+
+  load() {
+    this.isLoading.set(true);
+    this.userService
+      .getUsers(
+        this.page(),
+        this.pageSize(),
+        this.search(),
+        this.roleFilter(),
+        this.statusFilter(),
+        this.sortKey(),
+        this.sortDir()
+      )
       .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
+        handleHttpError(this.toast, 'Không tải được danh sách người dùng.'),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((val) => {
-        if (this.searchQuery() !== (val || '')) {
-          this.searchQuery.set(val || '');
-          this.currentPage.set(1);
-        }
+      .subscribe({
+        next: (res) => {
+          this.users.set(res.result?.content || []);
+          this.total.set(res.result?.totalElements || 0);
+          this.isLoading.set(false);
+        },
       });
-
-    // 2. Centralized Reactive Data Pipeline
-    forkJoin([]).subscribe(); // Dummy to ensure import is used if needed later, will be removed. Actually, let's use combineLatest.
   }
 
-  ngOnInit() {
-    import('rxjs').then(({ combineLatest }) => {
-      combineLatest([
-        this.searchQuery$,
-        this.roleFilter$,
-        this.statusFilter$,
-        this.currentPage$,
-        this.pageSize$,
-        this.sortColumn$,
-        this.sortDirection$,
-        this.refreshTrigger$,
-      ])
-        .pipe(
-          takeUntilDestroyed(this.destroyRef),
-          debounceTime(50), // Small debounce to batch synchronous signal updates
-          switchMap(
-            ([query, roles, statuses, page, size, sortCol, sortDir]: [string, Set<string>, Set<string>, number, number, string, string, number]) => {
-              this.isLoading.set(true);
-              this.updateUrl();
-
-              const roleStr = Array.from(roles).join(',');
-              const statusStr = Array.from(statuses).join(',');
-
-              return this.userService
-                .getUsers(
-                  page,
-                  size,
-                  query,
-                  roleStr,
-                  statusStr,
-                  sortCol,
-                  sortDir as 'asc' | 'desc'
-                )
-                .pipe(finalize(() => this.isLoading.set(false)));
-            }
-          )
-        )
-        .subscribe({
-          next: (res) => {
-            if (res.result) {
-              this.users.set(res.result.content);
-              this.totalUsersCount.set(res.result.totalElements);
-            } else {
-              this.users.set([]);
-              this.totalUsersCount.set(0);
-            }
-          },
-          error: () => {
-            this.users.set([]);
-            this.totalUsersCount.set(0);
-          },
-        });
-    });
+  onPageChange(p: number) {
+    this.page.set(p);
+    this.load();
   }
 
-  private initFromUrl() {
-    const params = this.route.snapshot.queryParams;
-
-    if (params['page']) this.currentPage.set(Number(params['page']));
-    if (params['size']) this.pageSize.set(Number(params['size']));
-
-    if (params['sort']) this.sortColumn.set(params['sort']);
-    if (params['dir']) this.sortDirection.set(params['dir']);
-
-    if (params['q']) {
-      this.searchQuery.set(params['q']);
-      this.searchControl.setValue(params['q'], { emitEvent: false });
-    }
-
-    if (params['role']) {
-      const roles = params['role'].split(',');
-      this.roleFilter.set(new Set(roles));
-    }
-
-    if (params['status']) {
-      const statuses = params['status'].split(',');
-      this.statusFilter.set(new Set(statuses));
-    }
-  }
-
-  updateUrl() {
-    const queryParams: Record<string, string | number | null> = {
-      page: this.currentPage(),
-      size: this.pageSize(),
-      sort: this.sortColumn(),
-      dir: this.sortDirection(),
-    };
-
-    if (this.searchQuery()) {
-      queryParams['q'] = this.searchQuery();
-    } else {
-      queryParams['q'] = null;
-    }
-
-    if (this.roleFilter().size > 0) {
-      queryParams['role'] = Array.from(this.roleFilter()).join(',');
-    } else {
-      queryParams['role'] = null;
-    }
-
-    if (this.statusFilter().size > 0) {
-      queryParams['status'] = Array.from(this.statusFilter()).join(',');
-    } else {
-      queryParams['status'] = null;
-    }
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: queryParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-
-  // loadUsers() corresponds to the reactive pipeline now. We keep it as a no-op or explicit refresh if needed.
-  loadUsers() {
-    this.refreshTrigger.update(v => v + 1);
-  }
-
-  // Filter Helpers
-  toggleFilterDropdown(key: string) {
-    this.activeFilterDropdown.update((current) =>
-      current === key ? null : key
-    );
-  }
-
-  removeRoleFilter(role: string) {
-    const current = this.roleFilter();
-    const newSet = new Set(current);
-    newSet.delete(role);
-    this.roleFilter.set(newSet);
-    this.currentPage.set(1);
-  }
-
-  clearRoleFilter() {
-    this.roleFilter.set(new Set());
-    this.currentPage.set(1);
-  }
-
-  removeStatusFilter(status: string) {
-    const current = this.statusFilter();
-    const newSet = new Set(current);
-    newSet.delete(status);
-    this.statusFilter.set(newSet);
-    this.currentPage.set(1);
-  }
-
-  clearStatusFilter() {
-    this.statusFilter.set(new Set());
-    this.currentPage.set(1);
+  onSort(state: SortState) {
+    this.sortKey.set(state.key);
+    this.sortDir.set(state.dir);
   }
 
   resetFilters() {
-    this.searchControl.setValue('', { emitEvent: false });
-    this.searchQuery.set('');
-    this.roleFilter.set(new Set());
-    this.statusFilter.set(new Set());
-    this.currentPage.set(1);
+    this.search.set('');
+    this.roleFilter.set('ALL');
+    this.statusFilter.set('ALL');
   }
 
-  // Derived Statistics
-  totalUsersCount = signal(0);
-  totalPages = computed(() =>
-    Math.ceil(this.totalUsersCount() / this.pageSize())
-  );
+  rolesOf(user: User): string[] {
+    if (user.roles && user.roles.length > 0) return user.roles;
+    return user.role ? [user.role] : [];
+  }
 
-  // Helper for UI
-  Math = Math;
-
-  // -- Modal State --
-  isUserModalOpen = signal(false);
-  isEditMode = signal(false);
-
-  // Typed Form
-  userForm = this.fb.group({
-    id: new FormControl<number | null>(null),
-    fullName: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    email: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    username: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    password: new FormControl<string>(''), // Optional in edit mode
-    roles: new FormControl<string[]>(['USER'], {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    isActive: new FormControl<boolean>(true, { nonNullable: true }),
-    isDeleted: new FormControl<boolean>(false, { nonNullable: true }),
-  });
-
-  showPassword = signal(false);
-  currentUser = signal<User | null>(null);
-
-  toggleSort(column: 'fullName' | 'createdAt' | 'lastActive') {
-    if (this.sortColumn() === column) {
-      this.sortDirection.update((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortColumn.set(column);
-      this.sortDirection.set('desc');
+  roleTone(role: string): StatusPillTone {
+    switch (role) {
+      case 'ADMIN':
+        return 'admin';
+      case 'TEACHER':
+        return 'teacher';
+      default:
+        return 'user';
     }
   }
 
-  // -- Bulk Selection --
-  clearSelection() {
-    this.selectedIds.set(new Set());
-  }
-
-  toggleSelectAll(checked: boolean) {
-    if (checked) {
-      // Select all ON CURRENT PAGE except logged in user
-      const loggedInId = this.loggedInUser()?.id;
-      const ids = this.users()
-        .filter((u) => u.id !== loggedInId)
-        .map((u) => u.id);
-      this.selectedIds.set(new Set(ids));
-    } else {
-      this.selectedIds.set(new Set());
+  statusTone(status?: string): StatusPillTone {
+    switch (status) {
+      case 'ACTIVE':
+        return 'active';
+      case 'BLOCKED':
+        return 'rejected';
+      case 'DELETED':
+        return 'inactive';
+      default:
+        return 'neutral';
     }
   }
 
-  isRowSelected(id: number) {
-    return this.selectedIds().has(id);
-  }
-  toggleSelection(id: number) {
-    this.selectedIds.update((set) => {
-      const newSet = new Set(set);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
-    });
-  }
-
-  isAllSelected() {
-    const visible = this.users();
-    const loggedInId = this.loggedInUser()?.id;
-    // Filter out logged in user from "Select All" check
-    const eligible = visible.filter((u) => u.id !== loggedInId);
-
-    if (eligible.length === 0) return false;
-    const selected = this.selectedIds();
-    return eligible.every((u) => selected.has(u.id));
+  statusLabel(status?: string): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Hoạt động';
+      case 'BLOCKED':
+        return 'Đã khoá';
+      case 'DELETED':
+        return 'Đã xoá';
+      default:
+        return status ?? '—';
+    }
   }
 
-  // -- Bulk Actions --
-  bulkBlock() {
-    const selected = this.selectedIds();
-    if (selected.size === 0) return;
+  // --- CRUD handlers ------------------------------------------------------
 
-    this.openConfirmModal(
-      'Khóa Người dùng đã chọn?',
-      `Bạn có chắc chắn muốn KHÓA ${selected.size} người dùng đã chọn? Họ sẽ mất quyền truy cập.`,
-      'BULK_BLOCK'
-    );
+  openCreate() {
+    this.openForm(null);
+  }
+  openEdit(user: User) {
+    this.openForm(user);
   }
 
-  executeBulkBlock() {
-    const selected = this.selectedIds();
-    if (selected.size === 0) return;
-
-    this.isLoading.set(true);
-    const requests = Array.from(selected).map((id) =>
-      this.userService.blockUser(String(id))
-    );
-
-    forkJoin(requests)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isLoading.set(false))
+  private openForm(user: User | null) {
+    const data: UserFormDialogData = { user };
+    this.dialogs
+      .openForm<UserFormDialogResult, UserFormDialogData>(
+        UserFormDialogComponent,
+        data,
+        this.destroyRef
       )
-      .subscribe({
-        next: () => {
-          this.toastService.show(
-            `${selected.size} người dùng đã bị khóa/mở khóa`,
+      .subscribe((result) => {
+        if (!result) return;
+        const req$ = user
+          ? this.userService.updateUser(user.id, {
+              fullName: result.fullName,
+              email: result.email,
+              username: result.username,
+              role: result.roles[0] as 'ADMIN' | 'TEACHER' | 'USER',
+              roles: result.roles,
+              status: result.status,
+            })
+          : this.userService.createUser({
+              fullName: result.fullName,
+              username: result.username,
+              email: result.email,
+              password: result.password,
+              roles: result.roles,
+              status: result.status,
+            });
+
+        req$
+          .pipe(
+            handleHttpError(
+              this.toast,
+              user ? 'Không cập nhật được.' : 'Không tạo được tài khoản.'
+            ),
+            takeUntilDestroyed(this.destroyRef)
+          )
+          .subscribe(() => {
+            this.toast.show(
+              user ? 'Đã cập nhật tài khoản.' : 'Đã tạo tài khoản mới.',
+              'success'
+            );
+            this.load();
+          });
+      });
+  }
+
+  confirmBlock(user: User) {
+    const isBlocked = user.status === 'BLOCKED';
+    const data: ConfirmDialogData = {
+      title: isBlocked ? 'Mở khoá tài khoản' : 'Khoá tài khoản',
+      message: isBlocked
+        ? `Mở khoá "${user.fullName}" và cho phép họ đăng nhập trở lại?`
+        : `Khoá "${user.fullName}" khỏi hệ thống? Họ sẽ không thể đăng nhập.`,
+      confirmText: isBlocked ? 'Mở khoá' : 'Khoá',
+      cancelText: 'Huỷ',
+      tone: isBlocked ? 'primary' : 'danger',
+    };
+    this.dialogs.confirm(data, this.destroyRef).subscribe((ok) => {
+      if (!ok) return;
+      this.userService
+        .blockUser(String(user.id))
+        .pipe(
+          handleHttpError(this.toast, 'Không thay đổi được trạng thái.'),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.toast.show(
+            isBlocked ? 'Đã mở khoá.' : 'Đã khoá tài khoản.',
             'success'
           );
-          // Let the reactive pipeline trigger the reload if we had a dedicated refresh subject,
-          // or we can explicitly force parameter update if needed.
-          // Since we removed explicit loadUsers() which was a no-op, we must trigger the pipeline.
-          // To trigger combineLatest, we can quickly toggle and re-toggle currentPage to itself.
-          this.loadUsers(); // This triggers the combineLatest pipeline
-          this.selectedIds.set(new Set());
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.show('Không thể xử lý người dùng', 'error');
-        },
-      });
-  }
-
-  bulkDelete() {
-    const selected = this.selectedIds();
-    if (selected.size === 0) return;
-
-    this.openConfirmModal(
-      'Xóa Người dùng đã chọn?',
-      `Bạn có chắc chắn muốn XÓA ${selected.size} người dùng đã chọn? Thao tác này không thể hoàn tác.`,
-      'BULK_DELETE'
-    );
-  }
-
-  executeBulkDelete() {
-    const selected = this.selectedIds();
-    if (selected.size === 0) return;
-
-    this.isLoading.set(true);
-    const requests = Array.from(selected).map((id) =>
-      this.userService.deleteUser(String(id))
-    );
-
-    forkJoin(requests)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isLoading.set(false))
-      )
-      .subscribe({
-        next: () => {
-          this.toastService.show(
-            `Đã chuyển ${selected.size} người dùng vào thùng rác`,
-            'success'
-          );
-          this.loadUsers(); // Trigger reload
-          this.selectedIds.set(new Set());
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.show('Lỗi khi xóa người dùng', 'error');
-        },
-      });
-  }
-
-  // GENERIC CONFIRMATION MODAL STATE
-  isConfirmModalOpen = signal(false);
-  confirmConfig = signal<{
-    title: string;
-    message: string;
-    action: 'BULK_BLOCK' | 'BULK_DELETE';
-  } | null>(null);
-
-  openConfirmModal(
-    title: string,
-    message: string,
-    action: 'BULK_BLOCK' | 'BULK_DELETE'
-  ) {
-    this.confirmConfig.set({ title, message, action });
-    this.isConfirmModalOpen.set(true);
-  }
-
-  closeConfirmModal() {
-    this.isConfirmModalOpen.set(false);
-    this.confirmConfig.set(null);
-  }
-
-  onConfirmAction() {
-    const config = this.confirmConfig();
-    if (!config) return;
-
-    switch (config.action) {
-      case 'BULK_BLOCK':
-        this.executeBulkBlock();
-        break;
-      case 'BULK_DELETE':
-        this.executeBulkDelete();
-        break;
-    }
-    this.closeConfirmModal();
-  }
-
-  // -- Modal Actions --
-  openAddUserModal() {
-    this.isEditMode.set(false);
-    this.currentUser.set(null);
-    this.userForm.reset({
-      roles: ['USER'],
-      isActive: true,
-      isDeleted: false,
+          this.load();
+        });
     });
-    this.userForm
-      .get('password')
-      ?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.userForm.get('password')?.updateValueAndValidity();
-
-    this.isUserModalOpen.set(true);
   }
 
-  onEditUser(user: User) {
-    this.isEditMode.set(true);
-    this.currentUser.set(user);
-
-    // Determine Roles
-    let roles = user.roles || [];
-    if (roles.length === 0 && user.role) {
-      roles = [user.role];
-    }
-
-    // Determine Active Status
-    let isActive = user.isActive;
-    if (user.status) {
-      isActive = user.status === 'ACTIVE';
-    }
-
-    this.userForm.patchValue({
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      username: user.username,
-      roles: roles,
-      isActive: isActive,
-      // isDeleted property might be optional in User but we need it for form
-      isDeleted: user.isDeleted ?? false,
-      password: '',
-    });
-    this.userForm.get('password')?.clearValidators();
-    this.userForm.get('password')?.updateValueAndValidity();
-
-    this.isUserModalOpen.set(true);
-  }
-
-  closeUserModal() {
-    this.isUserModalOpen.set(false);
-  }
-
-  generatePassword() {
-    const pwd = 'User@' + Math.floor(1000 + Math.random() * 9000);
-    this.userForm.patchValue({ password: pwd });
-  }
-
-  // -- Role Confirmation Modal (Deprecated / Removed) --
-  // isRoleConfirmModalOpen = signal(false); // Removed
-
-  submitUserForm() {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
-      return;
-    }
-
-    const formVal = this.userForm.value;
-
-    if (this.isEditMode()) {
-      // Update User
-      const updateData: AdminUpdateUserRequest = {
-        fullName: formVal.fullName || '',
-        email: formVal.email || '',
-        username: formVal.username || '',
-        // Primary role (legacy compat)
-        role: (formVal.roles && formVal.roles.length > 0 ? formVal.roles[0] : 'USER') as UserRole,
-        // Multi-role (new)
-        roles: formVal.roles ?? ['USER'],
-        // BE requires status as enum string, NOT isActive boolean
-        status: (formVal.isActive ?? true) ? 'ACTIVE' : 'BLOCKED',
-      };
-
-      this.userService
-        .updateUser(String(formVal.id), updateData)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (res) => {
-            if (res.code === 200 || res.result) {
-              this.toastService.show('User updated successfully', 'success');
-              this.loadUsers(); // Trigger reload
-              this.closeUserModal();
-            } else {
-              this.toastService.show(res.message || 'Update failed', 'error');
-            }
-          },
-          error: (err) => {
-            this.toastService.show(
-              err.error?.message || 'Failed to update user',
-              'error'
-            );
-          },
-        });
-    } else {
-      // Create new user
-      const createData: UserCreationRequest = {
-        fullName: formVal.fullName || '',
-        email: formVal.email || '',
-        username: formVal.username || '',
-        roles: formVal.roles ?? [],
-        status: formVal.isActive ? 'ACTIVE' : 'BLOCKED',
-        password: formVal.password || '',
-      };
-
-      this.userService
-        .createUser(createData)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {
-            this.toastService.show('User created successfully', 'success');
-            this.loadUsers(); // Trigger reload
-            this.closeUserModal();
-          },
-          error: (err) => {
-            this.toastService.show(
-              err.error?.message || 'Failed to create user',
-              'error'
-            );
-          },
-        });
-    }
-  }
-
-  // Remove deprecated confirmRoleChange methods if they exist
-
-  closeResetModal() {
-    this.isResetModalOpen.set(false);
-    this.userToReset.set(null);
-    this.resetStep.set('INIT');
-    this.otpControl.reset();
-    this.stopOtpTimer();
-  }
-
-  // Update Reset Password
-  // Update Reset Password
-  // Renamed to onResetPassword to match template usage
-  // Note: duplicate declaration of onResetPassword was removed below
-  /*
-  onResetPassword(user: User) {
-     this.userToReset.set(user);
-     this.resetStep.set('INIT');
-     this.otpControl.reset();
-     this.isResetModalOpen.set(true);
-  }
-  */
-  // Actually, I should remove this block and keep the one I added below, or vice versa.
-  // The block below is where `onResetPassword` normally lives (Row Actions).
-  // But I put the logic here in the previous step.
-  // I will KEEP this block but remove the method name if I moved it.
-
-  // Wait, I just modified the block below (526-574) to have the logic.
-  // So I should REMOVE the methods here to avoid duplicates.
-
-  // Removing openResetModal and closeResetModal from this location as they are now consolidated below.
-
-  // confirmResetPassword uses variables that are defined below (otpControl was redefined?).
-  // Let's check where signals are defined.
-  // Signals were duplicated in the previous view:
-  // Line 500: isResetModalOpen... added in recent edit.
-  // Line 531: isResetModalOpen... existing.
-
-  // I need to clean up the duplicates deeply.
-
-  confirmResetPassword() {
-    const user = this.userToReset();
-    if (!user) return;
-
-    // Step 1: Initiate (Send OTP)
-    if (this.resetStep() === 'INIT') {
-      this.userService
-        .initiatePasswordReset(user.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {
-            this.toastService.show('OTP sent to user email', 'success');
-            this.resetStep.set('OTP');
-            this.startOtpTimer();
-          },
-          error: (err) => {
-            this.toastService.show(
-              err.error?.message || 'Failed to send OTP',
-              'error'
-            );
-          },
-        });
-      return;
-    }
-
-    // Step 2: Confirm (Verify OTP)
-    if (this.resetStep() === 'OTP') {
-      if (this.otpControl.invalid) {
-        this.otpControl.markAsTouched();
-        return;
-      }
-
-      const otp = this.otpControl.value || '';
-      this.userService
-        .completePasswordReset(user.id, otp)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (res) => {
-            const newPass = res.result;
-
-            if (newPass) {
-              this.toastService.show(
-                `Success! New Password: ${newPass}`,
-                'success'
-              );
-            } else {
-              this.toastService.show(
-                'Success! New password sent to user email.',
-                'success'
-              );
-            }
-
-            this.closeResetModal();
-          },
-          error: (err) => {
-            this.toastService.show(
-              err.error?.message || 'Invalid OTP or Reset Failed',
-              'error'
-            );
-          },
-        });
-    }
-  }
-
-  // -- Block/Unblock Modal State --
-  isBlockModalOpen = signal(false);
-  userToBlock = signal<User | null>(null);
-
-  // -- Row Actions (Open Modals) --
-  onToggleStatus(user: User) {
-    this.userToBlock.set(user);
-    this.isBlockModalOpen.set(true);
-  }
-
-  // Renamed from openResetModal to match HTML template
-  onResetPassword(user: User) {
-    this.userToReset.set(user);
-    this.resetStep.set('INIT');
-    this.otpControl.reset();
-    this.isResetModalOpen.set(true);
-  }
-
-  confirmBlockUser() {
-    const user = this.userToBlock();
-    if (!user) return;
-
-    this.userService
-      .blockUser(String(user.id))
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((res) => {
-        this.toastService.show(
-          res.message || 'Updated status successfully',
-          'success'
-        );
-        this.loadUsers(); // Trigger reload
-        this.closeBlockModal();
-      });
-  }
-
-  // -- Close Modals --
-  closeBlockModal() {
-    this.isBlockModalOpen.set(false);
-    this.userToBlock.set(null);
-  }
-
-  // closeResetModal is already defined above at line 470, removing duplicate here
-
-  // -- Delete Modal State --
-  isDeleteModalOpen = signal(false);
-  userToDelete = signal<User | null>(null);
-
-  onDeleteUser(user: User) {
-    this.userToDelete.set(user);
-    this.isDeleteModalOpen.set(true);
-  }
-
-  confirmDeleteUser() {
-    const user = this.userToDelete();
-    if (user) {
+  confirmDelete(user: User) {
+    const data: ConfirmDialogData = {
+      title: 'Xoá tài khoản',
+      message: `Xoá "${user.fullName}"? Dữ liệu sẽ chuyển vào thùng rác và có thể khôi phục.`,
+      confirmText: 'Xoá',
+      cancelText: 'Huỷ',
+      tone: 'danger',
+    };
+    this.dialogs.confirm(data, this.destroyRef).subscribe((ok) => {
+      if (!ok) return;
       this.userService
         .deleteUser(String(user.id))
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((res) => {
-          this.toastService.showResponse(res);
-          this.loadUsers(); // Trigger reload
-          this.closeDeleteModal();
+        .pipe(
+          handleHttpError(this.toast, 'Không xoá được tài khoản.'),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.toast.show('Đã xoá tài khoản.', 'success');
+          this.load();
         });
-    }
+    });
   }
 
-  closeDeleteModal() {
-    this.isDeleteModalOpen.set(false);
-    this.userToDelete.set(null);
+  restoreUser(user: User) {
+    this.userService
+      .restoreUser(String(user.id))
+      .pipe(
+        handleHttpError(this.toast, 'Không khôi phục được.'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.toast.show('Đã khôi phục tài khoản.', 'success');
+        this.load();
+      });
   }
 
-  // -- Reset Password Modal State --
-  // -- Reset Password Modal State --
-  isResetModalOpen = signal(false);
-  userToReset = signal<User | null>(null);
-  resetStep = signal<'INIT' | 'OTP'>('INIT');
-  otpControl = new FormControl('', [
-    Validators.required,
-    Validators.minLength(6),
-  ]);
-
-  // OTP Timer
-  otpCountdown = signal(0);
-  private timerSub: ReturnType<typeof setInterval> | null = null;
-
-  startOtpTimer() {
-    this.otpCountdown.set(300); // 5 minutes
-    this.timerSub = setInterval(() => {
-      const current = this.otpCountdown();
-      if (current > 0) {
-        this.otpCountdown.set(current - 1);
-      } else {
-        this.stopOtpTimer();
-      }
-    }, 1000);
+  openPasswordReset(user: User) {
+    const data: PasswordResetDialogData = {
+      userId: user.id,
+      userName: user.fullName,
+    };
+    this.dialogs
+      .openForm<boolean, PasswordResetDialogData>(
+        PasswordResetDialogComponent,
+        data,
+        this.destroyRef
+      )
+      .subscribe();
   }
 
-  stopOtpTimer() {
-    if (this.timerSub) {
-      clearInterval(this.timerSub);
-      this.timerSub = null;
-    }
-  }
-  // -- Restore Modal State --
-  isRestoreModalOpen = signal(false);
-  userToRestore = signal<User | null>(null);
-
-  onRestoreUser(user: User) {
-    this.userToRestore.set(user);
-    this.isRestoreModalOpen.set(true);
-  }
-
-  confirmRestoreUser() {
-    const user = this.userToRestore();
-    if (user) {
-      this.userService
-        .restoreUser(String(user.id))
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {
-            this.toastService.show('User restored successfully', 'success');
-            this.loadUsers(); // Trigger reload
-            this.closeRestoreModal();
-          },
-          error: () => {
-            this.toastService.show('Failed to restore user', 'error');
-          },
-        });
-    }
-  }
-
-  closeRestoreModal() {
-    this.isRestoreModalOpen.set(false);
-    this.userToRestore.set(null);
-  }
-
-  onPageSizeChange(newSize: number) {
-    this.pageSize.set(Number(newSize));
-    this.currentPage.set(1);
-    this.updateUrl();
-    this.loadUsers();
-  }
-
-  onPageChange(page: number) {
-    this.currentPage.set(page);
-    this.updateUrl();
-    this.loadUsers();
-  }
-
-  trackByUser(index: number, item: User): number {
-    return item.id;
-  }
-
-  // -- Helper for Checkbox Group --
-  toggleRole(role: string, checked: boolean) {
-    const currentRoles = this.userForm.value.roles || [];
-    let newRoles = [...currentRoles];
-
-    if (checked) {
-      if (!newRoles.includes(role)) newRoles.push(role);
-    } else {
-      newRoles = newRoles.filter((r) => r !== role);
-    }
-
-    this.userForm.patchValue({ roles: newRoles });
-    this.userForm.get('roles')?.markAsTouched();
+  isSelf(user: User): boolean {
+    return this.currentUser()?.id === user.id;
   }
 }

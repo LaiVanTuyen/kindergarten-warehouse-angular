@@ -1,525 +1,158 @@
-<div class="h-full flex flex-col">
-  <!-- Page Header -->
-  <div
-    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 relative overflow-hidden flex justify-between items-center">
-    <!-- Decorative -->
-    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+<app-page-header
+  title="Quản lý Banner"
+  [subtitle]="'Tổng ' + banners().length + ' · Đang hoạt động: ' + activeCount()"
+>
+  <button
+    type="button"
+    (click)="openCreate()"
+    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar transition-colors"
+  >
+    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+    Banner mới
+  </button>
+</app-page-header>
 
-    <div class="flex flex-col gap-1">
-      <app-breadcrumb></app-breadcrumb>
-      <h1 class="text-2xl font-bold tracking-tight">Quản lý Banner</h1>
-      <p class="text-slate-400 mt-1 text-sm">Kéo thả để sắp xếp lại • Quản lý hiển thị banner trang chủ.</p>
-    </div>
-    <button (click)="openCreateModal()"
-      class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 active:scale-95">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      Thêm Banner
-    </button>
+<!-- Filters -->
+<div class="bg-white border border-gray-100 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
+  <span class="text-sm font-medium text-kindy-ink-soft">Nền tảng:</span>
+  <div role="tablist" aria-label="Lọc theo nền tảng" class="inline-flex rounded-lg bg-gray-100 p-0.5">
+    @for (opt of [{v:'ALL',l:'Tất cả'},{v:'WEB',l:'Web'},{v:'MOBILE',l:'Mobile'}]; track opt.v) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="platformFilter() === opt.v"
+        (click)="setPlatform($any(opt.v))"
+        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        [class.bg-white]="platformFilter() === opt.v"
+        [class.text-kindy-sidebar]="platformFilter() === opt.v"
+        [class.shadow-sm]="platformFilter() === opt.v"
+        [class.text-kindy-ink-soft]="platformFilter() !== opt.v"
+      >{{ opt.l }}</button>
+    }
   </div>
 
-  <!-- Sortable Banner List -->
-  <div class="flex-1 overflow-y-auto px-1 flex flex-col">
-    <div cdkDropList [cdkDropListData]="banners()" (cdkDropListDropped)="drop($event)"
-      class="banner-list space-y-3 pb-4 flex-1 w-full">
-
-      @for (banner of banners(); track banner.id) {
-      <div cdkDrag [cdkDragData]="banner"
-        class="banner-box group bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
-
-        <!-- Drag Placeholder -->
-        <div *cdkDragPlaceholder class="opacity-0"></div>
-
-        <!-- Drag Handle -->
-        <div class="cursor-move text-gray-400 hover:text-gray-700 transition-colors p-2" cdkDragHandle>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="12" r="1" />
-            <circle cx="9" cy="5" r="1" />
-            <circle cx="9" cy="19" r="1" />
-            <circle cx="15" cy="12" r="1" />
-            <circle cx="15" cy="5" r="1" />
-            <circle cx="15" cy="19" r="1" />
-          </svg>
-        </div>
-
-        <!-- Image Preview (16:9) -->
-        <div
-          class="relative w-40 aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group-hover:border-blue-200 transition-colors flex-shrink-0 cursor-zoom-in"
-          (click)="openPreview(banner.imageUrl, $event)">
-          <img [src]="banner.imageUrl" class="w-full h-full object-cover">
-
-          <!-- Platform Badge overlay -->
-          <div
-            class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-black/60 text-white backdrop-blur-sm">
-            {{ banner.platform || 'Desktop' }}
-          </div>
-        </div>
-
-        <!-- Same Image Preview as before -->
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex flex-col gap-1 mb-1">
-            <!-- Title & Subtitle -->
-            <div>
-              <h4 class="text-sm font-bold text-gray-900 truncate" [innerHTML]="banner.title || 'Untitled Banner'"></h4>
-              <p class="text-xs text-gray-500 truncate">{{ banner.subtitle }}</p>
-            </div>
-
-            <div class="flex items-center gap-2 mt-1">
-              <span
-                class="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">#{{
-                banner.id }}</span>
-              <span
-                class="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded tracking-wide">
-                Order: {{ banner.displayOrder }}
-              </span>
-              <!-- Expiration Badge -->
-              <span *ngIf="isExpired(banner)"
-                class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                Hết hạn
-              </span>
-            </div>
-          </div>
-
-          <a *ngIf="banner.link" [href]="banner.link" target="_blank"
-            class="text-blue-600 font-medium hover:underline truncate block max-w-md">
-            {{ banner.link }}
-          </a>
-          <span *ngIf="!banner.link" class="text-gray-400 italic text-sm">Chưa có liên kết</span>
-
-          <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
-            <span class="flex items-center gap-1" *ngIf="banner.startDate">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              {{ banner.startDate | date:'mediumDate' }} - {{ banner.endDate | date:'mediumDate' }}
-            </span>
-            <span *ngIf="!banner.startDate">Luôn hiển thị</span>
-          </div>
-        </div>
-
-        <!-- Status Toggle -->
-        <div class="flex items-center gap-3 mr-4">
-          <button (click)="toggleStatus(banner, $event)" [class.bg-green-500]="banner.isActive"
-            [class.bg-gray-200]="!banner.isActive"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            role="switch">
-            <span class="sr-only">Dùng cài đặt</span>
-            <span [class.translate-x-5]="banner.isActive" [class.translate-x-0]="!banner.isActive"
-              class="pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out">
-              <span [class.opacity-0]="banner.isActive" [class.opacity-100]="!banner.isActive"
-                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity duration-200 ease-in-out"
-                aria-hidden="true">
-                <svg class="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 12 12">
-                  <path d="M4 8l2-2m0 0l2-2M6 6L4 4m2 2l2 2" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
-              </span>
-              <span [class.opacity-100]="banner.isActive" [class.opacity-0]="!banner.isActive"
-                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity duration-200 ease-in-out"
-                aria-hidden="true">
-                <svg class="h-3 w-3 text-green-600" fill="currentColor" viewBox="0 0 12 12">
-                  <path
-                    d="M3.707 5.293a1 1 0 00-1.414 1.414l1.414-1.414zM5 8l-.707.707a1 1 0 001.414 0L5 8zm4.707-3.293a1 1 0 00-1.414-1.414l1.414 1.414zm-7.414 2l2 2 1.414-1.414-2-2-1.414 1.414zm3.414 2l4-4-1.414-1.414-4 4 1.414 1.414z">
-                  </path>
-                </svg>
-              </span>
-            </span>
-          </button>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex items-center gap-1 border-l border-gray-100 pl-4">
-          <button (click)="openEditModal(banner)"
-            class="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Sửa">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
-          <button (click)="deleteBanner(banner)"
-            class="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Xóa">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              <line x1="10" y1="11" x2="10" y2="17" />
-              <line x1="14" y1="11" x2="14" y2="17" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div cdkDrag [cdkDragData]="banner"
-        class="banner-box group bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
-        <!-- Content omitted for brevity, logic remains same -->
-        <!-- Drag Placeholder -->
-        <div *cdkDragPlaceholder class="opacity-0"></div>
-        <!-- ... existing banner content ... -->
-        <!-- Since I cannot cleanly match the entire block without copying huge chunks, I will use a larger context in next tool call or assume this replaces the empty block if I target correctly. -->
-        <!-- Actually, I will target the @empty block specifically. -->
-      </div>
-      } @empty {
-      <div class="h-64 flex items-center justify-center">
-        <app-empty-state message="Chưa có banner nào"
-          subMessage="Tạo banner đầu tiên để bắt đầu tuỳ chỉnh trang chủ của bạn." actionLabel="Tạo Banner"
-          (actionClicked)="openCreateModal()">
-        </app-empty-state>
-      </div>
-      }
-    </div>
-
-
+  <span class="text-sm font-medium text-kindy-ink-soft ml-2">Trạng thái:</span>
+  <div role="tablist" aria-label="Lọc theo trạng thái" class="inline-flex rounded-lg bg-gray-100 p-0.5">
+    @for (opt of [{v:'ALL',l:'Tất cả'},{v:'ACTIVE',l:'Đang hiển thị'},{v:'INACTIVE',l:'Đã ẩn'}]; track opt.v) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="statusFilter() === opt.v"
+        (click)="setStatus($any(opt.v))"
+        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        [class.bg-white]="statusFilter() === opt.v"
+        [class.text-kindy-sidebar]="statusFilter() === opt.v"
+        [class.shadow-sm]="statusFilter() === opt.v"
+        [class.text-kindy-ink-soft]="statusFilter() !== opt.v"
+      >{{ opt.l }}</button>
+    }
   </div>
 
-  <!-- Create/Edit Modal (Advanced) -->
-  <div *ngIf="isModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div (click)="closeModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-    <div
-      class="bg-white rounded-xl shadow-xl w-full max-w-5xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-gray-800">{{ isEditMode() ? 'Chỉnh sửa Banner' : 'Tạo Banner mới' }}</h3>
-        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600"><svg xmlns="http://www.w3.org/2000/svg"
-            width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg></button>
-      </div>
-
-      <form [formGroup]="bannerForm" (ngSubmit)="onSubmit()" class="p-6 overflow-y-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Left Col: Image -->
-          <div class="space-y-4">
-            <div>
-              <label for="bannerImageUpload" class="block text-sm font-medium text-gray-700 mb-1">Hình ảnh Banner <span
-                  class="text-red-500">*</span></label>
-
-              <!-- Hidden Form Control for Validation -->
-              <input type="hidden" formControlName="imageUrl">
-
-              <!-- File Upload UI -->
-              <div class="flex flex-col gap-2">
-                <input id="bannerImageUpload" #fileInput type="file" (change)="onFileSelected($event)" accept="image/*"
-                  class="hidden">
-
-                <div class="flex gap-2">
-                  <button type="button" (click)="fileInput.click()"
-                    class="flex-1 px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    Chọn hình ảnh
-                  </button>
-                  <button *ngIf="bannerForm.get('imageUrl')?.value" type="button"
-                    (click)="bannerForm.patchValue({imageUrl: ''})"
-                    class="p-2 border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                    title="Remove Image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-                <p class="text-xs text-gray-500">Định dạng hỗ trợ: JPG, PNG, WEBP</p>
-              </div>
-            </div>
-
-            <!-- Preview -->
-            <div
-              class="w-full aspect-video bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-              <img *ngIf="bannerForm.get('imageUrl')?.value" [src]="bannerForm.get('imageUrl')?.value"
-                class="w-full h-full object-cover">
-              <span *ngIf="!bannerForm.get('imageUrl')?.value" class="text-gray-400 text-sm">Xem trước ảnh</span>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Nền tảng</label>
-              <div class="flex gap-2">
-                <label
-                  class="flex-1 cursor-pointer rounded-lg border p-4 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 group">
-                  <input type="radio" formControlName="platform" value="WEB" class="hidden peer" />
-                  <div class="flex items-center justify-center gap-3">
-                    <!-- Monitor Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                      class="w-6 h-6 text-gray-400 peer-checked:text-blue-600 group-has-[:checked]:text-blue-600"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                      <line x1="8" y1="21" x2="16" y2="21"></line>
-                      <line x1="12" y1="17" x2="12" y2="21"></line>
-                    </svg>
-                    <div class="font-medium text-gray-700 group-has-[:checked]:text-blue-700">Web</div>
-                  </div>
-                </label>
-
-                <label
-                  class="flex-1 cursor-pointer rounded-lg border p-4 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 group">
-                  <input type="radio" formControlName="platform" value="MOBILE" class="hidden peer" />
-                  <div class="flex items-center justify-center gap-3">
-                    <!-- Mobile Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                      class="w-6 h-6 text-gray-400 peer-checked:text-blue-600 group-has-[:checked]:text-blue-600"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round">
-                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                      <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                    </svg>
-                    <div class="font-medium text-gray-700 group-has-[:checked]:text-blue-700">Mobile</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Col: Details -->
-          <div class="space-y-4">
-            <!-- Enhanced Title Input with Helpers -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-sm font-medium text-gray-700">Tiêu đề (Hỗ trợ HTML)</label>
-                <div class="flex gap-1">
-                  <button *ngFor="let color of textColors" type="button"
-                    (click)="insertColorTag('title', color.class, titleInput)"
-                    [class]="'w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-offset-1 ring-transparent hover:ring-gray-300 ' + color.dotClass"
-                    [title]="'Color: ' + color.label">
-                  </button>
-
-                  <!-- Custom Color Picker -->
-                  <div class="relative flex items-center justify-center w-5 h-5 group cursor-pointer"
-                    title="Tùy chỉnh màu">
-                    <div
-                      class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-orange-400 opacity-80 group-hover:opacity-100 transition-opacity">
-                    </div>
-                    <input type="color" #customTitleColor
-                      (change)="insertCustomColor('title', customTitleColor.value, titleInput); customTitleColor.value = '#000000'"
-                      class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
-                      stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-                      class="relative z-0 pointer-events-none drop-shadow-sm">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <input type="text" formControlName="title" #titleInput placeholder="VD: <b>Chào mừng</b> bạn đến với chúng tôi"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
-              <!-- Live Preview -->
-              <div *ngIf="bannerForm.get('title')?.value"
-                class="mt-2 p-3 bg-gray-50 rounded border text-gray-800 text-lg font-bold">
-                <span class="text-xs text-gray-400 block mb-1">Xem trước:</span>
-                <span [innerHTML]="bannerForm.get('title')?.value | safeHtml"></span>
-              </div>
-            </div>
-
-            <!-- Enhanced Subtitle Input with Helpers -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-sm font-medium text-gray-700">Tiêu đề phụ</label>
-                <div class="flex gap-1">
-                  <button *ngFor="let color of textColors" type="button"
-                    (click)="insertColorTag('subtitle', color.class, subtitleInput)"
-                    [class]="'w-5 h-5 rounded-full hover:scale-110 transition-transform ring-1 ring-offset-1 ring-transparent hover:ring-gray-300 ' + color.dotClass"
-                    [title]="'Màu: ' + color.label">
-                  </button>
-
-                  <!-- Custom Color Picker -->
-                  <div class="relative flex items-center justify-center w-5 h-5 group cursor-pointer"
-                    title="Tùy chỉnh màu">
-                    <div
-                      class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-orange-400 opacity-80 group-hover:opacity-100 transition-opacity">
-                    </div>
-                    <input type="color" #customSubtitleColor
-                      (change)="insertCustomColor('subtitle', customSubtitleColor.value, subtitleInput); customSubtitleColor.value = '#000000'"
-                      class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
-                      stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-                      class="relative z-0 pointer-events-none drop-shadow-sm">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <input type="text" formControlName="subtitle" #subtitleInput placeholder="Mô tả ngắn..."
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
-              <!-- Live Preview -->
-              <div *ngIf="bannerForm.get('subtitle')?.value" class="mt-2 p-3 bg-gray-50 rounded border text-gray-600">
-                <span class="text-xs text-gray-400 block mb-1">Xem trước:</span>
-                <span [innerHTML]="bannerForm.get('subtitle')?.value | safeHtml"></span>
-              </div>
-            </div>
-
-            <!-- Theme Selector -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Chủ đề Banner</label>
-              <select formControlName="theme" (change)="onThemeChange($event)"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="" disabled selected>Chọn chủ đề</option>
-                <option *ngFor="let theme of gradientThemes" [value]="theme.value">
-                  {{ theme.label }}
-                </option>
-              </select>
-
-              <!-- Hidden Inputs for actual values -->
-              <input type="hidden" formControlName="bgFrom">
-              <input type="hidden" formControlName="bgTo">
-
-              <!-- Visual Preview of Selected Gradient -->
-              <div *ngIf="bannerForm.get('bgFrom')?.value && bannerForm.get('bgTo')?.value"
-                class="mt-2 text-xs text-gray-500 flex items-center gap-2">
-                <span>Xem trước:</span>
-                <div class="h-6 w-24 rounded-md bg-gradient-to-r"
-                  [ngClass]="[bannerForm.get('bgFrom')?.value, bannerForm.get('bgTo')?.value]">
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Liên kết đích</label>
-              <input type="text" formControlName="link" placeholder="https://example.com/tai-nguyen"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                [class.border-red-300]="bannerForm.get('link')?.invalid && (bannerForm.get('link')?.dirty || bannerForm.get('link')?.touched)">
-
-              <div
-                *ngIf="bannerForm.get('link')?.hasError('pattern') && (bannerForm.get('link')?.dirty || bannerForm.get('link')?.touched)"
-                class="text-red-500 text-xs mt-1">
-                Vui lòng nhập URL hợp lệ (ví dụ: https://example.com)
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
-                <input type="date" formControlName="startDate"
-                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
-                <input type="date" formControlName="endDate"
-                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-              </div>
-
-              <!-- Date Range Error -->
-              <div class="col-span-2 text-red-500 text-xs"
-                *ngIf="bannerForm.errors?.['dateRangeInvalid'] && (bannerForm.get('startDate')?.dirty || bannerForm.get('endDate')?.dirty)">
-                Ngày bắt đầu phải trước ngày kết thúc.
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Thứ tự hiển thị</label>
-              <input type="number" formControlName="displayOrder"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-
-            <div class="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
-              <div>
-                <div class="font-medium text-gray-900">Trạng thái hoạt động</div>
-                <div class="text-xs text-gray-500">Hiển thị trên trang chủ</div>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" formControlName="isActive" class="sr-only peer">
-                <div
-                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-4 ring-transparent peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Metadata (Edit Mode Only) -->
-        <div *ngIf="isEditMode() && getSelectedBanner() as banner" class="mt-6 pt-4 border-t border-gray-100">
-          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Thông tin</h4>
-          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
-            <div>
-              <span class="block text-gray-400">ID</span>
-              <span class="font-mono text-gray-700">#{{ banner.id }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Platform</span>
-              <span class="font-medium text-gray-700 uppercase">{{ banner.platform }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Ngày tạo</span>
-              <span>{{ banner.createdAt ? (banner.createdAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật lần cuối</span>
-              <span>{{ banner.updatedAt ? (banner.updatedAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Tạo bởi</span>
-              <span class="font-medium text-gray-700">{{ banner.createdBy || 'System/Unknown' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật bởi</span>
-              <span class="font-medium text-gray-700">{{ banner.updatedBy || 'System/Unknown' }}</span>
-            </div>
-          </div>
-        </div>
-      </form>
-
-      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-        <button (click)="closeModal()"
-          class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Hủy bỏ</button>
-        <button (click)="onSubmit()" [disabled]="bannerForm.invalid || (isEditMode() && !bannerForm.dirty)"
-          type="submit"
-          class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Lưu</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Image Preview Modal -->
-  <div *ngIf="isPreviewModalOpen()"
-    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-    (click)="closePreview()">
-    <img [src]="previewImageUrl()" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
-      (click)="$event.stopPropagation()">
-    <button class="absolute top-4 right-4 text-white/50 hover:text-white" (click)="closePreview()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    </button>
-  </div>
-
-  <!-- Delete Modal (Reused) -->
-  <div *ngIf="isDeleteModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div (click)="closeDeleteModal()" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-    <div
-      class="bg-white rounded-xl shadow-xl w-full max-w-md relative z-10 overflow-hidden transform transition-all scale-100">
-      <div class="p-6 text-center">
-        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-2">Xóa Banner?</h3>
-        <p class="text-gray-500 mb-6">Bạn có chắc chắn muốn xóa banner này?</p>
-        <div class="flex gap-3 justify-center">
-          <button (click)="closeDeleteModal()"
-            class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 w-full">Hủy bỏ</button>
-          <button (click)="confirmDelete()"
-            class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 w-full">Xóa Banner</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <p class="text-xs text-kindy-ink-soft ml-auto">
+    <svg aria-hidden="true" class="inline w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
+    </svg>
+    Kéo & thả để sắp xếp (tắt bộ lọc)
+  </p>
 </div>
+
+@if (isLoading()) {
+  <div class="space-y-3">
+    @for (_ of [1,2,3]; track $index) {
+      <div class="h-24 bg-white rounded-xl border border-gray-100 animate-pulse"></div>
+    }
+  </div>
+} @else if (filtered().length === 0) {
+  <app-empty-state
+    message="Chưa có banner nào"
+    subMessage="Tạo banner đầu tiên để giới thiệu sự kiện hoặc chiến dịch trên trang chủ."
+  />
+} @else {
+  <ul
+    cdkDropList
+    (cdkDropListDropped)="onDrop($event)"
+    class="space-y-3"
+  >
+    @for (banner of filtered(); track banner.id) {
+      <li
+        cdkDrag
+        class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center gap-3 p-3">
+          <button
+            type="button"
+            cdkDragHandle
+            aria-label="Kéo để sắp xếp"
+            class="p-2 text-kindy-ink-soft hover:text-kindy-sidebar cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md flex-shrink-0"
+          >
+            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="9" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" />
+              <circle cx="15" cy="6" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+            </svg>
+          </button>
+
+          <div
+            class="w-28 h-16 rounded-lg overflow-hidden flex-shrink-0 relative"
+            [style.background]="'linear-gradient(135deg, ' + banner.bgFrom + ', ' + banner.bgTo + ')'"
+          >
+            @if (banner.imageUrl) {
+              <img [src]="banner.imageUrl" alt="" loading="lazy" class="w-full h-full object-cover" />
+            }
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm font-semibold text-kindy-ink truncate max-w-md">{{ banner.title }}</h3>
+              <app-status-pill
+                [label]="banner.platform"
+                [tone]="banner.platform === 'WEB' ? 'neutral' : 'teacher'"
+              />
+              <app-status-pill
+                [label]="banner.isActive ? 'Đang hiển thị' : 'Đã ẩn'"
+                [tone]="banner.isActive ? 'active' : 'inactive'"
+                [dot]="true"
+              />
+            </div>
+            @if (banner.subtitle) {
+              <p class="text-xs text-kindy-ink-soft mt-0.5 truncate max-w-xl">{{ banner.subtitle }}</p>
+            }
+            <p class="text-xs text-kindy-ink-soft mt-0.5">
+              Thứ tự: <span class="font-medium">{{ banner.displayOrder }}</span>
+              @if (banner.link) {
+                · Link:
+                <a
+                  [href]="banner.link"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-kindy-sidebar hover:underline truncate max-w-xs"
+                >{{ banner.link }}</a>
+              }
+            </p>
+          </div>
+
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <app-icon-button
+              [icon]="banner.isActive ? 'eyeOff' : 'eye'"
+              [ariaLabel]="banner.isActive ? 'Ẩn banner' : 'Hiện banner'"
+              (click)="toggleActive(banner)"
+            />
+            <app-icon-button
+              icon="pencil"
+              tone="primary"
+              [ariaLabel]="'Chỉnh sửa ' + banner.title"
+              (click)="openEdit(banner)"
+            />
+            <app-icon-button
+              icon="trash"
+              tone="danger"
+              [ariaLabel]="'Xoá ' + banner.title"
+              (click)="confirmDelete(banner)"
+            />
+          </div>
+        </div>
+      </li>
+    }
+  </ul>
+}

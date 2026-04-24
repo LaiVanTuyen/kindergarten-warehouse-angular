@@ -1,378 +1,170 @@
-<div class="h-full flex flex-col overflow-hidden">
-  <!-- Page Header (chuẩn prod) — KHÔNG dùng overflow-hidden để tránh tạo stacking context mới -->
-  <div
-    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 relative flex justify-between items-center flex-shrink-0">
-    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="space-y-1">
-      <h1 class="text-2xl font-bold tracking-tight">Tổng quan hệ thống</h1>
-      <p class="text-slate-400 mt-1 text-sm">Theo dõi hiệu suất, tài nguyên và trạng thái hệ thống.</p>
-    </div>
-  </div>
+<div class="space-y-6 pb-6">
 
-  <!-- Control Bar (date filter tách riêng để không bị stacking context của banner) -->
-  <div class="flex items-center justify-between mb-3 flex-shrink-0">
-    <p class="text-sm text-gray-500">
-      {{ dateFilter() === 'this_year' ? 'Kỳ hiện tại: Năm nay (12 tháng)' :
-         dateFilter() === 'last_7_days' ? 'Kỳ hiện tại: 7 ngày qua' :
-         dateFilter() === 'this_month' ? 'Kỳ hiện tại: Tháng này' :
-         'Khoảng thời gian tuỳ chỉnh' }}
-    </p>
-    <div class="flex items-center gap-3">
-      @if (dateFilter() === 'custom') {
-      <div class="flex gap-2">
-        <input type="date" [ngModel]="customStartDate()" (ngModelChange)="customStartDate.set($event)"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-        <input type="date" [ngModel]="customEndDate()" (ngModelChange)="customEndDate.set($event)"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+  <!-- Welcome banner + date filter -->
+  <header
+    class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-kindy-sidebar via-kindy-sidebar-hover to-kindy-sidebar-active text-white p-6 shadow-xl"
+  >
+    <div
+      aria-hidden="true"
+      class="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="absolute -left-16 -bottom-16 w-56 h-56 bg-kindy-coral/30 rounded-full blur-3xl"
+    ></div>
+
+    <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold font-display tracking-tight">
+          Chào mừng trở lại, {{ userName() }} 👋
+        </h1>
+        <p class="text-white/80 mt-1 text-sm">
+          Đây là bức tranh tổng quan về kho tài nguyên mầm non hôm nay.
+        </p>
       </div>
-      }
-      <div class="relative">
-        <button type="button"
-          (click)="dateDropdownOpen.set(!dateDropdownOpen())"
-          class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 py-2 pl-4 pr-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer text-sm hover:bg-gray-50 transition-colors">
-          <span>{{ getDateFilterLabel() }}</span>
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        @if (dateDropdownOpen()) {
-        <div class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden" style="z-index: 8000">
-          @for (opt of dateOptions; track opt.value) {
-          <button type="button"
-            (click)="setDateFilter(opt.value); dateDropdownOpen.set(false)"
-            class="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2"
-            [class.bg-blue-50]="dateFilter() === opt.value"
-            [class.text-blue-700]="dateFilter() === opt.value"
-            [class.font-semibold]="dateFilter() === opt.value">
-            {{ opt.label }}
-          </button>
-          }
-        </div>
+      <div class="flex-shrink-0">
+        <app-date-filter
+          [value]="period()"
+          [startDate]="startDate()"
+          [endDate]="endDate()"
+          (valueChange)="onPeriodChange($event)"
+          (startDateChange)="onStartDateChange($event)"
+          (endDateChange)="onEndDateChange($event)"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats (4 KPI) -->
+  <section aria-labelledby="stats-heading">
+    <h2 id="stats-heading" class="sr-only">Chỉ số chính</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      @if (isLoadingStats() && statCards().length === 0) {
+        @for (_ of [1,2,3,4]; track $index) {
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+            <div class="h-4 w-24 bg-gray-100 rounded mb-3"></div>
+            <div class="h-8 w-20 bg-gray-200 rounded mb-3"></div>
+            <div class="h-3 w-32 bg-gray-100 rounded"></div>
+          </div>
         }
-      </div>
-    </div>
-  </div>
-
-  <!-- Scrollable Content -->
-  <div class="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- Card 1 -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <p class="text-sm font-medium text-gray-500">Tổng tài nguyên</p>
-            <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalResources }}</h3>
-          </div>
-          <div class="p-2 bg-blue-50 text-blue-500 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-            </svg>
-          </div>
-        </div>
-        <div class="text-sm">
-          <span class="text-green-500 font-medium">↑ 12%</span>
-          <span class="text-gray-400 ml-1">so với kỳ trước</span>
-        </div>
-      </div>
-
-      <!-- Card 2 -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <p class="text-sm font-medium text-gray-500">Tổng lượt xem</p>
-            <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalViews }}</h3>
-          </div>
-          <div class="p-2 bg-pink-50 text-pink-500 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </div>
-        </div>
-        <div class="text-sm">
-          <span class="text-green-500 font-medium">↑ 8%</span>
-          <span class="text-gray-400 ml-1">so với kỳ trước</span>
-        </div>
-      </div>
-
-      <!-- Card 3 -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <p class="text-sm font-medium text-gray-500">Tổng người dùng</p>
-            <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().totalUsers }}</h3>
-          </div>
-          <div class="p-2 bg-green-50 text-green-500 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
-        </div>
-        <div class="text-sm">
-          <span class="text-green-500 font-medium">↑ 24%</span>
-          <span class="text-gray-400 ml-1">so với kỳ trước</span>
-        </div>
-      </div>
-
-      <!-- Card 4 -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <p class="text-sm font-medium text-gray-500">Chờ phê duyệt</p>
-            <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ stats().pendingApprovals }}</h3>
-          </div>
-          <div class="p-2 bg-purple-50 text-purple-500 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-        </div>
-        <div class="text-sm">
-          <span class="text-orange-500 font-medium">Cần xử lý</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Tài nguyên mới</h3>
-        <div echarts [options]="resourceChartOption()" class="h-[250px] w-full"></div>
-      </div>
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Tổng lượt xem</h3>
-        <div echarts [options]="viewChartOption()" class="h-[250px] w-full"></div>
-      </div>
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Người dùng mới</h3>
-        <div echarts [options]="userChartOption()" class="h-[250px] w-full"></div>
-      </div>
-    </div>
-
-    <!-- Bottom: Pending Resources + System Health -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <!-- Recent Pending Resources -->
-      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-bold text-gray-800">Tài nguyên chờ duyệt</h3>
-          <a routerLink="/resources" class="text-blue-500 text-sm font-medium hover:underline">Xem tất cả</a>
-        </div>
-
-        @if (pendingResources().length > 0) {
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wider">
-                <th class="py-3 font-medium">Tài nguyên</th>
-                <th class="py-3 font-medium">Người tải lên</th>
-                <th class="py-3 font-medium">Ngày</th>
-                <th class="py-3 font-medium text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody class="text-sm">
-              @for (resource of pendingResources(); track resource.id) {
-              <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                <td class="py-4">
-                  <div class="flex items-center gap-3">
-                    <span class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-lg">{{
-                      resource.thumbnail }}</span>
-                    <span class="font-medium text-gray-800">{{ resource.title }}</span>
-                  </div>
-                </td>
-                <td class="py-4 text-gray-600">{{ resource.uploader }}</td>
-                <td class="py-4 text-gray-500">{{ resource.date }}</td>
-                <td class="py-4 text-right">
-                  <div class="flex justify-end gap-2">
-                    <button (click)="viewResource(resource)"
-                      class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
-                      title="Xem chi tiết">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                    </button>
-                    <button (click)="approveResource(resource.id)"
-                      class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors"
-                      title="Phê duyệt">✓</button>
-                    <button (click)="rejectResource(resource.id)"
-                      class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
-                      title="Từ chối">✕</button>
-                  </div>
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        } @else {
-        <div class="flex-1 flex flex-col items-center justify-center text-gray-400 py-10">
-          <p class="text-4xl mb-3 grayscale opacity-30">✅</p>
-          <p>Không có tài nguyên nào chờ duyệt.</p>
-        </div>
+      } @else {
+        @for (card of statCards(); track card.label) {
+          <app-stat-card
+            [label]="card.label"
+            [value]="card.value"
+            [iconPath]="card.iconPath"
+            [tone]="card.tone"
+            [trend]="card.trend"
+            [subLabel]="card.subLabel || ''"
+            [linkTo]="card.linkTo || null"
+            [linkQueryParams]="card.linkQueryParams || null"
+          />
         }
-      </div>
-
-      <!-- System Health -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
-        <h3 class="text-lg font-bold text-gray-800 mb-6">Trạng thái hệ thống</h3>
-
-        @if (isRamWarning()) {
-        <div class="absolute top-0 left-0 w-full bg-red-500 text-white text-xs font-bold text-center py-1 animate-pulse">
-          ⚠️ RAM cao — Hệ thống có thể khởi động lại
-        </div>
-        }
-
-        <div class="space-y-6" [class.mt-4]="isRamWarning()">
-          <!-- Server Status -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-gray-100 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="text-gray-600">
-                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-                  <line x1="6" y1="6" x2="6.01" y2="6" />
-                  <line x1="6" y1="18" x2="6.01" y2="18" />
-                </svg>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-gray-800">Máy chủ</p>
-                <p class="text-xs text-gray-500">Uptime: {{ systemHealth().serverUptime }}</p>
-              </div>
-            </div>
-            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{{
-              systemHealth().serverStatus }}</span>
-          </div>
-
-          <!-- Database -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-gray-100 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="text-gray-600">
-                  <ellipse cx="12" cy="5" rx="9" ry="3" />
-                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                </svg>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-gray-800">Cơ sở dữ liệu</p>
-                <p class="text-xs text-gray-500">MySQL 8.0</p>
-              </div>
-            </div>
-            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{{
-              systemHealth().dbStatus }}</span>
-          </div>
-
-          <!-- RAM Usage -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <p class="text-sm font-medium text-gray-600">RAM (Java)</p>
-              <span class="text-xs font-bold" [class.text-red-600]="isRamWarning()"
-                [class.text-gray-800]="!isRamWarning()">{{ systemHealth().ramUsage }}%</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2">
-              <div class="h-2 rounded-full transition-all duration-500" [class.bg-red-500]="isRamWarning()"
-                [class.bg-blue-500]="!isRamWarning()" [style.width.%]="systemHealth().ramUsage"></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-1">Phân bổ 1024MB</p>
-          </div>
-
-          <!-- CPU Load -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <p class="text-sm font-medium text-gray-600">CPU</p>
-              <span class="text-xs font-bold text-gray-800">{{ systemHealth().cpuUsage }}%</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2">
-              <div class="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                [style.width.%]="systemHealth().cpuUsage"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal xem chi tiết tài nguyên -->
-@if (isViewModalOpen()) {
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-  (click)="closeViewModal()">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all"
-    (click)="$event.stopPropagation()">
-    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-      <h3 class="text-lg font-bold text-gray-800">Xem trước tài nguyên</h3>
-      <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-    <div class="p-6">
-      @if (selectedResource(); as res) {
-      <div class="flex gap-6 mb-6">
-        <div class="w-24 h-24 bg-blue-50 rounded-xl flex items-center justify-center text-5xl flex-shrink-0 shadow-inner">
-          {{ res.thumbnail }}
-        </div>
-        <div class="flex-1 space-y-3">
-          <div>
-            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-wider">Chờ
-              duyệt</span>
-            <h4 class="text-xl font-bold text-gray-900 mt-1">{{ res.title }}</h4>
-            <p class="text-sm text-gray-500">Tải lên bởi <span class="font-medium text-gray-800">{{ res.uploader
-                }}</span></p>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="text-gray-400">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span>Gửi lên vào {{ res.date }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 text-sm text-gray-500 space-y-2">
-        <p><strong>Mô tả:</strong> Đây là mô tả mẫu cho tài nguyên "{{ res.title }}". Nội dung giáo dục phù hợp cho
-          học sinh mẫu giáo.</p>
-        <div class="h-2 bg-gray-200 rounded w-3/4"></div>
-        <div class="h-2 bg-gray-200 rounded w-1/2"></div>
-        <div class="h-2 bg-gray-200 rounded w-5/6"></div>
-      </div>
       }
     </div>
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-      <button (click)="closeViewModal()"
-        class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Đóng</button>
-      <button (click)="selectedResource() && approveResource(selectedResource().id); closeViewModal()"
-        class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-sm flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        Phê duyệt
-      </button>
+  </section>
+
+  <!-- Trend charts -->
+  <section aria-labelledby="trend-heading">
+    <h2 id="trend-heading" class="sr-only">Biểu đồ xu hướng</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      @for (chart of trendCharts(); track chart.title) {
+        <app-dashboard-card [title]="chart.title">
+          <div
+            echarts
+            [options]="chart.option"
+            class="h-[220px] w-full"
+            role="img"
+            [attr.aria-label]="'Biểu đồ ' + chart.title"
+          ></div>
+        </app-dashboard-card>
+      }
+      @if (isLoadingTrend() && trendCharts().length === 0) {
+        @for (_ of [1,2,3]; track $index) {
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+            <div class="h-4 w-32 bg-gray-100 rounded mb-4"></div>
+            <div class="h-[180px] w-full bg-gray-100 rounded"></div>
+          </div>
+        }
+      }
     </div>
-  </div>
+  </section>
+
+  <!-- Pending + Recent activity -->
+  <section aria-labelledby="operations-heading">
+    <h2 id="operations-heading" class="sr-only">Vận hành hàng ngày</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2">
+        <app-dashboard-card
+          title="Tài nguyên chờ duyệt"
+          [subtitle]="'Từ giáo viên gửi lên qua Portal'"
+          linkTo="/resources"
+          [linkQueryParams]="{ status: 'PENDING' }"
+        >
+          <app-pending-preview
+            [items]="pending()"
+            (approve)="onApprove($event)"
+            (reject)="onReject($event)"
+          />
+        </app-dashboard-card>
+      </div>
+
+      <app-dashboard-card
+        title="Hoạt động gần đây"
+        linkTo="/audit-logs"
+      >
+        <app-recent-activity [items]="activity()" />
+      </app-dashboard-card>
+    </div>
+  </section>
+
+  <!-- Quick actions -->
+  <section aria-labelledby="quick-actions-heading">
+    <h2 id="quick-actions-heading" class="sr-only">Thao tác nhanh</h2>
+    <app-dashboard-card title="Thao tác nhanh">
+      <app-quick-actions />
+    </app-dashboard-card>
+  </section>
+
+  <!-- Insights row -->
+  <section aria-labelledby="insights-heading">
+    <h2 id="insights-heading" class="sr-only">Thống kê nội dung</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <app-dashboard-card
+        title="Top tài nguyên được xem nhiều"
+        linkTo="/resources"
+      >
+        <app-top-list
+          [items]="topResourceItems()"
+          metricSuffix="lượt xem"
+          emptyMessage="Chưa có lượt xem nào trong kỳ."
+        />
+      </app-dashboard-card>
+
+      <app-dashboard-card
+        title="Top giáo viên tích cực"
+        linkTo="/users"
+        [linkQueryParams]="{ role: 'TEACHER' }"
+      >
+        <app-top-list
+          [items]="topTeacherItems()"
+          metricSuffix="bài đăng"
+          emptyMessage="Chưa có giáo viên nào tải lên."
+        />
+      </app-dashboard-card>
+
+      <app-dashboard-card
+        title="Phân bố theo chủ đề"
+        linkTo="/categories"
+      >
+        <div
+          echarts
+          [options]="topicPieOption()"
+          class="h-[240px] w-full"
+          role="img"
+          aria-label="Biểu đồ phân bố tài nguyên theo chủ đề"
+        ></div>
+      </app-dashboard-card>
+    </div>
+  </section>
 </div>
-}
