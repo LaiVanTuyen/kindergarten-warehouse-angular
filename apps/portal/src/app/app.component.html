@@ -1,8 +1,9 @@
 <div class="min-h-screen bg-gray-50 font-sans text-gray-900">
   <app-toast></app-toast>
-  <app-header *ngIf="!isLoginPage"></app-header>
+  <app-route-progress></app-route-progress>
+  <app-header *ngIf="!isChromeless()"></app-header>
   <main>
     <router-outlet></router-outlet>
   </main>
-  <app-footer *ngIf="!isLoginPage"></app-footer>
+  <app-footer *ngIf="!isChromeless()"></app-footer>
 </div>

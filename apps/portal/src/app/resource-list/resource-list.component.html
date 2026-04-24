@@ -75,7 +75,7 @@
         <div class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 custom-scrollbar min-h-0"
           *ngIf="categories$ | async as categoriesRes">
           <!-- Dynamic Categories -->
-          <div *ngFor="let cat of categoriesRes.data" class="flex flex-col">
+          <div *ngFor="let cat of categoriesRes.data; trackBy: trackByCategoryId" class="flex flex-col">
             <button (click)="toggleCategory(cat)"
               class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border mb-1"
               [ngClass]="{
@@ -105,7 +105,7 @@
                 {{ 'list.noTopics' | translate }}
               </div>
 
-              <button *ngFor="let topic of currentTopics$ | async"
+              <button *ngFor="let topic of currentTopics$ | async; trackBy: trackByTopicId"
                 (click)="$event.stopPropagation(); onTopicClick(topic, cat, $event)"
                 class="w-full text-left px-4 py-3 text-sm transition-all flex items-center justify-between relative group/topic"
                 [ngClass]="isTopicSelected(topic.id) 
@@ -131,7 +131,7 @@
             Độ tuổi
           </h4>
           <div class="space-y-2">
-            <label *ngFor="let age of ageGroups$ | async"
+            <label *ngFor="let age of ageGroups$ | async; trackBy: trackByAgeGroupId"
               class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-pink-50 group">
               <div class="relative flex items-center">
                 <input type="checkbox" [checked]="isChecked(age.id)" (change)="toggleAgeGroup(age)"
@@ -175,7 +175,7 @@
 
       <!-- Filter Chips (Active Filters) -->
       <div class="mb-6 flex flex-wrap gap-2 animate-fade-in" *ngIf="(selectedAgeGroups$ | async)?.length">
-        <div *ngFor="let age of (selectedAgeGroups$ | async)"
+        <div *ngFor="let age of (selectedAgeGroups$ | async); trackBy: trackByAgeGroupId"
           class="inline-flex items-center bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm border border-pink-200">
           <span>{{ age.name }}</span>
           <button (click)="removeAgeFilter(age)"
@@ -237,64 +237,35 @@
         <ng-container *ngIf="!state.isLoading">
           <div *ngIf="state.resources && state.resources.length > 0; else empty"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div *ngFor="let resource of state.resources">
-              <app-resource-card [resource]="resource" (view)="openPreview(resource)"
-                (download)="downloadResource(resource)">
-              </app-resource-card>
-            </div>
+            <app-resource-card *ngFor="let resource of state.resources; trackBy: trackByResourceId"
+              [resource]="resource"
+              (view)="openPreview(resource)"
+              (download)="downloadResource(resource)">
+            </app-resource-card>
           </div>
 
           <ng-template #empty>
-            <div
-              class="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm col-span-full">
-              <div class="w-32 h-32 bg-pink-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                <!-- Bear substitute icon (Paw print or custom if available, using Paw here for cuteness) -->
-                <i class="ph-fill ph-paw-print text-6xl text-pink-300"></i>
-              </div>
-              <h3 class="text-2xl font-black text-gray-800 mb-3">Không tìm thấy tài liệu nào</h3>
-              <p class="text-gray-500 max-w-sm mx-auto mb-8 text-base">
-                Rất tiếc, không có bài học nào phù hợp với lựa chọn của bạn. Thử chọn độ tuổi hoặc chủ đề khác nhé!
-              </p>
-              <button (click)="onAllCategoriesClick()"
-                class="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 hover:scale-105 transition-all">
-                Xem tất cả tài liệu
-              </button>
+            <div class="col-span-full">
+              <app-empty-state
+                icon="ph-fill ph-paw-print"
+                tone="pink"
+                title="Không tìm thấy tài liệu nào"
+                message="Rất tiếc, không có bài học nào phù hợp với lựa chọn của bạn. Thử chọn độ tuổi hoặc chủ đề khác nhé!"
+                actionLabel="Xem tất cả tài liệu"
+                actionIcon="ph ph-arrow-clockwise"
+                (action)="onAllCategoriesClick()">
+              </app-empty-state>
             </div>
           </ng-template>
         </ng-container>
       </ng-container>
 
       <!-- Pagination -->
-      <div *ngIf="(totalPages$ | async) as totalPages" [class.hidden]="totalPages <= 1"
-        class="flex justify-center items-center gap-2 mt-12 mb-8">
-        <button (click)="prevPage()" [disabled]="(currentPage$ | async) === 1"
-          class="p-2.5 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-
-        <ng-container *ngIf="(pages$ | async) as pages">
-          <button *ngFor="let page of pages" (click)="goToPage(page)"
-            class="w-10 h-10 rounded-full font-bold text-sm transition-all" [ngClass]="
-                (currentPage$ | async) === page
-                ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30 transform scale-105'
-                : 'text-gray-600 hover:bg-pink-50 bg-white border border-gray-200'
-            ">
-            {{ page }}
-          </button>
-        </ng-container>
-
-        <button (click)="nextPage()" [disabled]="(currentPage$ | async) === totalPages"
-          class="p-2.5 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
+      <div *ngIf="(totalPages$ | async) as totalPages" class="flex justify-center mt-12 mb-8">
+        <app-paginator *ngIf="(currentPage$ | async) as currentPage"
+          [page]="currentPage" [totalPages]="totalPages"
+          (pageChange)="goToPage($event)">
+        </app-paginator>
       </div>
 
     </div>

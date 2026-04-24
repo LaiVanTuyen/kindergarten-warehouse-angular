@@ -1,25 +1,46 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { CommonModule, registerLocaleData } from '@angular/common';
+import localeVi from '@angular/common/locales/vi';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ResourceService, Resource } from '@kindergarten-warehouse/data-access';
-import { switchMap, map, of, combineLatest, tap } from 'rxjs';
-
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '../pipes/translate.pipe';
-import { ResourceCardComponent } from '../resource-card/resource-card.component';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+
 import {
   AuthService,
   CategoryService,
-  TopicService,
   Comment,
+  CommentService,
+  CreateCommentRequest,
+  Resource,
+  ResourceDownloadService,
+  ResourceService,
+  ToastService,
+  TopicService,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
 import { FileHelper } from '../shared/utils/file-helper';
-import { registerLocaleData } from '@angular/common';
-import localeVi from '@angular/common/locales/vi';
+import { ResourceCardComponent } from '../resource-card/resource-card.component';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { RatingStarsComponent } from '../shared/rating-stars/rating-stars.component';
+import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { TranslatePipe } from '../pipes/translate.pipe';
 
 registerLocaleData(localeVi);
+
+interface BreadcrumbInfo {
+  category: { id: string; name: string; slug: string } | null;
+  topic: { id: string; name: string; slug: string } | null;
+}
 
 @Component({
   selector: 'app-resource-detail',
@@ -30,68 +51,143 @@ registerLocaleData(localeVi);
     FormsModule,
     TranslatePipe,
     ResourceCardComponent,
+    EmptyStateComponent,
+    RatingStarsComponent,
+    SpinnerComponent,
   ],
   templateUrl: './resource-detail.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ResourceDetailComponent {
-  private route = inject(ActivatedRoute);
-  private resourceService = inject(ResourceService);
-  private categoryService = inject(CategoryService);
-  private topicService = inject(TopicService);
-  private sanitizer = inject(DomSanitizer);
-  public authService = inject(AuthService);
-  public translationService = inject(TranslationService);
+export class ResourceDetailComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly resourceService = inject(ResourceService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly topicService = inject(TopicService);
+  private readonly commentService = inject(CommentService);
+  private readonly downloadService = inject(ResourceDownloadService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly toast = inject(ToastService);
+  readonly authService = inject(AuthService);
+  readonly translationService = inject(TranslationService);
 
-  newCommentContent = '';
-  newCommentRating = 5;
+  /** Comment form state (signal-based, template calls are reactive). */
+  readonly newCommentContent = signal('');
+  readonly newCommentRating = signal(5);
+  readonly isSubmittingComment = signal(false);
+  readonly isDownloading = signal(false);
 
-  resource$ = this.route.paramMap.pipe(
+  readonly resource$: Observable<Resource | null> = this.route.paramMap.pipe(
     switchMap((params) => {
       const slug = params.get('slug');
-      return this.resourceService.getResource(slug || '').pipe(
-        map((res) => res.data),
+      if (!slug) return of(null);
+      return this.resourceService.getResource(slug).pipe(
+        map((res) => res.data ?? res.result ?? null),
         tap((resource) => {
-          if (resource && resource.id) {
-            this.resourceService.incrementViewCount(resource.id).subscribe();
+          if (resource?.id) {
+            // Fire and forget — a failed view-count should never block the page.
+            this.resourceService.incrementViewCount(resource.id).subscribe({
+              error: () => void 0,
+            });
+            this.loadComments(resource);
           }
-        })
+        }),
+        catchError(() => of(null))
       );
-    })
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  // Breadcrumb Logic: Resource -> Topic -> Category
-  breadcrumbInfo$ = this.resource$.pipe(
+  /**
+   * Breadcrumb = Category → Topic → Resource. The previous version fetched
+   * *all* topics (size 1000) to resolve one id; now we call `/topics/:id`.
+   */
+  readonly breadcrumbInfo$: Observable<BreadcrumbInfo> = this.resource$.pipe(
     switchMap((resource) => {
-      if (!resource || !resource.topicId) {
+      if (!resource?.topicId) {
         return of({ category: null, topic: null });
       }
-
-      const topicId = resource.topicId;
-
-      return combineLatest([
-        this.categoryService.getCategories(1, 100), // Fetch reasonable amount
-        this.topicService.getTopics(undefined, 1, 1000), // Fetch all (bad practice but needed for client-side join without getTopicById)
-      ]).pipe(
-        map(([categoriesResp, topicsResp]) => {
-          const topic = topicsResp.data.find((t: any) => t.id === topicId);
-          const category = topic
-            ? categoriesResp.data.find((c: any) => c.id === topic.categoryId)
-            : null;
-          return { category: category || null, topic: topic || null };
-        })
+      // Prefer the embedded topic + category the backend ships (avoids 2 round-trips).
+      if (resource.topic?.categoryName) {
+        return of({
+          topic: {
+            id: String(resource.topic.id),
+            name: resource.topic.name,
+            slug: resource.topic.slug,
+          },
+          category: {
+            id: String(resource.topic.categoryId),
+            name: resource.topic.categoryName,
+            slug: '',
+          },
+        });
+      }
+      // Fallback: one call per level.
+      return this.topicService.getTopic(resource.topicId).pipe(
+        map((res) => res.result),
+        switchMap((topic) => {
+          if (!topic) return of({ category: null, topic: null });
+          const topicSummary = {
+            id: String(topic.id),
+            name: topic.name,
+            slug: topic.slug,
+          };
+          if (!topic.categoryId) {
+            return of({ topic: topicSummary, category: null });
+          }
+          return this.categoryService.getCategories(1, 100).pipe(
+            map((res) => {
+              const category =
+                (res.data ?? []).find(
+                  (c) => String(c.id) === String(topic.categoryId)
+                ) ?? null;
+              return {
+                topic: topicSummary,
+                category: category
+                  ? {
+                      id: category.id,
+                      name: category.name,
+                      slug: category.slug,
+                    }
+                  : null,
+              };
+            })
+          );
+        }),
+        catchError(() => of({ category: null, topic: null }))
       );
     })
   );
 
-  // Re-implementing simplified version assuming we simply add a helper to `CategoryService`
-  // OR we just use a quicker check if we can't change service.
-  // I will add `getAllTopicsMock` to `general.service.ts` first.
+  readonly relatedResources$ = this.resource$.pipe(
+    switchMap((current) =>
+      this.resourceService
+        .getResources({
+          page: 1,
+          size: 4,
+          topicId: current?.topicId,
+        })
+        .pipe(
+          map((res) =>
+            (res.data?.content ?? [])
+              .filter((r) => r.id !== current?.id)
+              .slice(0, 4)
+          ),
+          catchError(() => of<Resource[]>([]))
+        )
+    )
+  );
 
-  relatedResources$ = this.resourceService
-    .getResources({ page: 1, size: 4 })
-    .pipe(map((res) => res.data.content));
+  ngOnInit(): void {
+    // no-op; all streams are cold and bound via async pipe in template.
+  }
 
+  // trackBy helpers for *ngFor inside the template
+  trackByCommentId = (_: number, c: Comment) => c.id;
+  trackByResourceId = (_: number, r: Resource) => r.id;
+
+  // -----------------------------------------------------------------------
+  // Media / preview helpers (kept for template compatibility)
+  // -----------------------------------------------------------------------
   isYouTube(url: string | undefined): boolean {
     if (!url) return false;
     return url.includes('youtube.com') || url.includes('youtu.be');
@@ -104,25 +200,26 @@ export class ResourceDetailComponent {
       if (url.includes('v=')) {
         videoId = url.split('v=')[1].split('&')[0];
       } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1];
+        videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
       }
-      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+      return this.sanitizer.bypassSecurityTrustResourceUrl(
+        `https://www.youtube.com/embed/${videoId}`
+      );
     }
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   getSafeDocUrl(url: string | undefined): SafeResourceUrl {
     if (!url) return '';
-    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+    const viewer = `https://docs.google.com/gview?url=${encodeURIComponent(
       url
     )}&embedded=true`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(viewer);
   }
 
   canPreviewDoc(resource: Resource): boolean {
     if (!resource.fileUrl) return false;
-    const type = resource.type || '';
+    const type = (resource.type || resource.fileType || '').toUpperCase();
     return [
       'PDF',
       'WORD',
@@ -136,131 +233,116 @@ export class ResourceDetailComponent {
     ].includes(type);
   }
 
-  // Pastel colors for avatars
-  getAvatarColor(name: string): string {
-    const colors = [
-      'bg-red-100 text-red-600',
-      'bg-orange-100 text-orange-600',
-      'bg-amber-100 text-amber-600',
-      'bg-green-100 text-green-600',
-      'bg-emerald-100 text-emerald-600',
-      'bg-teal-100 text-teal-600',
-      'bg-cyan-100 text-cyan-600',
-      'bg-sky-100 text-sky-600',
-      'bg-blue-100 text-blue-600',
-      'bg-indigo-100 text-indigo-600',
-      'bg-violet-100 text-violet-600',
-      'bg-purple-100 text-purple-600',
-      'bg-fuchsia-100 text-fuchsia-600',
-      'bg-pink-100 text-pink-600',
-      'bg-rose-100 text-rose-600',
-    ];
-
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const index = Math.abs(hash % colors.length);
-    return colors[index];
-  }
-
-  followAuthor(authorName: string) {
-    if (!this.authService.isLoggedIn) {
-      alert('Please login to follow authors.');
-      return;
-    }
-    alert(`Followed ${authorName}!`);
-  }
-
   getFileIcon(type: string | undefined): string {
     return FileHelper.getFileIcon(type);
   }
 
-  isDownloading = false;
+  // -----------------------------------------------------------------------
+  // Avatar color (stable hash → tailwind palette)
+  // -----------------------------------------------------------------------
+  private static readonly AVATAR_PALETTE = [
+    'bg-red-100 text-red-600',
+    'bg-orange-100 text-orange-600',
+    'bg-amber-100 text-amber-600',
+    'bg-green-100 text-green-600',
+    'bg-emerald-100 text-emerald-600',
+    'bg-teal-100 text-teal-600',
+    'bg-cyan-100 text-cyan-600',
+    'bg-sky-100 text-sky-600',
+    'bg-blue-100 text-blue-600',
+    'bg-indigo-100 text-indigo-600',
+    'bg-violet-100 text-violet-600',
+    'bg-purple-100 text-purple-600',
+    'bg-fuchsia-100 text-fuchsia-600',
+    'bg-pink-100 text-pink-600',
+    'bg-rose-100 text-rose-600',
+  ];
 
-  downloadResource(resource: Resource) {
-    if (!resource || !resource.id) return;
-    this.isDownloading = true;
-
-    this.resourceService.downloadFile(resource.id).subscribe({
-      next: (response) => {
-        const contentDisposition = response.headers.get('content-disposition');
-        let filename = 'tai_lieu_mac_dinh.pdf';
-
-        if (contentDisposition) {
-          const regex = /filename\*=UTF-8''(.+)/;
-          const matches = regex.exec(contentDisposition);
-          if (matches != null && matches[1]) {
-            filename = decodeURIComponent(matches[1]);
-          } else {
-            const fallbackRegex = /filename="?([^"]+)"?/;
-            const fallbackMatches = fallbackRegex.exec(contentDisposition);
-            if (fallbackMatches != null && fallbackMatches[1]) {
-              filename = fallbackMatches[1];
-            }
-          }
-        } else if (resource.title) {
-          const ext = resource.fileUrl?.split('.').pop() || 'pdf';
-          filename = `${resource.title}.${ext}`;
-        }
-
-        const blob = response.body;
-        if (blob) {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }
-
-        resource.downloadCount = (resource.downloadCount || 0) + 1;
-        this.isDownloading = false;
-      },
-      error: (err) => {
-        console.error('Download failed', err);
-        this.isDownloading = false;
-        // Fallback
-        if (resource.fileUrl) {
-          window.open(resource.fileUrl, '_blank');
-        }
-      },
-    });
+  getAvatarColor(name: string): string {
+    const palette = ResourceDetailComponent.AVATAR_PALETTE;
+    const source = (name || 'A').toString();
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = source.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return palette[Math.abs(hash) % palette.length];
   }
 
-  submitComment(resource: Resource) {
-    if (!this.authService.isLoggedIn) {
-      alert('You must be logged in to post a comment.');
+  // -----------------------------------------------------------------------
+  // Actions
+  // -----------------------------------------------------------------------
+  followAuthor(authorName: string): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để theo dõi tác giả.', 'info');
+      return;
+    }
+    this.toast.show(
+      `Tính năng theo dõi "${authorName}" sẽ sớm có mặt.`,
+      'info'
+    );
+  }
+
+  downloadResource(resource: Resource | null | undefined): void {
+    if (!resource?.id || this.isDownloading()) return;
+    this.isDownloading.set(true);
+    this.downloadService
+      .download(resource)
+      .pipe(finalize(() => this.isDownloading.set(false)))
+      .subscribe({
+        next: () => {
+          resource.downloadCount = (resource.downloadCount ?? 0) + 1;
+        },
+        error: () => void 0,
+      });
+  }
+
+  setCommentRating(value: number): void {
+    this.newCommentRating.set(value);
+  }
+
+  submitComment(resource: Resource): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để bình luận.', 'info');
       return;
     }
 
-    if (!this.newCommentContent.trim()) {
-      return;
-    }
+    const content = this.newCommentContent().trim();
+    if (!content || this.isSubmittingComment()) return;
 
-    const user = this.authService.currentUserValue;
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: user?.id || 0, // Mock userId if not available
-      content: this.newCommentContent,
-      createdAt: new Date().toISOString(),
-      rating: this.newCommentRating,
-      user: user || ({ username: 'Anonymous', avatarUrl: '' } as any), // Mock user object
-      resourceId: resource.id,
+    const payload: CreateCommentRequest = {
+      content,
+      rating: this.newCommentRating(),
     };
 
-    // In a real app, call service to save comment.
-    // Here we just push to the local resource object for demo.
-    if (!resource.comments) {
-      resource.comments = [];
-    }
-    resource.comments.unshift(newComment);
+    this.isSubmittingComment.set(true);
+    this.commentService
+      .create(resource.id, payload)
+      .pipe(finalize(() => this.isSubmittingComment.set(false)))
+      .subscribe({
+        next: (created) => {
+          resource.comments = [created, ...(resource.comments ?? [])];
+          this.newCommentContent.set('');
+          this.newCommentRating.set(5);
+          this.toast.show('Đã đăng bình luận của bạn.', 'success');
+        },
+        error: (err: HttpErrorResponse) => {
+          const msg =
+            err.status === 401
+              ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+              : 'Không thể đăng bình luận. Vui lòng thử lại.';
+          this.toast.show(msg, 'error');
+        },
+      });
+  }
 
-    // Reset form
-    this.newCommentContent = '';
-    this.newCommentRating = 5;
+  private loadComments(resource: Resource): void {
+    // Only call the API if the resource payload didn't already include comments.
+    if (resource.comments && resource.comments.length > 0) return;
+    this.commentService.list(resource.id, 1, 20).subscribe({
+      next: (page) => {
+        resource.comments = page.content ?? [];
+      },
+      error: () => void 0,
+    });
   }
 }

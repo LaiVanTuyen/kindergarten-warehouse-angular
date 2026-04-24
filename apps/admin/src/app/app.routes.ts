@@ -3,7 +3,7 @@ import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { BannersComponent } from './banners/banners.component';
 import { CategoriesComponent } from './categories/categories.component';
-import { authGuard } from '@kindergarten-warehouse/data-access';
+import { roleGuard } from '@kindergarten-warehouse/data-access';
 
 export const appRoutes: Route[] = [
   {
@@ -12,9 +12,23 @@ export const appRoutes: Route[] = [
       import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./forgot-password/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent
+      ),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent
+      ),
+  },
+  {
     path: '',
     component: AdminLayoutComponent,
-    canActivate: [authGuard],
+    canActivate: [roleGuard('ADMIN')],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -25,12 +39,12 @@ export const appRoutes: Route[] = [
       {
         path: 'banners',
         component: BannersComponent,
-        data: { breadcrumb: 'Banners' },
+        data: { breadcrumb: 'Banner' },
       },
       {
         path: 'categories',
         component: CategoriesComponent,
-        data: { breadcrumb: 'Phân loại' },
+        data: { breadcrumb: 'Phân loại & Chủ đề' },
       },
       {
         path: 'users',
@@ -52,7 +66,7 @@ export const appRoutes: Route[] = [
           import('./audit-logs/audit-logs.component').then(
             (m) => m.AuditLogsComponent
           ),
-        data: { breadcrumb: 'Nhật ký' },
+        data: { breadcrumb: 'Nhật ký hệ thống' },
       },
       {
         path: 'profile',
@@ -62,4 +76,5 @@ export const appRoutes: Route[] = [
       },
     ],
   },
+  { path: '**', redirectTo: '' },
 ];

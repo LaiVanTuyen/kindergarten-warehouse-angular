@@ -2,17 +2,27 @@
 export * from './lib/models/models';
 export * from './lib/models/audit-log.model';
 export * from './lib/models/resource.model';
+export * from './lib/models/dashboard.model';
 export * from './lib/services/resource.service';
 export * from './lib/services/category.service';
+export * from './lib/services/categories.store';
 export * from './lib/services/topic.service';
 export * from './lib/services/banner.service';
 export * from './lib/services/user.service';
 export * from './lib/services/translation.service';
 export * from './lib/services/audit-log.service';
 export * from './lib/services/auth.service';
+export * from './lib/services/dashboard.service';
+export * from './lib/services/favorites.service';
+export * from './lib/services/comment.service';
+export * from './lib/services/resource-download.service';
 export * from './lib/guards/auth.guard';
+export * from './lib/guards/role.guard';
 export * from './lib/interceptors/auth.interceptor';
 export * from './lib/utils/resource.utils';
+export * from './lib/utils/api-error.util';
+export * from './lib/utils/csv.util';
+export * from './lib/utils/rx-operators';
 
 export * from './lib/services/toast.service';
 

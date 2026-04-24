@@ -22,7 +22,7 @@
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-            *ngIf="currentUser$ | async as user">
+            *ngIf="currentUser() as user">
             <!-- Cover/Header -->
             <div class="h-48 bg-gradient-to-r from-primary-500 to-primary-300 relative">
                 <div class="absolute -bottom-12 left-8 md:left-12">

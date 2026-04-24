@@ -1,148 +1,175 @@
-import { Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService, UserService } from '@kindergarten-warehouse/data-access';
-import { catchError, of, tap } from 'rxjs';
-import { ToastService } from '@kindergarten-warehouse/data-access';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
+
+import {
+  AuthService,
+  ToastService,
+  UserService,
+} from '@kindergarten-warehouse/data-access';
+
+type Tab = 'general' | 'security';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './settings.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private userService = inject(UserService);
-  private toastService = inject(ToastService);
+export class SettingsComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  currentUser$ = this.authService.currentUser$;
-  activeTab: 'general' | 'security' = 'general';
+  readonly currentUser = this.authService.currentUser;
+  readonly activeTab = signal<Tab>('general');
+  readonly isSavingGeneral = signal(false);
+  readonly isSavingPassword = signal(false);
+  readonly isUploadingAvatar = signal(false);
 
-  // General Form
-  generalForm = this.fb.group({
+  readonly generalForm: FormGroup = this.fb.group({
     fullName: ['', [Validators.required]],
     phoneNumber: ['', [Validators.pattern(/(84|0[3|5|7|8|9])+([0-9]{8})\b/)]],
-    avatar: [null],
   });
 
-  // Password Form
-  passwordForm = this.fb.group({
+  readonly passwordForm: FormGroup = this.fb.group({
     oldPassword: ['', [Validators.required]],
     newPassword: ['', [Validators.required, Validators.minLength(6)]],
     confirmNewPassword: ['', [Validators.required]],
   });
 
-  // Init form with user data
-  ngOnInit() {
-    this.currentUser$.subscribe((user) => {
-      if (user) {
-        this.generalForm.patchValue({
-          fullName: user.fullName,
-          phoneNumber: user.phoneNumber,
-        });
-      }
-    });
+  ngOnInit(): void {
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (user) {
+          this.generalForm.patchValue(
+            {
+              fullName: user.fullName,
+              phoneNumber: user.phoneNumber ?? '',
+            },
+            { emitEvent: false }
+          );
+        }
+      });
   }
 
-  onTabChange(tab: 'general' | 'security') {
-    this.activeTab = tab;
+  onTabChange(tab: Tab): void {
+    this.activeTab.set(tab);
   }
 
-  // --- Actions ---
+  updateProfile(): void {
+    if (this.generalForm.invalid || this.isSavingGeneral()) {
+      this.generalForm.markAllAsTouched();
+      return;
+    }
+    const { fullName, phoneNumber } = this.generalForm.getRawValue();
 
-  updateProfile() {
-    if (this.generalForm.invalid) return;
-
-    const { fullName, phoneNumber } = this.generalForm.value;
-
+    this.isSavingGeneral.set(true);
     this.userService
       .updateProfile({
         fullName: fullName!,
-        phoneNumber: phoneNumber || undefined, // Handle empty string as undefined
+        phoneNumber: phoneNumber || undefined,
       })
-      .pipe(
-        tap((res: any) => {
-          this.toastService.show('Cập nhật thông tin thành công!', 'success');
-
-          // Update local user state
-          if (res.result) {
-            this.authService.updateCurrentUser(res.result);
-          }
-        }),
-        catchError((err: any) => {
-          this.toastService.show(err.message || 'Có lỗi xảy ra', 'error');
-          return of(null);
-        })
-      )
-      .subscribe();
+      .pipe(finalize(() => this.isSavingGeneral.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.toast.show('Cập nhật thông tin thành công!', 'success');
+          if (res.result) this.authService.updateCurrentUser(res.result);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.show(this.messageFor(err, 'Cập nhật thất bại.'), 'error');
+        },
+      });
   }
 
-  changePassword() {
-    if (this.passwordForm.invalid) return;
+  changePassword(): void {
+    if (this.passwordForm.invalid || this.isSavingPassword()) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
     const { oldPassword, newPassword, confirmNewPassword } =
-      this.passwordForm.value;
+      this.passwordForm.getRawValue();
 
     if (newPassword !== confirmNewPassword) {
-      this.toastService.show('Mật khẩu nhập lại không khớp', 'error');
+      this.toast.show('Mật khẩu nhập lại không khớp.', 'error');
       return;
     }
 
+    this.isSavingPassword.set(true);
     this.userService
       .changePassword({
         currentPassword: oldPassword!,
         newPassword: newPassword!,
         confirmNewPassword: confirmNewPassword!,
       })
-      .pipe(
-        tap(() => {
-          this.toastService.show('Đổi mật khẩu thành công!', 'success');
+      .pipe(finalize(() => this.isSavingPassword.set(false)))
+      .subscribe({
+        next: () => {
+          this.toast.show('Đổi mật khẩu thành công!', 'success');
           this.passwordForm.reset();
-        }),
-        catchError((err: any) => {
-          this.toastService.show(
-            err.message || 'Đổi mật khẩu thất bại',
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.show(
+            this.messageFor(err, 'Đổi mật khẩu thất bại.'),
             'error'
           );
-          return of(null);
-        })
-      )
-      .subscribe();
+        },
+      });
   }
 
-  onAvatarSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.userService
-        .uploadAvatar(file)
-        .pipe(
-          tap((res: any) => {
-            this.toastService.show('Cập nhật avatar thành công!', 'success');
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || this.isUploadingAvatar()) return;
 
-            if (res.result) {
-              // Fix MinIO URL if needed
-              const fixedUrl = this.formatAvatarUrl(res.result.avatarUrl);
-              const updatedUser = { ...res.result, avatarUrl: fixedUrl };
-              this.authService.updateCurrentUser(updatedUser);
-            }
-          }),
-          catchError((err: any) => {
-            this.toastService.show(err.message || 'Upload thất bại', 'error');
-            return of(null);
-          })
-        )
-        .subscribe();
-    }
+    this.isUploadingAvatar.set(true);
+    this.userService
+      .uploadAvatar(file)
+      .pipe(finalize(() => this.isUploadingAvatar.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.toast.show('Cập nhật avatar thành công!', 'success');
+          if (res.result) {
+            const fixedUrl = this.authService.formatAssetUrl(res.result.avatarUrl);
+            this.authService.updateCurrentUser({
+              ...res.result,
+              avatarUrl: fixedUrl,
+            });
+          }
+          input.value = '';
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.show(
+            this.messageFor(err, 'Tải avatar thất bại.'),
+            'error'
+          );
+        },
+      });
   }
 
-  // Helper to fix MinIO URL in Local Dev environment
-  private formatAvatarUrl(url: string | undefined): string {
-    if (!url) return '';
-    if (url.includes('minio:9000')) {
-      return url.replace('minio:9000', 'localhost:9000');
-    }
-    return url;
+  private messageFor(err: HttpErrorResponse, fallback: string): string {
+    if (err.status === 0) return 'Không thể kết nối đến máy chủ.';
+    const backend = (err.error as { message?: string } | null)?.message;
+    return backend || err.message || fallback;
   }
 }

@@ -44,7 +44,7 @@
             <div>
                 <h4 class="font-bold text-gray-900 mb-6 text-lg">Danh mục</h4>
                 <ul class="space-y-3 text-sm">
-                    <li *ngFor="let cat of categories$ | async">
+                    <li *ngFor="let cat of categories$ | async; trackBy: trackByCategoryId">
                         <a [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
                             class="text-gray-500 hover:text-primary-500 transition-colors">
                             {{ cat.name }}
@@ -77,7 +77,7 @@
         <!-- Copyright -->
         <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p class="text-gray-400 text-sm font-medium">
-                © 2024 KinderWorld. Bảo lưu mọi quyền.
+                © {{ year }} KinderWorld. Bảo lưu mọi quyền.
             </p>
             <div class="flex gap-6 text-sm text-gray-400">
                 <a href="#" class="hover:text-primary-500 transition-colors">Chính sách bảo mật</a>

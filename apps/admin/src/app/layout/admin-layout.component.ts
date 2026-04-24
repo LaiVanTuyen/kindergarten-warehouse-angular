@@ -1,25 +1,59 @@
-import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, SidebarComponent],
+  imports: [RouterModule, SidebarComponent, BreadcrumbComponent],
   templateUrl: './admin-layout.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLayoutComponent {
   private authService = inject(AuthService);
+  private dialog = inject(Dialog);
 
-  isProfileOpen = signal(false);
-  isSidebarOpen = signal(false);
-  isSidebarCollapsed = signal(false);
+  readonly isProfileOpen = signal(false);
+  readonly isSidebarOpen = signal(false); // mobile drawer
+  readonly isSidebarCollapsed = signal(false); // desktop collapse
 
-  // Expose currentUser for the template
-  currentUser$ = this.authService.currentUser$;
+  readonly currentUser = toSignal(this.authService.currentUser$, {
+    initialValue: null,
+  });
+
+  readonly avatarUrl = computed(() =>
+    this.authService.formatAvatarUrl(this.currentUser()?.avatarUrl)
+  );
+
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.fullName;
+    if (!name) return 'A';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  });
+
+  private profileMenu = viewChild<ElementRef<HTMLElement>>('profileMenu');
+  private profileButton = viewChild<ElementRef<HTMLElement>>('profileButton');
 
   toggleProfile() {
     this.isProfileOpen.update((v) => !v);
@@ -29,24 +63,59 @@ export class AdminLayoutComponent {
     this.isSidebarOpen.update((v) => !v);
   }
 
-  onSidebarCollapsed(collapsed: boolean) {
-    this.isSidebarCollapsed.set(collapsed);
+  toggleSidebarCollapsed() {
+    this.isSidebarCollapsed.update((v) => !v);
+  }
+
+  closeMobileSidebar() {
+    this.isSidebarOpen.set(false);
   }
 
   logout() {
-    this.authService.logout('Hẹn gặp lại bạn! 👋');
+    this.isProfileOpen.set(false);
+    const data: ConfirmDialogData = {
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc muốn đăng xuất khỏi trang quản trị?',
+      confirmText: 'Đăng xuất',
+      cancelText: 'Ở lại',
+      tone: 'danger',
+    };
+    this.dialog
+      .open<boolean>(ConfirmDialogComponent, {
+        data,
+        role: 'alertdialog',
+        ariaLabelledBy: 'confirm-dialog-title',
+        ariaDescribedBy: 'confirm-dialog-message',
+        disableClose: false,
+        hasBackdrop: true,
+        backdropClass: 'bg-kindy-ink/40 backdrop-blur-sm',
+      })
+      .closed.subscribe((confirmed) => {
+        if (confirmed) {
+          this.authService.logout('Hẹn gặp lại bạn! 👋');
+        }
+      });
   }
 
-  getUserInitials(name: string | undefined): string {
-    if (!name) return 'A';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.isProfileOpen()) this.isProfileOpen.set(false);
+    if (this.isSidebarOpen()) this.isSidebarOpen.set(false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.isProfileOpen()) return;
+    const target = event.target as Node;
+    const menu = this.profileMenu()?.nativeElement;
+    const button = this.profileButton()?.nativeElement;
+    if (
+      menu &&
+      !menu.contains(target) &&
+      button &&
+      !button.contains(target)
+    ) {
+      this.isProfileOpen.set(false);
     }
-    return name.substring(0, 2).toUpperCase();
-  }
-
-  getAvatarUrl(url: string | undefined): string {
-    return this.authService.formatAvatarUrl(url);
   }
 }

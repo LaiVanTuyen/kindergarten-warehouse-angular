@@ -36,15 +36,15 @@
                 <h2 class="text-lg font-black text-gray-900 mb-6 px-3">Cài đặt</h2>
                 <nav class="space-y-2">
                     <button (click)="onTabChange('general')"
-                        [class]="activeTab === 'general' ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900'"
+                        [class]="activeTab() === 'general' ? 'bg-pink-50 text-pink-700 shadow-sm ring-1 ring-pink-200' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900'"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all">
-                        <i [class]="activeTab === 'general' ? 'ph-fill ph-user' : 'ph-bold ph-user'"></i>
+                        <i [class]="activeTab() === 'general' ? 'ph-fill ph-user' : 'ph-bold ph-user'"></i>
                         Thông tin chung
                     </button>
                     <button (click)="onTabChange('security')"
-                        [class]="activeTab === 'security' ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900'"
+                        [class]="activeTab() === 'security' ? 'bg-pink-50 text-pink-700 shadow-sm ring-1 ring-pink-200' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900'"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all">
-                        <i [class]="activeTab === 'security' ? 'ph-fill ph-lock-key' : 'ph-bold ph-lock-key'"></i>
+                        <i [class]="activeTab() === 'security' ? 'ph-fill ph-lock-key' : 'ph-bold ph-lock-key'"></i>
                         Bảo mật
                     </button>
                 </nav>
@@ -53,14 +53,14 @@
             <!-- Content Area -->
             <div class="flex-1 p-8 md:p-12">
                 <!-- Loading -->
-                <div *ngIf="(currentUser$ | async) === null" class="text-center py-12">
+                <div *ngIf="currentUser() === null" class="text-center py-12">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
                 </div>
 
-                <ng-container *ngIf="currentUser$ | async as user">
+                <ng-container *ngIf="currentUser() as user">
 
                     <!-- General Tab -->
-                    <div *ngIf="activeTab === 'general'" class="max-w-xl animate-fade-in-up">
+                    <div *ngIf="activeTab() === 'general'" class="max-w-xl animate-fade-in-up">
                         <h3 class="text-2xl font-black text-gray-900 mb-2">Thông tin cá nhân</h3>
                         <p class="text-gray-500 text-sm mb-8">Cập nhật thông tin hồ sơ và avatar của bạn.</p>
 
@@ -107,7 +107,7 @@
 
                             <div class="pt-4">
                                 <button type="submit" [disabled]="generalForm.invalid || generalForm.pristine"
-                                    class="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold rounded-full shadow-lg shadow-pink-500/20 hover:shadow-pink-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
                                     Lưu thay đổi
                                 </button>
                             </div>
@@ -115,7 +115,7 @@
                     </div>
 
                     <!-- Security Tab -->
-                    <div *ngIf="activeTab === 'security'" class="max-w-xl animate-fade-in-up">
+                    <div *ngIf="activeTab() === 'security'" class="max-w-xl animate-fade-in-up">
                         <h3 class="text-2xl font-black text-gray-900 mb-2">Bảo mật</h3>
                         <p class="text-gray-500 text-sm mb-8">Quản lý mật khẩu và bảo mật tài khoản.</p>
 
@@ -144,7 +144,7 @@
 
                             <div class="pt-4">
                                 <button type="submit" [disabled]="passwordForm.invalid"
-                                    class="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold rounded-full shadow-lg shadow-pink-500/20 hover:shadow-pink-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
                                     Đổi mật khẩu
                                 </button>
                             </div>

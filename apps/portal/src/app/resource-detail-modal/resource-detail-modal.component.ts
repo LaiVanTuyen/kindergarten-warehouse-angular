@@ -1,30 +1,40 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Resource } from '@kindergarten-warehouse/data-access';
+import {
+  Resource,
+  ResourceDownloadService,
+} from '@kindergarten-warehouse/data-access';
 
 @Component({
   selector: 'app-resource-detail-modal',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './resource-detail-modal.component.html',
-  styles: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResourceDetailModalComponent {
   @Input() isOpen = false;
   @Input() resource: Resource | null = null;
   @Output() closeModal = new EventEmitter<void>();
 
-  constructor(private sanitizer: DomSanitizer) {}
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly downloadService = inject(ResourceDownloadService);
 
-  close() {
+  close(): void {
     this.closeModal.emit();
   }
 
-  download() {
-    if (this.resource?.fileUrl) {
-      window.open(this.resource.fileUrl, '_blank');
-    }
+  download(): void {
+    if (!this.resource) return;
+    this.downloadService.download(this.resource).subscribe({ error: () => void 0 });
   }
 
   getSafeUrl(url: string | undefined): SafeResourceUrl | null {

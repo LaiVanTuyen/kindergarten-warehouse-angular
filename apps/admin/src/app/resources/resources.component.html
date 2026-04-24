@@ -1,1481 +1,367 @@
-<div class="h-full flex flex-col">
+<app-page-header
+  title="Quản lý tài nguyên"
+  [subtitle]="'Tổng ' + total() + ' · Duyệt nội dung do giáo viên gửi lên'"
+/>
 
-  <!-- Detached Dark Banner -->
+<!-- Filters -->
+<div class="bg-white border border-gray-100 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
+  <div class="flex-1 min-w-[220px]">
+    <app-search-input
+      [value]="search()"
+      placeholder="Tìm theo tiêu đề, mô tả…"
+      (valueChange)="search.set($event)"
+    />
+  </div>
+
+  <select
+    [ngModel]="status()"
+    (ngModelChange)="status.set($event)"
+    aria-label="Lọc theo trạng thái"
+    class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+  >
+    @for (opt of statusOptions; track opt.value) {
+      <option [value]="opt.value">{{ opt.label }}</option>
+    }
+  </select>
+
+  <select
+    [ngModel]="categoryId()"
+    (ngModelChange)="categoryId.set($event); topicId.set('')"
+    aria-label="Lọc theo phân loại"
+    class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+  >
+    <option value="">Tất cả phân loại</option>
+    @for (cat of categories(); track cat.id) {
+      <option [value]="cat.id">{{ cat.icon || '' }} {{ cat.name }}</option>
+    }
+  </select>
+
+  @if (categoryId() && topics().length > 0) {
+    <select
+      [ngModel]="topicId()"
+      (ngModelChange)="topicId.set($event)"
+      aria-label="Lọc theo chủ đề"
+      class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+    >
+      <option value="">Tất cả chủ đề</option>
+      @for (t of topics(); track t.id) {
+        <option [value]="t.id">{{ t.name }}</option>
+      }
+    </select>
+  }
+
+  @if (hasFilters()) {
+    <button
+      type="button"
+      (click)="resetFilters()"
+      class="text-xs font-semibold text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sky rounded-md px-2 py-1"
+    >Xoá bộ lọc</button>
+  }
+</div>
+
+<!-- Bulk action bar -->
+@if (selectedCount() > 0) {
   <div
-    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 flex justify-between items-center relative overflow-hidden">
-    <!-- Decorative -->
-    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+    role="toolbar"
+    aria-label="Thao tác hàng loạt"
+    class="sticky top-0 z-20 bg-kindy-sidebar text-white rounded-xl shadow-lg px-4 py-3 mb-4 flex flex-wrap items-center gap-2"
+  >
+    <span class="text-sm font-semibold">Đã chọn {{ selectedCount() }} mục</span>
+    <button
+      type="button"
+      (click)="clearSelection()"
+      class="text-xs text-white/70 hover:text-white underline px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded"
+    >Bỏ chọn</button>
 
-    <div class="flex flex-col gap-1">
-      <app-breadcrumb></app-breadcrumb>
-      <h1 class="text-2xl font-bold tracking-tight">Quản lý Tài nguyên</h1>
-      <p class="text-slate-400 mt-1 text-sm">Quản lý, phê duyệt và sắp xếp nội dung giáo dục.</p>
-    </div>
+    <div class="flex-1"></div>
+
+    @if (status() === 'PENDING' || status() === 'ALL') {
+      <button
+        type="button"
+        (click)="bulkApprove()"
+        class="inline-flex items-center gap-1 bg-kindy-mint text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+        Duyệt
+      </button>
+      <button
+        type="button"
+        (click)="bulkReject()"
+        class="inline-flex items-center gap-1 bg-kindy-coral-strong text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-rose-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        Từ chối
+      </button>
+    }
+
+    @if (status() === 'DELETED') {
+      <button
+        type="button"
+        (click)="bulkRestore()"
+        class="inline-flex items-center gap-1 bg-kindy-sun text-kindy-ink text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >Khôi phục</button>
+    }
+
+    <button
+      type="button"
+      (click)="bulkDelete()"
+      class="inline-flex items-center gap-1 bg-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+    >
+      <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-1 13a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M10 4V2h4v2m-9 3h14" /></svg>
+      Xoá
+    </button>
   </div>
+}
 
-  <!-- Toolbar Section -->
-  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-
-    <!-- Left: Tabs -->
-    <div class="flex p-1 bg-slate-100/80 rounded-xl shadow-inner border border-slate-200/50 w-full sm:w-auto">
-      <button (click)="setActiveTab('pending')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
-        [ngClass]="activeTab() === 'pending' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'">
-        Chờ duyệt
-      </button>
-      <button (click)="setActiveTab('list')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
-        [ngClass]="activeTab() === 'list' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'">
-        Kho tài liệu
-      </button>
-      <button (click)="setActiveTab('rejected')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
-        [ngClass]="activeTab() === 'rejected' ? 'bg-white text-orange-600 shadow-sm ring-1 ring-orange-100' : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50/50'">
-        Bị từ chối
-      </button>
-      <button (click)="setActiveTab('trash')"
-        class="flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap"
-        [ngClass]="activeTab() === 'trash' ? 'bg-white text-red-600 shadow-sm ring-1 ring-red-100' : 'text-slate-500 hover:text-red-600 hover:bg-red-50/50'">
-        Thùng rác
-      </button>
+<!-- Data -->
+<div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+  @if (isLoading()) {
+    <div class="p-6 space-y-3">
+      @for (_ of [1,2,3,4,5,6]; track $index) {
+        <div class="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+      }
     </div>
-
-    <!-- Right: Actions -->
-    <div class="flex items-center gap-3 w-full sm:w-auto">
-      <!-- Search -->
-      <div class="relative w-full sm:w-80 group">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 20 20"
-            fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-              clip-rule="evenodd" />
-          </svg>
-        </div>
-        <input [formControl]="searchControl" type="text" placeholder="Tìm kiếm..."
-          class="block w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm group-hover:border-slate-300" />
-        <button *ngIf="searchControl.value" (click)="searchControl.setValue('')"
-          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Filter Toggle Button -->
-      <button (click)="showFilters.set(!showFilters())"
-        class="bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95"
-        [class.bg-blue-50]="showFilters()" [class.text-blue-600]="showFilters()"
-        [class.border-blue-200]="showFilters()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Bộ lọc
-        <span *ngIf="(categoryFilter().size + topicFilter().size + ageGroupFilter().size + typeFilter().size) > 0"
-          class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1 min-w-[18px] text-center">
-          {{ categoryFilter().size + topicFilter().size + ageGroupFilter().size +
-          typeFilter().size }}
-        </span>
-      </button>
-
-      <!-- New Resource Button -->
-      <button (click)="openUploadModal()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-xl hover:translate-y-[-1px] transition-all flex items-center gap-2 active:scale-95 border border-transparent">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
-          class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Thêm mới
-      </button>
-    </div>
-  </div>
-
-  <!-- Global Backdrop for Dropdowns -->
-  <div tabindex="-1" *ngIf="activeFilterDropdown()" class="fixed inset-0 z-30 bg-transparent focus:outline-none"
-    (click)="closeFilterDropdown()"></div>
-
-  <!-- Filters Section -->
-  <div class="flex flex-col gap-4 mb-6 relative z-30">
-
-    <!-- Top Row: Filters & Page Size -->
-    <div class="flex flex-wrap items-center gap-3 mb-6" *ngIf="showFilters()">
-
-      <!-- Page Size (Styled Single Select) -->
-      <div class="relative min-w-[120px]">
-        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)"
-          class="w-full pl-4 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer hover:border-slate-300 transition-colors shadow-sm">
-          <option [value]="12">12 dòng</option>
-          <option [value]="24">24 dòng</option>
-          <option [value]="48">48 dòng</option>
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-
-      <!-- Category Filter (Multi-select) -->
-      <div class="relative group z-40">
-        <app-multi-select-filter label="Danh mục" [options]="categoryOptions()"
-          [selectedValues]="getFilterSet('category')" [isOpen]="activeFilterDropdown() === 'category'"
-          (toggleOpen)="toggleFilterDropdown('category')" (selectionChange)="onFilterChange(categoryFilter, $event)">
-        </app-multi-select-filter>
-      </div>
-
-      <!-- Topic Filter (Multi-select) -->
-      <div class="relative group z-30">
-        <app-multi-select-filter label="Chủ đề" [options]="topicOptions()" [selectedValues]="getFilterSet('topic')"
-          [isOpen]="activeFilterDropdown() === 'topic'" (toggleOpen)="toggleFilterDropdown('topic')"
-          (selectionChange)="onFilterChange(topicFilter, $event)">
-        </app-multi-select-filter>
-      </div>
-
-      <!-- Age Group Filter (Multi-select) -->
-      <div class="relative group z-20">
-        <app-multi-select-filter label="Độ tuổi" [options]="ageGroupOptions()" [selectedValues]="getFilterSet('age')"
-          [isOpen]="activeFilterDropdown() === 'age'" (toggleOpen)="toggleFilterDropdown('age')"
-          (selectionChange)="onFilterChange(ageGroupFilter, $event)">
-        </app-multi-select-filter>
-      </div>
-
-      <!-- Type Filter (Multi-select) -->
-      <div class="relative group z-10">
-        <app-multi-select-filter label="Loại tệp" [options]="typeOptions" [selectedValues]="getFilterSet('type')"
-          [isOpen]="activeFilterDropdown() === 'type'" (toggleOpen)="toggleFilterDropdown('type')"
-          (selectionChange)="onFilterChange(typeFilter, $event)">
-        </app-multi-select-filter>
-      </div>
-
-      <!-- Reset Filters Button -->
-      <button (click)="resetFilters()" title="Đặt lại bộ lọc"
-        class="p-2.5 rounded-xl border border-dashed border-slate-300 bg-white text-slate-400 hover:text-red-500 hover:border-red-300 hover:bg-red-50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/20 active:scale-95 ml-auto lg:ml-0">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-          class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-        </svg>
-      </button>
-
-    </div>
-
-    <!-- Active Filters Chips (Tags) -->
-    <div class="flex flex-wrap items-center gap-2"
-      *ngIf="categoryFilter().size || topicFilter().size || ageGroupFilter().size || typeFilter().size">
-
-      <!-- Categories -->
-      <ng-container *ngFor="let slug of categoryFilter()">
-        <div
-          class="inline-flex items-center h-8 px-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95">
-          <span class="opacity-70 mr-1.5">Danh mục:</span>
-          {{ getCategoryNameBySlug(slug) }}
-          <button (click)="removeFilter(categoryFilter, slug)"
-            class="ml-2 hover:bg-blue-100 rounded-full p-0.5 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </ng-container>
-
-      <!-- Topics -->
-      <ng-container *ngFor="let slug of topicFilter()">
-        <div
-          class="inline-flex items-center h-8 px-3 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-xs font-semibold animate-in fade-in zoom-in-95">
-          <span class="opacity-70 mr-1.5">Chủ đề:</span>
-          {{ getTopicNameBySlug(slug) }}
-          <button (click)="removeFilter(topicFilter, slug)"
-            class="ml-2 hover:bg-purple-100 rounded-full p-0.5 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </ng-container>
-
-      <!-- Age Groups -->
-      <ng-container *ngFor="let slug of ageGroupFilter()">
-        <div
-          class="inline-flex items-center h-8 px-3 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-xs font-semibold animate-in fade-in zoom-in-95">
-          <span class="opacity-70 mr-1.5">Độ tuổi:</span>
-          {{ getAgeGroupNameBySlug(slug) }}
-          <button (click)="removeFilter(ageGroupFilter, slug)"
-            class="ml-2 hover:bg-orange-100 rounded-full p-0.5 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </ng-container>
-
-      <!-- Types -->
-      <ng-container *ngFor="let type of typeFilter()">
-        <div
-          class="inline-flex items-center h-8 px-3 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold animate-in fade-in zoom-in-95">
-          <span class="opacity-70 mr-1.5">Loại:</span>
-          {{ getTypeLabel(type) }}
-          <button (click)="removeFilter(typeFilter, type)"
-            class="ml-2 hover:bg-slate-200 rounded-full p-0.5 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </ng-container>
-
-      <!-- Clear All -->
-      <button (click)="resetFilters()"
-        class="text-xs text-slate-500 hover:text-red-600 hover:underline font-medium ml-2">
-        Xóa tất cả
-      </button>
-    </div>
-
-  </div>
-
-  <!-- Bulk Actions Toolbar -->
-
-
-  <!-- Total Count & View Toggle -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-    <div class="text-sm text-gray-500 font-medium">
-      Hiển thị <span class="text-gray-900 font-bold">{{ (currentPage() - 1) * pageSize() + 1 }}</span> - <span
-        class="text-gray-900 font-bold">{{ Math.min(currentPage() * pageSize(), totalResources()) }}</span>
-      trên tổng số <span class="text-gray-900 font-bold">{{ totalResources() }}</span> tài nguyên
-    </div>
-
-    <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-      <button (click)="toggleView('list')" [class.bg-white]="viewMode() === 'list'"
-        [class.shadow-sm]="viewMode() === 'list'" [class.text-blue-600]="viewMode() === 'list'"
-        class="p-2 rounded-md text-gray-500 hover:text-gray-700 transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="8" y1="6" x2="21" y2="6"></line>
-          <line x1="8" y1="12" x2="21" y2="12"></line>
-          <line x1="8" y1="18" x2="21" y2="18"></line>
-          <line x1="3" y1="6" x2="3.01" y2="6"></line>
-          <line x1="3" y1="12" x2="3.01" y2="12"></line>
-          <line x1="3" y1="18" x2="3.01" y2="18"></line>
-        </svg>
-      </button>
-      <button (click)="toggleView('grid')" [class.bg-white]="viewMode() === 'grid'"
-        [class.shadow-sm]="viewMode() === 'grid'" [class.text-blue-600]="viewMode() === 'grid'"
-        class="p-2 rounded-md text-gray-500 hover:text-gray-700 transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Main Content Card (List View) -->
-  <div *ngIf="viewMode() === 'list'"
-    class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
-
-    <!-- Skeleton Loading -->
-    <div *ngIf="isTableLoading()" class="p-6">
-      <app-skeleton-table [rows]="10" [cols]="8"
-        [template]="['checkbox', 'resource', 'text-sm', 'badge', 'text-sm', 'badge', 'text-sm', 'actions']">
-      </app-skeleton-table>
-    </div>
-
-    <div class="overflow-auto flex-1" *ngIf="!isTableLoading()">
-      <table class="w-full text-left border-collapse">
-        <thead class="bg-white/95 sticky top-0 z-20 backdrop-blur-sm shadow-sm ring-1 ring-black/5">
-          <tr class="border-b border-slate-200">
-            <th class="pl-8 py-4 w-10">
-              <input type="checkbox" (change)="toggleAll($any($event.target).checked)"
-                class="rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer h-4 w-4 transition-all">
+  } @else if (resources().length === 0) {
+    <app-empty-state
+      message="Không có tài nguyên nào"
+      subMessage="Thử điều chỉnh bộ lọc hoặc chờ giáo viên tải lên từ Portal."
+    />
+  } @else {
+    <!-- DESKTOP table -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="sticky top-0 bg-kindy-surface-soft/70 backdrop-blur z-10">
+          <tr class="border-b border-gray-100 text-left">
+            <th scope="col" class="px-3 py-3 w-10">
+              <input
+                type="checkbox"
+                [checked]="allSelected()"
+                (change)="toggleSelectAll()"
+                aria-label="Chọn tất cả"
+                class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar"
+              />
             </th>
-            <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider pl-2 min-w-[180px]">Chi
-              tiết Tài nguyên</th>
-            <th
-              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px] whitespace-nowrap">
-              Loại & Kích thước</th>
-            <th
-              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">
-              Trạng thái duyệt
+            <th scope="col" class="px-4 py-3">
+              <app-sort-header key="title" [current]="sortState()" (sortChange)="onSort($event)">Tài nguyên</app-sort-header>
             </th>
-            <th
-              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center">
-              Hiển thị
+            <th scope="col" class="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-kindy-ink-soft">Người tải lên</th>
+            <th scope="col" class="px-4 py-3">
+              <app-sort-header key="status" [current]="sortState()" (sortChange)="onSort($event)">Trạng thái</app-sort-header>
             </th>
-            <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px]">Chủ đề</th>
-            <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[100px]">Danh mục</th>
-            <th
-              class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">
-              Lượt xem</th>
-            <th class="px-3 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center min-w-[100px]">
-              Thao tác</th>
+            <th scope="col" class="px-4 py-3 text-right">
+              <app-sort-header key="viewsCount" [current]="sortState()" (sortChange)="onSort($event)">Lượt xem</app-sort-header>
+            </th>
+            <th scope="col" class="px-4 py-3">
+              <app-sort-header key="createdAt" [current]="sortState()" (sortChange)="onSort($event)">Gửi lên</app-sort-header>
+            </th>
+            <th scope="col" class="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-kindy-ink-soft text-right">Thao tác</th>
           </tr>
         </thead>
-        <tbody class="text-slate-700 text-sm divide-y divide-slate-100">
-          <tr *ngFor="let res of resources(); trackBy: trackById"
-            class="hover:bg-slate-50/80 transition-all duration-200 group relative"
-            [class.bg-blue-50/50]="selectedIds().has(res.id)">
-            <!-- Checkbox -->
-            <td class="pl-8 py-3 w-10">
-              <input type="checkbox" [checked]="selectedIds().has(res.id)" (change)="toggleSelection(res.id)"
-                class="rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer h-4 w-4 transition-all opacity-60 group-hover:opacity-100"
-                [class.opacity-100]="selectedIds().has(res.id)">
-            </td>
-
-            <!-- Resource Info -->
-            <td class="px-3 py-3 pl-2">
-              <div class="flex items-center">
-                <!-- Thumbnail with Hover Zoom -->
-                <!-- Thumbnail: Real Image or Fallback Icon -->
-                <div
-                  class="h-12 w-12 bg-gray-50 rounded-xl flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden border border-gray-100 relative group-hover:border-blue-200 transition-all">
-                  <img *ngIf="res.thumbnailUrl" loading="lazy" [src]="res.thumbnailUrl" alt="Thumbnail"
-                    class="object-cover w-full h-full rounded-md"
-                    onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
-                  <!-- Fallback if no thumbnail or error -->
-                  <span class="w-full h-full flex items-center justify-center bg-slate-50"
-                    [class.hidden]="res.thumbnailUrl">
-                    <ng-container [ngSwitch]="res.type">
-                      <!-- YOUTUBE -->
-                      <div *ngSwitchCase="'YOUTUBE'" class="p-2.5 bg-red-50 rounded-xl border border-red-100 shadow-sm">
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-red-600 drop-shadow-sm">
-                          <path
-                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                        </svg>
-                      </div>
-
-                      <!-- VIDEO -->
-                      <div *ngSwitchCase="'VIDEO'"
-                        class="p-2.5 bg-fuchsia-50 rounded-xl border border-fuchsia-100 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-fuchsia-600 drop-shadow-sm">
-                          <path
-                            d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.94-.94 2.56-.27 2.56 1.07v11.36c0 1.34-1.62 2.01-2.56 1.07Z" />
-                        </svg>
-                      </div>
-
-                      <!-- PDF -->
-                      <div *ngSwitchCase="'PDF'"
-                        class="p-2.5 bg-rose-50 rounded-xl border border-rose-100 shadow-sm relative overflow-hidden group">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-rose-600 drop-shadow-sm">
-                          <path fill-rule="evenodd"
-                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                            clip-rule="evenodd" />
-                        </svg>
-                        <span
-                          class="absolute bottom-0.5 right-0.5 text-[8px] font-bold text-rose-300 opacity-50">PDF</span>
-                      </div>
-
-                      <!-- EXCEL -->
-                      <div *ngSwitchCase="'EXCEL'"
-                        class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm relative overflow-hidden group">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-8 h-8 text-emerald-600 drop-shadow-sm">
-                          <path fill-rule="evenodd"
-                            d="M3 4.5A1.5 1.5 0 0 1 4.5 3h12.384c.399 0 .78.158 1.06.44l3.616 3.616c.282.28.44.662.44 1.06V21a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 3 21V4.5Zm6.75 4.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z"
-                            clip-rule="evenodd" />
-                        </svg>
-                        <span
-                          class="absolute bottom-0 right-0 text-[9px] font-extrabold text-emerald-500 opacity-80 bg-white/80 px-0.5 rounded shadow-sm backdrop-blur-[1px]">XLS</span>
-                      </div>
-
-                      <!-- IMAGE -->
-                      <div *ngSwitchCase="'IMAGE'"
-                        class="p-2.5 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden group">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-indigo-600 drop-shadow-sm">
-                          <path fill-rule="evenodd"
-                            d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
-                            clip-rule="evenodd" />
-                        </svg>
-                        <span
-                          class="absolute bottom-0.5 right-0.5 text-[8px] font-bold text-indigo-300 opacity-50">IMG</span>
-                      </div>
-
-                      <!-- AUDIO -->
-                      <div *ngSwitchCase="'AUDIO'"
-                        class="p-2.5 bg-yellow-50 rounded-xl border border-yellow-100 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-yellow-600 drop-shadow-sm">
-                          <path fill-rule="evenodd"
-                            d="M19.952 1.651a.75.75 0 0 1 .298.599V16.303a3 3 0 0 1-2.176 5.947H13.65a3 3 0 0 1-2.176-5.947h.056v-9.15l-4.14 1.655v10.997a3 3 0 0 1-2.176 5.947H4.35a3 3 0 0 1-2.176-5.947h.056V6.052a.75.75 0 0 1 .453-.7l8.25-3.3a.75.75 0 0 1 1.022.69V10.25l6-2.4V2.25a.75.75 0 0 1 1.022-.693l.977.094Z"
-                            clip-rule="evenodd" />
-                        </svg>
-                      </div>
-
-                      <!-- DOCUMENT -->
-                      <div *ngSwitchCase="'DOCUMENT'"
-                        class="p-2.5 bg-blue-50 rounded-xl border border-blue-100 shadow-sm relative overflow-hidden group">
-                        <ng-container *ngIf="['doc', 'docx'].includes(res.fileExtension || ''); else genericDoc">
-                          <!-- WORD ICON -->
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                            class="w-7 h-7 text-blue-600 drop-shadow-sm">
-                            <path fill-rule="evenodd"
-                              d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                              clip-rule="evenodd" />
-                            <path d="M9.5 7h5v2h-5zM9.5 11h5v2h-5z" opacity="0.6" />
-                          </svg>
-                          <span
-                            class="absolute bottom-0.5 right-0.5 text-[8px] font-bold text-blue-300 opacity-60">DOC</span>
-                        </ng-container>
-                        <ng-template #genericDoc>
-                          <!-- GENERIC ICON -->
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                            class="w-7 h-7 text-slate-500 drop-shadow-sm">
-                            <path fill-rule="evenodd"
-                              d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                              clip-rule="evenodd" />
-                            <path d="M9.5 7h5v2h-5zM9.5 11h5v2h-5z" opacity="0.4" />
-                          </svg>
-                        </ng-template>
-                      </div>
-
-                      <!-- POWERPOINT -->
-                      <div *ngSwitchCase="'POWERPOINT'"
-                        class="p-2.5 bg-amber-50 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden group">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-amber-600 drop-shadow-sm">
-                          <path fill-rule="evenodd"
-                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375h1.875c1.148 0 2.222.508 2.934 1.309a1.875 1.875 0 0 0 .32-2.1l-6.79-6.791a1.875 1.875 0 0 0-2.1.32z"
-                            clip-rule="evenodd" />
-                        </svg>
-                      </div>
-
-                      <!-- DEFAULT -->
-                      <div *ngSwitchDefault class="p-2.5 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                          class="w-7 h-7 text-gray-400">
-                          <path
-                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
-                          <path
-                            d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                        </svg>
-                      </div>
-                    </ng-container>
-                  </span>
-                </div>
-                <div>
-                  <div
-                    class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-0.5 text-[15px] line-clamp-1"
-                    [title]="res.title">
-                    {{ res.title }}
+        <tbody class="divide-y divide-gray-50">
+          @for (resource of resources(); track resource.id) {
+            <tr
+              class="hover:bg-kindy-surface-soft/30 transition-colors"
+              [class.bg-kindy-surface-soft]="isSelected(resource.id)"
+            >
+              <td class="px-3 py-3 align-top">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(resource.id)"
+                  (change)="toggleSelect(resource.id)"
+                  [attr.aria-label]="'Chọn ' + resource.title"
+                  class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar"
+                />
+              </td>
+              <td class="px-4 py-3">
+                <button
+                  type="button"
+                  (click)="openPreview(resource)"
+                  class="flex items-start gap-3 text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md"
+                >
+                  @if (resource.thumbnailUrl) {
+                    <img
+                      [src]="resource.thumbnailUrl"
+                      alt=""
+                      loading="lazy"
+                      class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                    />
+                  } @else {
+                    <div
+                      aria-hidden="true"
+                      class="w-14 h-14 rounded-lg bg-kindy-sun-soft text-kindy-sun flex items-center justify-center flex-shrink-0 text-xl"
+                    >📄</div>
+                  }
+                  <div class="min-w-0">
+                    <p class="font-semibold text-kindy-ink hover:text-kindy-sidebar truncate max-w-xs">
+                      {{ resource.title }}
+                    </p>
+                    <p class="text-xs text-kindy-ink-soft mt-0.5 truncate max-w-xs">
+                      {{ resource.topic?.name || '—' }}
+                      @if (resource.fileType) {
+                        · <span class="uppercase">{{ resource.fileType }}</span>
+                      }
+                    </p>
                   </div>
-                  <div class="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-                    <span class="bg-gray-100 px-1.5 rounded text-[10px]">{{ res.createdAt | date:'MMM d' }}</span>
-                    <span class="text-gray-300">•</span>
-                    <span>{{ res.createdBy || res.uploader }}</span>
-                  </div>
-                  <div *ngIf="activeTab() === 'rejected' && res.rejectionReason"
-                    class="mt-1 text-[10.5px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100 w-fit line-clamp-1"
-                    [title]="res.rejectionReason">
-                    Lý do: {{ res.rejectionReason }}
-                  </div>
-                </div>
-              </div>
-            </td>
-
-            <!-- Type & Size -->
-            <td class="px-3 py-3 text-center">
-              <div class="flex flex-col gap-1 items-center justify-center">
-                <!-- Icon BadgeOnly -->
-                <ng-container [ngSwitch]="getDisplayType(res)">
-                  <!-- YOUTUBE -->
-                  <span *ngSwitchCase="'YOUTUBE'" class="flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-red-600">
-                      <path
-                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                    </svg>
-                    <span class="text-xs font-semibold text-gray-700">YOUTUBE</span>
-                  </span>
-
-                  <!-- VIDEO -->
-                  <span *ngSwitchCase="'VIDEO'"
-                    class="text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-rose-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#C2185B" />
-                      <path d="M9.5 8v8l6-4-6-4z" fill="white" />
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || 'VIDEO'
-                      }}</span>
-                  </span>
-
-                  <!-- PDF -->
-                  <span *ngSwitchCase="'PDF'"
-                    class="text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-rose-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#F40F02" />
-                      <text x="12" y="16.5" fill="white" font-family="sans-serif" font-weight="900" font-size="9"
-                        text-anchor="middle" letter-spacing="-0.5">PDF</text>
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">PDF</span>
-                  </span>
-
-                  <!-- WORD -->
-                  <span *ngSwitchCase="'WORD'"
-                    class="text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-blue-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#2B579A" />
-                      <text x="12" y="17" fill="white" font-family="sans-serif" font-weight="900" font-size="14"
-                        text-anchor="middle">W</text>
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">WORD</span>
-                  </span>
-
-                  <!-- EXCEL -->
-                  <span *ngSwitchCase="'EXCEL'"
-                    class="text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-emerald-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#217346" />
-                      <text x="12" y="17" fill="white" font-family="sans-serif" font-weight="900" font-size="14"
-                        text-anchor="middle">X</text>
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">EXCEL</span>
-                  </span>
-
-                  <!-- DOCUMENT via Word Icon -->
-                  <span *ngSwitchCase="'DOCUMENT'"
-                    class="text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-blue-200 w-fit">
-                    <ng-container *ngIf="['doc', 'docx'].includes(res.fileExtension || ''); else genericDocBadge">
-                      <!-- WORD ICON -->
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                        <rect x="2" y="2" width="20" height="20" rx="4" fill="#2B579A" />
-                        <text x="12" y="17" fill="white" font-family="sans-serif" font-weight="900" font-size="14"
-                          text-anchor="middle">W</text>
-                      </svg>
-                      <span class="font-bold text-[11px] tracking-wide uppercase">WORD</span>
-                    </ng-container>
-                    <ng-template #genericDocBadge>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        class="w-5 h-5 text-slate-500">
-                        <path fill-rule="evenodd"
-                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
-                          clip-rule="evenodd" />
-                        <path d="M9.5 7h5v2h-5zM9.5 11h5v2h-5z" opacity="0.4" />
-                      </svg>
-                      <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || res.type
-                        }}</span>
-                    </ng-template>
-                  </span>
-
-                  <!-- POWERPOINT -->
-                  <span *ngSwitchCase="'POWERPOINT'"
-                    class="text-orange-700 bg-orange-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-orange-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#D24726" />
-                      <text x="12" y="17" fill="white" font-family="sans-serif" font-weight="900" font-size="14"
-                        text-anchor="middle">P</text>
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">PPT</span>
-                  </span>
-
-                  <!-- IMAGE -->
-                  <span *ngSwitchCase="'IMAGE'"
-                    class="text-purple-700 bg-purple-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-purple-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#7B1FA2" />
-                      <path d="M7 14l3-4 3 4 4-6 4 8H3z" fill="white" opacity="0.9" />
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">IMAGE</span>
-                  </span>
-
-                  <!-- AUDIO -->
-                  <span *ngSwitchCase="'AUDIO'"
-                    class="text-amber-800 bg-amber-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-amber-100 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 drop-shadow-sm">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#F59E0B" />
-                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
-                        fill="white" />
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">AUDIO</span>
-                  </span>
-
-                  <!-- DEFAULT / FILE EXTENSION -->
-                  <span *ngSwitchDefault
-                    class="text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg flex items-center gap-2 border border-gray-200 w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                      class="w-5 h-5 text-gray-500">
-                      <path
-                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z" />
-                      <path
-                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                    </svg>
-                    <span class="font-bold text-[11px] tracking-wide uppercase">{{ res.fileExtension || res.type
-                      }}</span>
-                  </span>
-                </ng-container>
-
-                <!-- Metadata (Duration or Size) -->
-                <span class="text-[11px] text-gray-500 font-medium">
-                  <!-- Case: Video/Youtube -> Duration -->
-                  <ng-container *ngIf="res.resourceType === 'YOUTUBE' || res.fileType === 'VIDEO'">
-                    <span *ngIf="res.duration" class="flex items-center gap-1 opacity-80" title="Thời lượng">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" class="w-3 h-3">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                      {{ res.duration }}
-                    </span>
-                  </ng-container>
-
-                  <!-- Case: File -> Size -->
-                  <ng-container *ngIf="res.resourceType !== 'YOUTUBE' && res.fileType !== 'VIDEO'">
-                    <span *ngIf="res.fileSize" class="flex items-center gap-1 opacity-80" title="Dung lượng">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" class="w-3 h-3">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                      </svg>
-                      {{ formatFileSize(res.fileSize) }}
-                    </span>
-                  </ng-container>
-                </span>
-              </div>
-            </td>
-
-            <!-- Status (Approval) -->
-            <td class="px-3 py-3 text-center">
-              <span *ngIf="activeTab() === 'trash'"
-                class="px-2 py-1 bg-red-100 text-red-600 text-[10px] rounded-lg font-bold uppercase">
-                Đã xóa
-              </span>
-              <span *ngIf="activeTab() !== 'trash'"
-                class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-sm whitespace-nowrap"
-                [ngClass]="{
-                  'bg-amber-50 text-amber-700 border-amber-100': res.status === 'PENDING',
-                  'bg-emerald-50 text-emerald-700 border-emerald-100': res.status === 'APPROVED',
-                  'bg-rose-50 text-rose-700 border-rose-100': res.status === 'REJECTED',
-                  'bg-gray-50 text-gray-500 border-gray-200': res.status === 'HIDDEN'
-                }">
-                {{ getStatusLabel(res.status) }}
-              </span>
-            </td>
-
-            <!-- Visibility (Public/Private Toggle) -->
-            <td class="px-3 py-3 text-center">
-              <div class="flex justify-center" *ngIf="activeTab() !== 'trash'">
-                <button (click)="executeChangeVisibility(res.id, res.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC')"
-                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
-                  [ngClass]="res.visibility === 'PUBLIC' ? 'bg-blue-600' : 'bg-gray-200'"
-                  [title]="res.visibility === 'PUBLIC' ? 'Đang công khai. Nhấn để chuyển thành Nội bộ (Private)' : 'Đang nội bộ. Nhấn để Công khai (Public)'">
-                  <span class="sr-only">Toggle Visibility</span>
-                  <span aria-hidden="true"
-                    class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                    [ngClass]="res.visibility === 'PUBLIC' ? 'translate-x-2' : '-translate-x-2'"></span>
                 </button>
-              </div>
-            </td>
-
-            <!-- Topic -->
-            <td class="px-3 py-3">
-              <span class="text-xs font-semibold text-gray-700 block max-w-[120px] truncate"
-                [title]="getTopicTitle(res)">{{ getTopicTitle(res) }}</span>
-            </td>
-
-            <!-- Category -->
-            <td class="px-3 py-3">
-              <span
-                class="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-200 block max-w-[120px] truncate uppercase tracking-wide"
-                [title]="getCategoryName(res)">{{
-                getCategoryName(res) }}</span>
-            </td>
-
-            <!-- Views -->
-            <td class="px-3 py-3 text-center font-bold text-gray-700">{{ res.viewsCount || 0 }}</td>
-
-
-            <!-- Actions -->
-            <td class="px-3 py-3 text-center">
-              <div class="flex justify-center gap-2">
-
-                <!-- PENDING TAB QUICK ACTIONS -->
-                <ng-container *ngIf="activeTab() === 'pending'">
-                  <!-- Approve -->
-                  <button (click)="approveResource(res.id)" title="Duyệt nhanh"
-                    class="p-2 text-emerald-600 bg-white hover:bg-emerald-50 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm border border-slate-200 hover:border-emerald-200 hover:shadow-emerald-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </button>
-                  <!-- Reject -->
-                  <button (click)="rejectResource(res.id)" title="Từ chối nhanh"
-                    class="p-2 text-rose-600 bg-white hover:bg-rose-50 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all shadow-sm border border-slate-200 hover:border-rose-200 hover:shadow-rose-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                  <!-- Preview -->
-                  <button (click)="openPreview(res)" title="Xem trước"
-                    class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full focus:outline-none transition-colors border border-transparent hover:border-blue-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </button>
-                </ng-container>
-
-                <!-- REPOSITORY & REJECTED TAB ACTIONS -->
-                <ng-container *ngIf="activeTab() === 'list' || activeTab() === 'rejected'">
-
-                  <!-- Approve (Rejected Tab Only) -->
-                  <button *ngIf="activeTab() === 'rejected'" (click)="approveResource(res.id)" title="Duyệt nhanh"
-                    class="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </button>
-                  <!-- Reject (Approved Tab Only) -->
-                  <button *ngIf="activeTab() === 'list'" (click)="rejectResource(res.id)" title="Từ chối"
-                    class="p-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                  <!-- Preview -->
-                  <button (click)="openPreview(res)" title="Xem trước"
-                    class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </button>
-                  <!-- Edit -->
-                  <button (click)="editResource(res)" title="Chỉnh sửa"
-                    class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
-                  <!-- Delete -->
-                  <button (click)="confirmDelete(res.id)" title="Xóa"
-                    class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full focus:outline-none transition-all hover:shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                    </svg>
-                  </button>
-                </ng-container>
-
-                <!-- TRASH TAB ACTIONS -->
-                <ng-container *ngIf="activeTab() === 'trash'">
-                  <button (click)="restoreResource(res)"
-                    class="p-2 text-emerald-600 bg-white hover:bg-emerald-50 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm border border-slate-200 hover:border-emerald-200"
-                    title="Khôi phục">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="15 14 20 9 15 4"></polyline>
-                      <path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
-                    </svg>
-                  </button>
-                  <button (click)="confirmDelete(res.id)"
-                    class="p-2 text-rose-600 bg-white hover:bg-rose-50 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all shadow-sm border border-slate-200 hover:border-rose-200"
-                    title="Xóa vĩnh viễn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
-                </ng-container>
-
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr *ngIf="resources().length === 0">
-            <td colspan="8" class="p-0">
-              <div class="p-8">
-                <app-empty-state message="Không tìm thấy tài nguyên nào"
-                  subMessage="Chúng tôi không tìm thấy tài nguyên nào phù hợp với tìm kiếm hoặc bộ lọc của bạn.">
-                </app-empty-state>
-              </div>
-            </td>
-          </tr>
+              </td>
+              <td class="px-4 py-3 text-kindy-ink-soft whitespace-nowrap">
+                {{ resource.uploader || resource.createdBy || '—' }}
+              </td>
+              <td class="px-4 py-3">
+                <app-status-pill
+                  [label]="statusLabel(resource.status)"
+                  [tone]="statusTone(resource.status)"
+                  [dot]="true"
+                />
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <span class="font-semibold text-kindy-ink">{{ resource.viewsCount | number }}</span>
+              </td>
+              <td class="px-4 py-3 text-xs text-kindy-ink-soft whitespace-nowrap">
+                {{ resource.createdAt | relativeTime }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="inline-flex items-center gap-0.5">
+                  <app-icon-button icon="eye" tone="primary" size="sm" [ariaLabel]="'Xem trước ' + resource.title" (click)="openPreview(resource)" />
+                  @if (resource.status === 'PENDING') {
+                    <app-icon-button icon="checkBold" tone="success" size="sm" [ariaLabel]="'Phê duyệt ' + resource.title" (click)="confirmApprove(resource)" />
+                    <app-icon-button icon="close" tone="danger" size="sm" [ariaLabel]="'Từ chối ' + resource.title" (click)="confirmReject(resource)" />
+                  }
+                  @if (resource.status === 'DELETED') {
+                    <app-icon-button icon="refresh" tone="success" size="sm" [ariaLabel]="'Khôi phục ' + resource.title" (click)="restore(resource)" />
+                  }
+                  <app-icon-button icon="trash" tone="danger" size="sm" [ariaLabel]="'Xoá ' + resource.title" (click)="confirmDelete(resource)" />
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="border-t border-slate-50 p-2 bg-white sticky bottom-0 z-20">
-      <app-pagination class="block" [currentPage]="currentPage()" [totalItems]="totalResources()"
-        [pageSize]="pageSize()" itemName="resources" (pageChange)="onPageChange($event)">
-      </app-pagination>
-    </div>
-  </div>
-
-  <!-- GRID VIEW -->
-  <div *ngIf="viewMode() === 'grid'" class="flex-1 flex flex-col overflow-hidden">
-    <!-- Scrollable Content Wrapper -->
-    <div class="flex-1 overflow-y-auto min-h-0 px-1 pb-2">
-
-      <!-- Loading Skeleton -->
-      <div *ngIf="isTableLoading()"
-        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-pulse">
-        <div *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]"
-          class="bg-white rounded-2xl border border-gray-100 overflow-hidden h-[340px]">
-          <div class="h-44 bg-gray-200"></div>
-          <div class="p-4 space-y-3">
-            <div class="flex justify-between">
-              <div class="h-4 bg-gray-200 rounded w-16"></div>
-              <div class="h-4 bg-gray-200 rounded-full w-4"></div>
+    <!-- MOBILE cards -->
+    <ul class="md:hidden divide-y divide-gray-100">
+      @for (resource of resources(); track resource.id) {
+        <li class="p-4 flex gap-3" [class.bg-kindy-surface-soft]="isSelected(resource.id)">
+          <input
+            type="checkbox"
+            [checked]="isSelected(resource.id)"
+            (change)="toggleSelect(resource.id)"
+            [attr.aria-label]="'Chọn ' + resource.title"
+            class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar mt-1 flex-shrink-0"
+          />
+          <button
+            type="button"
+            (click)="openPreview(resource)"
+            class="flex items-start gap-3 text-left flex-1 min-w-0 focus:outline-none"
+          >
+            @if (resource.thumbnailUrl) {
+              <img [src]="resource.thumbnailUrl" alt="" loading="lazy" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+            } @else {
+              <div aria-hidden="true" class="w-12 h-12 rounded-lg bg-kindy-sun-soft text-kindy-sun flex items-center justify-center flex-shrink-0 text-lg">📄</div>
+            }
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-kindy-ink truncate">{{ resource.title }}</p>
+              <p class="text-xs text-kindy-ink-soft truncate">{{ resource.uploader || resource.createdBy || '—' }}</p>
+              <div class="flex flex-wrap gap-1 mt-1.5">
+                <app-status-pill [label]="statusLabel(resource.status)" [tone]="statusTone(resource.status)" [dot]="true" />
+                @if (resource.topic?.name) {
+                  <app-status-pill [label]="resource.topic!.name" tone="neutral" />
+                }
+              </div>
+              <p class="text-xs text-kindy-ink-soft mt-1.5">
+                {{ resource.viewsCount | number }} lượt · {{ resource.createdAt | relativeTime }}
+              </p>
             </div>
-            <div class="h-4 bg-gray-200 rounded w-full"></div>
-            <div class="h-4 bg-gray-200 rounded w-2/3"></div>
-            <div class="mt-4 h-8 bg-gray-200 rounded-xl w-full"></div>
-          </div>
-        </div>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (total() > pageSize()) {
+      <div class="border-t border-gray-100 px-4 py-3">
+        <app-pagination
+          [currentPage]="page()"
+          [pageSize]="pageSize()"
+          [totalItems]="total()"
+          itemName="tài nguyên"
+          (pageChange)="onPageChange($event)"
+        />
       </div>
-
-      <!-- Content Grid -->
-      <div *ngIf="!isTableLoading()"
-        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 pb-32">
-
-        <!-- Empty State -->
-        <div *ngIf="resources().length === 0"
-          class="col-span-full py-20 bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
-          <app-empty-state message="Không tìm thấy tài nguyên nào"
-            subMessage="Chúng tôi không tìm thấy tài nguyên nào phù hợp với tìm kiếm hoặc bộ lọc của bạn.">
-          </app-empty-state>
-        </div>
-
-        <!-- Resource Card -->
-        <div *ngFor="let resource of resources()"
-          class="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex flex-col relative overflow-hidden h-[270px]">
-
-          <!-- Selection Checkbox (Visible on Hover or Checked) -->
-          <div class="absolute top-2 left-2 z-20 transition-opacity duration-200"
-            [class.opacity-0]="!selectedIds().has(resource.id)" [class.group-hover:opacity-100]="true">
-            <input type="checkbox" [checked]="selectedIds().has(resource.id)" (change)="toggleSelection(resource.id)"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer shadow-sm bg-white/90 backdrop-blur-sm">
-          </div>
-
-          <!-- Thumbnail Area (Fixed Height 180px) -->
-          <div role="button" tabindex="0" (keydown.enter)="openPreview(resource)"
-            class="relative h-[180px] bg-gray-50 border-b border-gray-100 overflow-hidden cursor-pointer group/thumb"
-            (click)="openPreview(resource)">
-            <!-- Thumbnail Image (Cover for Media, Contain for Docs) -->
-            <img loading="lazy" [src]="getThumbnail(resource)" alt="Thumbnail"
-              class="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
-              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'" />
-
-            <!-- Fallback/Placeholder (Clean Icon) -->
-            <div [class.hidden]="resource.thumbnailUrl"
-              class="w-full h-full bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-60" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-
-            <!-- Type Badge (Top Right) -->
-            <div class="absolute top-2 right-2 z-10">
-              <span
-                [class]="getTypeBadgeClass(resource.resourceType === 'YOUTUBE' ? 'YOUTUBE' : (resource.fileType || ''))"
-                class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 opacity-90">
-                {{ resource.resourceType === 'YOUTUBE' ? 'YT' : resource.fileExtension || 'FILE' }}
-              </span>
-            </div>
-
-            <!-- Play Overlay (Video/YouTube) -->
-            <div *ngIf="resource.resourceType === 'YOUTUBE' || resource.fileType === 'VIDEO'"
-              class="absolute inset-0 flex items-center justify-center bg-black/10 group-hover/thumb:bg-black/30 transition-colors">
-              <div
-                class="w-8 h-8 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-lg group-hover/thumb:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                  class="ml-0.5">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Duration/Size (Bottom Right) -->
-            <!-- Duration/Size (Bottom Right) -->
-            <div class="absolute bottom-1 right-1 flex flex-col items-end gap-1">
-              <!-- Duration -->
-              <div *ngIf="(resource.resourceType === 'YOUTUBE' || resource.fileType === 'VIDEO') && resource.duration"
-                class="px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono backdrop-blur-sm flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" class="w-3 h-3">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                {{ resource.duration }}
-              </div>
-
-              <!-- File Size -->
-              <div *ngIf="(resource.resourceType !== 'YOUTUBE' && resource.fileType !== 'VIDEO') && resource.fileSize"
-                class="px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono backdrop-blur-sm flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" class="w-3 h-3">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                {{ formatFileSize(resource.fileSize) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="p-3 flex flex-col flex-1 relative">
-            <!-- Status Dot & Category -->
-            <div class="flex items-center justify-between mb-1.5 text-[10px]">
-              <span class="text-gray-500 font-medium truncate max-w-[60%]" [title]="getCategoryName(resource)">
-                {{ getCategoryName(resource) }}
-              </span>
-              <span [title]="getStatusLabel(resource.status)"
-                class="flex items-center gap-1 font-bold uppercase whitespace-nowrap" [ngClass]="{
-                            'text-green-600': resource.status === 'APPROVED',
-                            'text-amber-600': resource.status === 'PENDING',
-                            'text-red-600': resource.status === 'REJECTED' || resource.status === 'DELETED',
-                            'text-gray-500': resource.status === 'HIDDEN'
-                        }">
-                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                {{ getStatusLabel(resource.status) }}
-              </span>
-            </div>
-
-            <!-- Title -->
-            <h4 role="button" tabindex="0" (keydown.enter)="openPreview(resource)"
-              class="font-semibold text-gray-900 text-sm mb-1 px-0.5 line-clamp-2 min-h-[40px] leading-tight group-hover:text-blue-600 transition-colors cursor-pointer"
-              [title]="resource.title" (click)="openPreview(resource)">
-              {{ resource.title }}
-            </h4>
-
-            <!-- Footer Info (Uploader & Views) -->
-            <div
-              class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium text-gray-500">
-              <span class="truncate max-w-[70%] text-slate-600 flex items-center gap-1.5">
-                <!-- Visiblity Indicator -->
-                <svg *ngIf="resource.visibility === 'PRIVATE'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                  fill="currentColor" class="w-3.5 h-3.5 text-amber-500 cursor-help" title="Nội bộ (Private)">
-                  <path fill-rule="evenodd"
-                    d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
-                    clip-rule="evenodd" />
-                </svg>
-                {{ resource.uploader || 'Admin' }}
-              </span>
-              <span class="flex items-center gap-1 text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                {{ resource.viewsCount || 0 }}
-              </span>
-            </div>
-
-            <!-- Action Overlay (Bottom Strip on Hover) -->
-            <div
-              class="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-blue-100 p-2 flex items-center justify-around gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-full group-hover:translate-y-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-              <!-- Preview -->
-              <button (click)="openPreview(resource); $event.stopPropagation()"
-                class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                title="Xem trước">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-
-              <!-- Edit/Approve/Restore -->
-              <ng-container *ngIf="resource.status === 'PENDING'">
-                <button
-                  (click)="openConfirmModal('Phê duyệt', 'Duyệt tài nguyên này?', 'APPROVE', resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Duyệt">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </button>
-                <button (click)="rejectResource(resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Từ chối">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </ng-container>
-
-              <ng-container *ngIf="resource.status === 'DELETED'">
-                <button
-                  (click)="openConfirmModal('Khôi phục', 'Khôi phục tài nguyên này?', 'RESTORE', resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-orange-500 hover:bg-orange-50 rounded transition-colors" title="Khôi phục">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="1 4 1 10 7 10"></polyline>
-                    <polyline points="23 20 23 14 17 14"></polyline>
-                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                  </svg>
-                </button>
-              </ng-container>
-
-              <ng-container *ngIf="resource.status !== 'DELETED' && resource.status !== 'PENDING'">
-                <!-- Approve Button (Rejected State Only) -->
-                <button *ngIf="resource.status === 'REJECTED'"
-                  (click)="openConfirmModal('Phê duyệt', 'Duyệt tài nguyên này?', 'APPROVE', resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Duyệt nhanh">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </button>
-                <!-- Reject Button (Approved State Only) -->
-                <button *ngIf="resource.status === 'APPROVED'"
-                  (click)="rejectResource(resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Từ chối">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-                <button (click)="editResource(resource); $event.stopPropagation()"
-                  class="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title="Chỉnh sửa">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button
-                  (click)="openConfirmModal('Xóa tài nguyên', 'Bạn có chắc chắn muốn xóa?', 'DELETE', resource.id); $event.stopPropagation()"
-                  class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Xóa">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                </button>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pagination (Grid - REMOVED, moved to global footer) -->
-    </div> <!-- End Grid Content -->
-  </div> <!-- End Scrollable Wrapper -->
-
-  <!-- Grid View Pagination (Fixed Footer) -->
-  <div *ngIf="!isTableLoading() && viewMode() === 'grid'" class="flex-none bg-white p-2 border-t border-slate-50 z-20">
-    <app-pagination class="block" [currentPage]="currentPage()" [totalItems]="totalResources()" [pageSize]="pageSize()"
-      itemName="resources" (pageChange)="onPageChange($event)">
-    </app-pagination>
-  </div>
+    }
+  }
 </div>
 
+<!-- Preview drawer -->
+<app-drawer
+  [open]="!!selectedResource()"
+  [title]="selectedResource()?.title || 'Chi tiết tài nguyên'"
+  titleId="resource-preview-title"
+  size="lg"
+  (close)="closePreview()"
+>
+  @if (selectedResource(); as res) {
+    <div class="space-y-5">
+      @if (res.thumbnailUrl) {
+        <img [src]="res.thumbnailUrl" alt="" loading="lazy" class="w-full rounded-xl aspect-video object-cover" />
+      } @else {
+        <div aria-hidden="true" class="w-full aspect-video rounded-xl bg-kindy-sun-soft text-kindy-sun flex items-center justify-center text-5xl">📄</div>
+      }
 
-<!-- UPLOAD / EDIT MODAL COMPONENT -->
-<app-admin-resources-form [isOpen]="isUploadModalOpen()"
-  [editResource]="isEditMode() ? (getCurrentResource() || null) : null" [categories]="categories()"
-  [ageGroups]="ageGroups()" (closeForm)="closeUploadModal()" (saveSuccess)="handleSaveSuccess()">
-</app-admin-resources-form>
-
-<!-- Generic Confirmation Modal -->
-<div *ngIf="isConfirmModalOpen()"
-  class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-all">
-  <div
-    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
-    <!-- Dynamic Icon -->
-    <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
-      [ngClass]="{
-        'bg-emerald-100 text-emerald-600': confirmConfig()?.action?.includes('APPROVE') || confirmConfig()?.action?.includes('RESTORE'),
-        'bg-rose-100 text-rose-600': confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')
-      }">
-
-      <!-- Approve Icon -->
-      <svg *ngIf="confirmConfig()?.action?.includes('APPROVE')" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10"
-        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-      </svg>
-
-      <!-- Restore Icon -->
-      <svg *ngIf="confirmConfig()?.action?.includes('RESTORE')" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10"
-        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-
-      <!-- Delete/Reject Icon -->
-      <svg *ngIf="confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')"
-        xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    </div>
-
-    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ confirmConfig()?.title }}</h3>
-    <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2">
-      {{ confirmConfig()?.message }}
-    </p>
-
-    <div class="flex justify-center gap-3">
-      <button (click)="closeConfirmModal()"
-        class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
-        Hủy
-      </button>
-
-      <!-- Approve Button -->
-      <button *ngIf="confirmConfig()?.action?.includes('APPROVE')" (click)="onConfirmAction()"
-        class="flex-1 px-4 py-3.5 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 active:scale-95 transition-all">
-        Phê duyệt
-      </button>
-
-      <!-- Restore Button -->
-      <button *ngIf="confirmConfig()?.action?.includes('RESTORE')" (click)="onConfirmAction()"
-        class="flex-1 px-4 py-3.5 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 active:scale-95 transition-all">
-        Khôi phục
-      </button>
-
-      <!-- Delete/Reject Button -->
-      <button *ngIf="confirmConfig()?.action?.includes('DELETE') || confirmConfig()?.action?.includes('REJECT')"
-        (click)="onConfirmAction()"
-        class="flex-1 px-4 py-3.5 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all">
-        {{ confirmConfig()?.action?.includes('REJECT') ? 'Từ chối' : 'Xóa' }}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Preview Modal -->
-<div *ngIf="previewResource()"
-  class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl transition-opacity">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full flex flex-col max-h-[90vh] overflow-hidden">
-    <!-- Header -->
-    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/80 backdrop-blur-md">
-      <div>
-        <h3 class="text-lg font-bold text-gray-900 line-clamp-1 pr-4">{{ previewResource()?.title }}</h3>
-        <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">Chế độ Xem trước</p>
-      </div>
-      <button (click)="closePreview()"
-        class="text-gray-400 hover:text-gray-700 transition-colors p-2 hover:bg-gray-200 rounded-full">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Content Area -->
-    <div class="flex-1 bg-neutral-950 relative flex items-center justify-center min-h-[500px]">
-
-      <!-- Spinner -->
-      <div *ngIf="isLoading()"
-        class="absolute inset-0 flex items-center justify-center z-10 bg-neutral-950/80 backdrop-blur-sm">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      <div class="flex flex-wrap gap-2">
+        <app-status-pill [label]="statusLabel(res.status)" [tone]="statusTone(res.status)" [dot]="true" />
+        @if (res.fileType) { <app-status-pill [label]="res.fileType" tone="neutral" /> }
+        @if (res.resourceType) { <app-status-pill [label]="res.resourceType" tone="neutral" /> }
       </div>
 
-      <!-- Viewer Switch -->
-      <ng-container [ngSwitch]="previewType">
+      @if (res.description) {
+        <p class="text-sm text-kindy-ink-soft leading-relaxed whitespace-pre-line">{{ res.description }}</p>
+      }
 
-        <!-- AUDIO -->
-        <div *ngSwitchCase="'AUDIO'"
-          class="w-full h-full flex flex-col items-center justify-center bg-neutral-900 p-12">
-          <div class="text-6xl mb-6 opacity-80">🎵</div>
-          <audio controls class="w-full max-w-xl scale-110 shadow-xl rounded-full" (loadeddata)="onLoad()">
-            <source [src]="previewUrl" type="audio/mpeg">
-            Trình duyệt của bạn không hỗ trợ phát âm thanh.
-          </audio>
+      @if (res.rejectionReason) {
+        <div class="bg-kindy-coral-soft/40 border border-kindy-coral-soft rounded-lg p-3">
+          <p class="text-xs font-semibold text-kindy-coral-strong uppercase tracking-wider">Lý do từ chối</p>
+          <p class="text-sm text-kindy-ink mt-1">{{ res.rejectionReason }}</p>
         </div>
+      }
 
-        <!-- VIDEO PLAYER -->
-        <div *ngSwitchCase="'VIDEO'"
-          class="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-inner">
-          <!-- YouTube Iframe -->
-          <ng-container *ngIf="isYoutube()">
-            <iframe *ngIf="previewUrl" [src]="previewUrl" class="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen (load)="onLoad()">
-            </iframe>
-          </ng-container>
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div><dt class="text-xs uppercase text-kindy-ink-soft">Người tải lên</dt><dd class="text-kindy-ink font-medium">{{ res.uploader || res.createdBy || '—' }}</dd></div>
+        <div><dt class="text-xs uppercase text-kindy-ink-soft">Chủ đề</dt><dd class="text-kindy-ink font-medium">{{ res.topic?.name || '—' }}</dd></div>
+        <div><dt class="text-xs uppercase text-kindy-ink-soft">Lượt xem</dt><dd class="text-kindy-ink font-medium">{{ res.viewsCount | number }}</dd></div>
+        <div><dt class="text-xs uppercase text-kindy-ink-soft">Lượt tải</dt><dd class="text-kindy-ink font-medium">{{ res.downloadCount | number }}</dd></div>
+        <div><dt class="text-xs uppercase text-kindy-ink-soft">Gửi lên</dt><dd class="text-kindy-ink font-medium">{{ res.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        @if (res.duration) {
+          <div><dt class="text-xs uppercase text-kindy-ink-soft">Thời lượng</dt><dd class="text-kindy-ink font-medium">{{ res.duration }}</dd></div>
+        }
+      </dl>
 
-          <!-- HTML5 Video -->
-          <ng-container *ngIf="!isYoutube()">
-            <video *ngIf="previewUrl" [src]="previewUrl" controls controlsList="nodownload"
-              class="w-full h-full object-contain" (loadeddata)="onLoad()">
-              Trình duyệt của bạn không hỗ trợ thẻ video.
-            </video>
-          </ng-container>
-        </div>
-
-        <!-- IMAGE -->
-        <img *ngSwitchCase="'IMAGE'" loading="lazy" [src]="previewUrl" alt="Preview"
-          class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" (load)="onLoad()">
-
-        <!-- DOCUMENTS (Google Viewer) -->
-        <iframe *ngSwitchCase="'DOCUMENT'" [src]="previewUrl" class="w-full h-[75vh] border-0 bg-white"
-          (load)="onLoad()"></iframe>
-
-        <!-- UNSUPPORTED -->
-        <div *ngSwitchDefault class="text-center p-12 text-white/50">
-          <div class="text-8xl mb-6 opacity-30">📦</div>
-          <h4 class="text-2xl font-bold mb-3 text-white">Định dạng không hỗ trợ xem trước</h4>
-          <p class="text-gray-400 mb-8 max-w-md mx-auto">Loại tệp/định dạng này không thể xem trước trực tiếp trên trình
-            duyệt.</p>
-        </div>
-
-      </ng-container>
-    </div>
-
-    <!-- Footer -->
-    <div class="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <!-- Avatar: Real Image -->
-        <img *ngIf="previewResource()?.uploaderAvatar" loading="lazy" [src]="previewResource()?.uploaderAvatar"
-          alt="Avatar" class="w-10 h-10 rounded-full border border-slate-200">
-
-        <!-- Avatar: Fallback -->
-        <div *ngIf="!previewResource()?.uploaderAvatar"
-          class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold uppercase border border-blue-50">
-          {{ (previewResource()?.uploader || '?').charAt(0) }}
-        </div>
-
-        <span class="text-xs text-gray-500 font-bold">Tải lên bởi {{ previewResource()?.uploader || 'Người dùng ẩn danh'
-          }}</span>
-      </div>
-      <div class="flex gap-3">
-        <button (click)="closePreview()"
-          class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm">
-          Đóng
-        </button>
-        <a [href]="previewResource()?.fileUrl" target="_blank" download
-          class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95 text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Tải xuống
+      @if (res.fileUrl) {
+        <a
+          [href]="res.fileUrl"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 text-sm font-semibold text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline"
+        >
+          <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+          Mở tệp / liên kết gốc
         </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Move to Topic Modal -->
-<div *ngIf="isMoveModalOpen()"
-  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-  <div
-    class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
-
-    <h3 class="text-xl font-bold text-gray-900 mb-2">Di chuyển Tài nguyên</h3>
-    <p class="text-sm text-gray-500 mb-6">Chọn danh mục và chủ đề đích cho các tài nguyên đã chọn.</p>
-
-    <div class="space-y-4 mb-6">
-      <div class="group">
-        <label for="moveCategory" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Danh
-          mục</label>
-        <div class="relative">
-          <select id="moveCategory" [formControl]="moveTargetCategoryId"
-            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-900 font-medium appearance-none">
-            <option value="">Chọn Danh mục</option>
-            <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div class="group">
-        <label for="moveTopic" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Chủ
-          đề</label>
-        <div class="relative">
-          <select id="moveTopic" [formControl]="moveTargetTopicId" [disabled]="!moveTargetCategoryId.value"
-            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 drop-shadow-sm text-gray-900 font-medium appearance-none">
-            <option value="">Chọn Chủ đề</option>
-            <option *ngFor="let topic of moveTopics()" [value]="topic.id">{{ topic.name }}</option>
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </div>
+      }
     </div>
 
-    <div class="flex gap-3">
-      <button (click)="closeMoveModal()"
-        class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">
-        Hủy
-      </button>
-      <button (click)="executeBulkMove()" [disabled]="!moveTargetTopicId.value"
-        class="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-        Di chuyển
-      </button>
-    </div>
-
-  </div>
-</div>
-
-<!-- Reject Modal -->
-<div *ngIf="isRejectModalOpen()"
-  class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-  <div
-    class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-white/10 ring-1 ring-black/5 animate-fade-in-up">
-
-    <div class="flex items-center gap-4 mb-4">
-      <div class="h-10 w-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+    @if (res.status === 'PENDING') {
+      <div drawer-footer class="border-t border-gray-100 px-5 py-4 flex gap-3">
+        <button
+          type="button"
+          (click)="confirmReject(res); closePreview()"
+          class="flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-kindy-coral-strong text-kindy-coral-strong hover:bg-kindy-coral-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-coral-strong"
+        >Từ chối</button>
+        <button
+          type="button"
+          (click)="confirmApprove(res); closePreview()"
+          class="flex-1 px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-mint hover:bg-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-mint"
+        >Phê duyệt</button>
       </div>
-      <div>
-        <h3 class="text-xl font-bold text-gray-900">Từ chối Tài nguyên</h3>
-        <p class="text-sm text-gray-500">Vui lòng nhập lý do từ chối để người dùng có thể điều chỉnh.</p>
-      </div>
-    </div>
-
-    <div class="mb-6">
-      <label for="rejectReason" class="block text-sm font-bold text-slate-700 mb-2">Lý do từ chối <span
-          class="text-red-500">*</span></label>
-      <textarea id="rejectReason" [formControl]="rejectReasonControl" rows="4"
-        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-400 text-sm resize-none"
-        placeholder="Ví dụ: File bị lỗi font, Vi phạm bản quyền, Sai danh mục..."></textarea>
-      <div *ngIf="rejectReasonControl.touched && rejectReasonControl.invalid" class="text-red-500 text-xs mt-1">
-        Lý do từ chối không được để trống và tối đa 1000 ký tự.
-      </div>
-    </div>
-
-    <div class="flex gap-3 justify-end">
-      <button (click)="closeRejectModal()"
-        class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">
-        Hủy
-      </button>
-      <button (click)="executeReject()" [disabled]="rejectReasonControl.invalid || isTableLoading()"
-        class="px-5 py-2.5 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-        <span *ngIf="isTableLoading()"
-          class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-        Từ chối
-      </button>
-    </div>
-
-  </div>
-</div>
-
-<!-- Bulk Actions Toolbar (Floating) -->
-<div *ngIf="selectedIds().size > 0"
-  class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[150] bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 animate-fade-in-up border border-slate-700">
-  <div class="flex items-center gap-3">
-    <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">{{ selectedIds().size }}</span>
-    <span class="font-medium text-sm">Đã chọn</span>
-  </div>
-
-  <div class="h-6 w-px bg-slate-700"></div>
-
-  <!-- Approve Button (Pending or Rejected) -->
-  <button *ngIf="activeTab() === 'pending' || activeTab() === 'rejected'" (click)="approveSelected()"
-    class="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-bold text-sm transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-    Duyệt
-  </button>
-
-  <div *ngIf="activeTab() === 'pending' || activeTab() === 'rejected'" class="h-6 w-px bg-slate-700"></div>
-
-  <!-- Reject Button (Pending or Approved) -->
-  <button *ngIf="activeTab() === 'pending' || activeTab() === 'list'" (click)="rejectSelected()"
-    class="flex items-center gap-2 text-rose-400 hover:text-rose-300 font-bold text-sm transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-    Từ chối
-  </button>
-
-  <div *ngIf="activeTab() === 'pending' || activeTab() === 'list'" class="h-6 w-px bg-slate-700"></div>
-
-  <!-- Restore Button (Trash Mode Only) -->
-  <button *ngIf="activeTab() === 'trash'" (click)="restoreSelected()"
-    class="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-bold text-sm transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="15 14 20 9 15 4"></polyline>
-      <path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
-    </svg>
-    Khôi phục
-  </button>
-
-  <div *ngIf="activeTab() === 'trash'" class="h-6 w-px bg-slate-700"></div>
-
-  <!-- Move (Not Trash) -->
-  <button *ngIf="activeTab() !== 'trash'" (click)="openMoveModal()"
-    class="flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold text-sm transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M5 9l7-7 7 7"></path>
-      <path d="M12 2v20"></path>
-    </svg>
-    Di chuyển
-  </button>
-
-  <div *ngIf="activeTab() !== 'trash'" class="h-6 w-px bg-slate-700"></div>
-
-  <!-- Delete -->
-  <button (click)="deleteSelected()"
-    class="flex items-center gap-2 text-rose-400 hover:text-rose-300 font-bold text-sm transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="3 6 5 6 21 6"></polyline>
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path>
-    </svg>
-    {{ activeTab() === 'trash' ? 'Xóa vĩnh viễn' : 'Xóa' }}
-  </button>
-
-  <button (click)="clearSelection()"
-    class="ml-2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  </button>
-</div>
+    }
+  }
+</app-drawer>

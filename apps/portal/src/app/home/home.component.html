@@ -23,15 +23,15 @@
       <div #categoryScroll
         class="flex gap-6 overflow-x-auto scroll-smooth px-4 pb-12 pt-4 scrollbar-hide snap-x snap-mandatory w-fit mx-auto max-w-full"
         style="scrollbar-width: none; -ms-overflow-style: none;">
-        <a *ngFor="let cat of categories$ | async" [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
-          class="flex-shrink-0 w-[240px] group/card flex flex-col items-center justify-start p-6 rounded-[2rem] bg-white/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.15)] border border-white/80 hover:border-pink-200 transition-all duration-500 ease-out cursor-pointer snap-start hover:-translate-y-3 h-[220px]">
+        <a *ngFor="let cat of categories$ | async; trackBy: trackByCategoryId"
+          [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
+          class="flex-shrink-0 w-[240px] group/card flex flex-col items-center justify-start p-6 rounded-[2rem] bg-white/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.15)] border border-white/80 hover:border-pink-200 transition-all duration-500 ease-out cursor-pointer snap-start hover:-translate-y-3 h-[220px] focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
 
-          <!-- Icon Container (Fixed Size for Alignment) -->
           <div
             class="h-24 w-full mb-4 flex items-center justify-center transition-transform group-hover/card:scale-110 duration-500 ease-out">
-            <img [src]="cat.icon" [alt]="cat.name"
+            <img [src]="cat.icon" [alt]="cat.name" loading="lazy" decoding="async"
               class="max-w-[96px] max-h-[96px] w-auto h-auto object-contain drop-shadow-sm group-hover/card:drop-shadow-md transition-all duration-300 contrast-[1.05] saturate-[1.05]"
-              onerror="this.src='https://img.icons8.com/fluency/96/folder-invoices--v1.png'" />
+              onerror="this.onerror=null;this.src='https://img.icons8.com/fluency/96/folder-invoices--v1.png'" />
           </div>
 
           <!-- Category Name (Fixed Height for Alignment) -->
@@ -75,13 +75,11 @@
       </a>
     </div>
 
-    <!-- Resource Grid (Latest 4) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-      <div *ngFor="let resource of latestResources$ | async">
-        <app-resource-card [resource]="resource" (view)="downloadResource(resource)"
-          (download)="downloadResource(resource)">
-        </app-resource-card>
-      </div>
+      <app-resource-card *ngFor="let resource of latestResources$ | async; trackBy: trackByResourceId"
+        [resource]="resource"
+        (download)="downloadResource(resource)">
+      </app-resource-card>
     </div>
   </div>
 </div>

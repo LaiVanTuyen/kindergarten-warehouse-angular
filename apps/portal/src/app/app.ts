@@ -1,9 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs/operators';
+
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
 import { ToastComponent } from './shared/toast/toast.component';
+import { RouteProgressComponent } from './shared/route-progress/route-progress.component';
 
 @Component({
   standalone: true,
@@ -13,22 +17,34 @@ import { ToastComponent } from './shared/toast/toast.component';
     HeaderComponent,
     FooterComponent,
     ToastComponent,
+    RouteProgressComponent,
   ],
   selector: 'app-root',
   templateUrl: './app.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  title = 'portal';
-  isLoginPage = false;
+  private readonly router = inject(Router);
 
-  private router = inject(Router);
+  /**
+   * Reactively derive the "chromeless" state (login/register) from router
+   * events. Using `toSignal` replaces a constructor-level subscription that
+   * had no teardown path — Angular unsubscribes automatically when the
+   * component is destroyed.
+   */
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+      startWith(this.router.url)
+    ),
+    { initialValue: this.router.url }
+  );
 
-  constructor() {
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.isLoginPage =
-          event.url.includes('/login') || event.url.includes('/register');
-      }
-    });
-  }
+  readonly isChromeless = computed(() => {
+    const url = this.currentUrl();
+    return ['/login', '/register', '/forgot-password', '/reset-password'].some(
+      (p) => url.startsWith(p)
+    );
+  });
 }

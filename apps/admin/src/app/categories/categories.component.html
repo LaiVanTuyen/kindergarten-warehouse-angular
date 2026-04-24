@@ -1,865 +1,215 @@
-<div class="h-full flex flex-col">
+<app-page-header
+  title="Phân loại & Chủ đề"
+  subtitle="Quản lý hệ thống phân loại 2 cấp cho kho tài nguyên"
+>
+  <button
+    type="button"
+    (click)="openCategoryForm(null)"
+    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar transition-colors"
+  >
+    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+    Phân loại mới
+  </button>
+</app-page-header>
 
-  <!-- Detached Dark Banner -->
-  <div
-    class="bg-slate-800 p-5 rounded-3xl text-white shadow-xl mb-4 relative overflow-hidden flex justify-between items-center">
-    <!-- Decorative -->
-    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-
-    <div class="flex flex-col gap-1">
-      <app-breadcrumb></app-breadcrumb>
-      <h1 class="text-2xl font-bold tracking-tight">Phân loại</h1>
-      <p class="text-slate-400 mt-1 text-sm">Quản lý các danh mục và chủ đề nội dung.</p>
-    </div>
+<!-- Filters -->
+<div class="bg-white border border-gray-100 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
+  <div role="tablist" aria-label="Chế độ xem" class="inline-flex rounded-lg bg-gray-100 p-0.5">
+    @for (opt of [{v:'active',l:'Đang hoạt động'},{v:'trash',l:'Thùng rác'}]; track opt.v) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="view() === opt.v"
+        (click)="setView($any(opt.v))"
+        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+        [class.bg-white]="view() === opt.v"
+        [class.text-kindy-sidebar]="view() === opt.v"
+        [class.shadow-sm]="view() === opt.v"
+        [class.text-kindy-ink-soft]="view() !== opt.v"
+      >{{ opt.l }}</button>
+    }
   </div>
 
-  <!-- Toolbar Section -->
-  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-    <div class="flex items-center gap-4">
-      <h2 class="text-lg font-bold text-gray-800">Cấu trúc</h2>
-
-      <!-- View Toggle -->
-      <div class="flex items-center bg-gray-100 p-1 rounded-xl">
-        <button (click)="setViewMode('list')"
-          [class]="viewMode() === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-          class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-          Hoạt động
-        </button>
-        <button (click)="setViewMode('trash')"
-          [class]="viewMode() === 'trash' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-          class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path>
-          </svg>
-          Thùng rác
-        </button>
-      </div>
-    </div>
-
-    <!-- Right: Actions & Search -->
-    <div class="flex items-center gap-3 w-full sm:w-auto">
-      <!-- Search Box -->
-      <div class="relative w-full sm:w-72">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-              clip-rule="evenodd" />
-          </svg>
-        </div>
-        <input [formControl]="searchControl" type="text" placeholder="Tìm kiếm theo tên hoặc mô tả..."
-          class="block w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white transition-all shadow-sm">
-        <button *ngIf="searchControl.value" (click)="searchControl.setValue('')"
-          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Filter Toggle Button -->
-      <button *ngIf="viewMode() === 'list'" (click)="showFilters.set(!showFilters())"
-        class="bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95 whitespace-nowrap"
-        [class.bg-blue-50]="showFilters()" [class.text-blue-600]="showFilters()"
-        [class.border-blue-200]="showFilters()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Bộ lọc
-        <span *ngIf="statusFilter().size > 0"
-          class="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1 min-w-[18px] text-center">
-          {{ statusFilter().size }}
-        </span>
-      </button>
-
-      <!-- Add Category Button -->
-      <button *ngIf="viewMode() === 'list'" (click)="openCreateCategory()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2 transform active:scale-95 whitespace-nowrap">
-        <span class="text-lg leading-none">+</span> Thêm Danh mục
-      </button>
-
-      <!-- Add Topic Button -->
-      <button *ngIf="viewMode() === 'list'" (click)="openCreateTopic()"
-        class="bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2 transform active:scale-95 whitespace-nowrap">
-        <span class="text-lg leading-none">+</span> Thêm Chủ đề
-      </button>
-
-    </div>
+  <div class="flex-1 min-w-[200px]">
+    <app-search-input
+      [value]="search()"
+      placeholder="Tìm phân loại…"
+      (valueChange)="setSearch($event)"
+    />
   </div>
+</div>
 
-  <!-- Filters Section -->
-  <div class="flex flex-col gap-4 mb-6 relative z-30" *ngIf="showFilters() && viewMode() === 'list'">
-    <div class="flex flex-wrap items-center gap-3">
-      <!-- Page Size Selector -->
-      <div class="relative min-w-[130px]">
-        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)"
-          class="w-full pl-4 pr-10 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer hover:border-slate-300 transition-colors shadow-sm">
-          <option [value]="5">5 dòng/trang</option>
-          <option [value]="10">10 dòng/trang</option>
-          <option [value]="20">20 dòng/trang</option>
-          <option [value]="50">50 dòng/trang</option>
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+<!-- Master-detail layout -->
+<div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4">
+
+  <!-- Categories list -->
+  <aside class="bg-white rounded-xl border border-gray-100 flex flex-col overflow-hidden" aria-label="Danh sách phân loại">
+    @if (isLoadingCategories()) {
+      <div class="p-4 space-y-3">
+        @for (_ of [1,2,3,4,5]; track $index) {
+          <div class="h-12 bg-gray-100 rounded-lg animate-pulse"></div>
+        }
       </div>
-
-      <!-- Status Filter (Multi-select) -->
-      <div class="relative group z-20">
-        <app-multi-select-filter label="Trạng thái" [options]="statusOptions" [selectedValues]="statusFilter()"
-          [isOpen]="activeFilterDropdown() === 'status'"
-          (toggleOpen)="activeFilterDropdown.set(activeFilterDropdown() === 'status' ? null : 'status')"
-          (selectionChange)="statusFilter.set($event); currentPageCategories.set(1); updateUrl(); loadData()">
-        </app-multi-select-filter>
+    } @else if (categories().length === 0) {
+      <div class="p-6 text-center text-sm text-kindy-ink-soft">
+        @if (view() === 'trash') {
+          Thùng rác trống.
+        } @else {
+          Chưa có phân loại nào. Tạo mới ở góc trên.
+        }
       </div>
-
-      <!-- Reset Filters Button -->
-      <button (click)="resetFilters()" title="Đặt lại toàn bộ bộ lọc"
-        class="p-2.5 rounded-xl border border-dashed border-slate-300 bg-white text-slate-400 hover:text-red-500 hover:border-red-300 hover:bg-red-50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/20 active:scale-95 ml-auto lg:ml-0">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-          class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Active Filters Chips -->
-  <div class="flex flex-wrap items-center gap-2 mb-4 px-1" *ngIf="statusFilter().size > 0">
-    <ng-container *ngFor="let status of statusFilter()">
-      <div
-        class="inline-flex items-center h-8 px-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold animate-in fade-in zoom-in-95">
-        <span class="opacity-70 mr-1.5">Trạng thái:</span>
-        {{ status }}
-        <button (click)="removeStatusFilter(status)"
-          class="ml-2 hover:bg-blue-100 rounded-full p-0.5 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-    </ng-container>
-    <button (click)="clearStatusFilter()"
-      class="text-xs text-slate-500 hover:text-red-600 hover:underline font-medium ml-2">
-      Xóa tất cả
-    </button>
-  </div>
-
-
-  <!-- Main Content Card -->
-  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
-
-    <!-- Categories Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="overflow-auto flex-1">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-slate-50 sticky top-0 z-10">
-            <tr class="border-b border-gray-100">
-              <th class="px-8 py-5 pl-8 w-12"></th> <!-- Expand status -->
-              <!-- Checkbox Column -->
-              <th class="px-4 py-5 w-12 text-center">
-                <input type="checkbox" [checked]="allSelected()" (change)="toggleAll($event)"
-                  class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-              </th>
-              <th class="px-6 py-5 w-20">Icon</th>
-              <th class="px-6 py-5 w-1/4 cursor-pointer hover:text-blue-600 transition-colors"
-                (click)="toggleSort('name')">
-                Tên
-                <span *ngIf="sortColumn() === 'name'" class="ml-1">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
-              </th>
-              <th class="px-6 py-5 w-1/3">Mô tả</th>
-              <th class="px-6 py-5 text-center">Trạng thái</th>
-              <th class="px-6 py-5 text-center">Chủ đề</th>
-              <th class="px-6 py-5 text-right pr-8">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
-            <ng-container *ngFor="let cat of categories(); trackBy: trackByCategory">
-              <!-- Category Row -->
-              <tr class="hover:bg-slate-50/80 transition-all group cursor-pointer" (click)="toggleExpand(cat.id)"
-                (keydown.enter)="toggleExpand(cat.id)" (keydown.space)="toggleExpand(cat.id)" tabindex="0">
-                <!-- Expand Icon -->
-                <td class="px-8 py-6 pl-8 text-gray-400">
-                  <svg [class.rotate-90]="expandedCategoryIds().has(cat.id)"
-                    class="transition-transform duration-200 w-5 h-5" xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </td>
-                <!-- Checkbox Cell -->
-                <td class="px-4 py-6 text-center" (click)="$event.stopPropagation()"
-                  (keydown.enter)="$event.stopPropagation()" tabindex="0">
-                  <input type="checkbox" [checked]="selectedIds().has(cat.id)" (change)="toggleSelection(cat.id)"
-                    class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                </td>
-                <!-- Icon -->
-                <td class="px-6 py-6">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden text-2xl shadow-sm group-hover:border-blue-200 group-hover:shadow-md transition-all">
-                    <img
-                      *ngIf="getIconUrl(cat.icon).startsWith('data:') || getIconUrl(cat.icon).startsWith('http') || getIconUrl(cat.icon).startsWith('/')"
-                      [src]="getIconUrl(cat.icon)" alt="Category Icon" class="w-full h-full object-cover">
-                    <span
-                      *ngIf="!(getIconUrl(cat.icon).startsWith('data:') || getIconUrl(cat.icon).startsWith('http') || getIconUrl(cat.icon).startsWith('/'))"
-                      role="img" aria-label="icon">{{ cat.icon || '📁' }}</span>
-                  </div>
-                </td>
-                <!-- Name -->
-                <td class="px-6 py-6">
-                  <div class="flex flex-col gap-1.5">
-                    <span class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-base">{{
-                      cat.name }}</span>
-                    <span
-                      class="w-fit text-[10px] bg-slate-100 text-slate-500 py-0.5 px-2 rounded-full font-mono border border-slate-200">{{
-                      cat.slug }}</span>
-                  </div>
-                </td>
-                <!-- Description -->
-                <td class="px-6 py-6">
-                  <div *ngIf="cat.description" class="text-sm text-gray-500 leading-relaxed line-clamp-2"
-                    [title]="cat.description">
-                    {{ cat.description }}
-                  </div>
-                  <div *ngIf="!cat.description" class="text-xs text-gray-300 italic">Không có mô tả</div>
-
-                  <!-- Audit Info (Visible primarily in Trash but good everywhere) -->
-                  <div class="mt-2 text-[10px] text-gray-400 flex flex-col gap-0.5"
-                    *ngIf="cat.createdBy || cat.createdAt">
-                    <div *ngIf="cat.createdAt">Ngày tạo: {{ cat.createdAt | date:'mediumDate' }}</div>
-                    <div *ngIf="cat.createdBy">Bởi: {{ cat.createdBy }}</div>
-                  </div>
-                </td>
-
-                <td class="px-6 py-6 text-center">
-                  <div class="flex justify-center" (click)="$event.stopPropagation()"
-                    (keydown.enter)="$event.stopPropagation()" tabindex="0">
-                    <label class="relative inline-flex items-center cursor-pointer" *ngIf="viewMode() === 'list'">
-                      <input type="checkbox" [checked]="cat.isActive" (change)="toggleCategoryStatus(cat, $event)"
-                        class="sr-only peer">
-                      <div
-                        class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500">
-                      </div>
-                    </label>
-                    <span *ngIf="viewMode() === 'trash'"
-                      class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-lg font-bold">Đã xóa</span>
-                  </div>
-                </td>
-
-                <!-- Topic Count -->
-                <td class="px-6 py-6 text-center">
-                  <span
-                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                    {{ viewMode() === 'trash' && expandedCategoryIds().has(cat.id) ? getTopicsForCategory(cat.id).length
-                    : (cat.topicCount || 0) }}
-                  </span>
-                </td>
-                <!-- Actions -->
-                <td class="px-6 py-6 text-right pr-8">
-                  <div class="flex justify-end gap-2 text-gray-400" (click)="$event.stopPropagation()"
-                    (keydown.enter)="$event.stopPropagation()" tabindex="0">
-
-                    <!-- List Mode Actions -->
-                    <ng-container *ngIf="viewMode() === 'list'">
-                      <button (click)="openEditCategory(cat)"
-                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                        title="Sửa">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
-                      <button (click)="confirmDeleteCategory(cat.id)"
-                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
-                        title="Xóa">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </button>
-                    </ng-container>
-
-                    <!-- Trash Mode Actions -->
-                    <ng-container *ngIf="viewMode() === 'trash'">
-                      <button (click)="confirmRestore('category', cat.id)"
-                        class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
-                        title="Khôi phục Danh mục">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="15 14 20 9 15 4"></polyline>
-                          <path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
-                        </svg>
-                      </button>
-                      <button (click)="confirmDeleteCategory(cat.id)"
-                        class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors"
-                        title="Xóa Vĩnh viễn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </button>
-                    </ng-container>
-
-                  </div>
-                </td>
-              </tr>
-
-              <!-- Nested Topics Rows -->
-              <tr *ngIf="expandedCategoryIds().has(cat.id)" class="bg-gray-50/50 animate-fade-in-down">
-                <td colspan="7" class="py-0 px-0">
-                  <!-- Loading State -->
-                  <div *ngIf="loadingTopicsState()[cat.id]" class="p-8 flex justify-center items-center text-gray-400">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg"
-                      fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                      </path>
-                    </svg>
-                    Đang tải các chủ đề...
-                  </div>
-
-                  <!-- Topics Content -->
-                  <div *ngIf="!loadingTopicsState()[cat.id]" class="px-12 py-8 border-b border-gray-100 bg-white">
-                    <div class="flex justify-between items-center mb-6 pl-1">
-                      <h4
-                        class="text-xs font-extrabold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                        Các chủ đề trong <span class="text-blue-600">{{ cat.name }}</span>
-                      </h4>
-                      <button *ngIf="viewMode() === 'list'" (click)="openCreateTopic(cat.id)"
-                        class="text-xs font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all shadow-sm hover:shadow flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="12" y1="5" x2="12" y2="19"></line>
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Thêm Chủ đề
-                      </button>
-                    </div>
-
-                    <div *ngIf="getTopicsForCategory(cat.id).length === 0"
-                      class="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
-                      <p class="text-sm text-gray-400 font-medium">
-                        {{ viewMode() === 'trash' ? 'Không tìm thấy chủ đề đã xóa.' : 'Chưa có chủ đề nào.' }}
-                      </p>
-                      <button *ngIf="viewMode() === 'list'" (click)="openCreateTopic(cat.id)"
-                        class="text-sm font-bold text-blue-600 hover:underline mt-2">Tạo chủ đề đầu tiên</button>
-                    </div>
-
-                    <div *ngIf="getTopicsForCategory(cat.id).length > 0"
-                      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div *ngFor="let topic of getTopicsForCategory(cat.id); trackBy: trackByTopic"
-                        class="group flex items-center justify-between p-4 bg-slate-50 hover:bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md rounded-2xl transition-all duration-200 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white"
-                        tabindex="0" (keydown.enter)="openEditTopic(topic)">
-                        <div class="flex items-center gap-3">
-                          <div class="w-2.5 h-2.5 rounded-full ring-2 ring-white"
-                            [ngClass]="topic.isActive ? 'bg-emerald-400' : 'bg-slate-300'"></div>
-                          <div>
-                            <div class="font-bold text-gray-700 text-sm group-hover:text-blue-700 transition-colors">{{
-                              topic.name }}</div>
-                            <div class="text-[10px] text-gray-400 font-mono mt-0.5">{{ topic.slug }}</div>
-                          </div>
-                        </div>
-                        <div
-                          class="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-
-                          <!-- List Mode Topic Actions -->
-                          <ng-container *ngIf="viewMode() === 'list'">
-                            <div (click)="toggleTopicStatus(topic, $event)"
-                              (keydown.enter)="toggleTopicStatus(topic, $event)" tabindex="0"
-                              class="mr-2 cursor-pointer flex items-center" title="Đổi trạng thái">
-                              <div class="w-8 h-4 rounded-full relative transition-colors"
-                                [ngClass]="topic.isActive ? 'bg-emerald-500' : 'bg-slate-300'">
-                                <div
-                                  class="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform"
-                                  [ngClass]="topic.isActive ? 'translate-x-4' : 'translate-x-0'"></div>
-                              </div>
-                            </div>
-                            <button (click)="openEditTopic(topic)"
-                              class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              title="Sửa chủ đề">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                              </svg>
-                            </button>
-                            <button (click)="confirmDeleteTopic(topic)"
-                              class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-                              title="Xóa chủ đề">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path
-                                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2">
-                                </path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                              </svg>
-                            </button>
-                          </ng-container>
-
-                          <!-- Trash Mode Topic Actions -->
-                          <ng-container *ngIf="viewMode() === 'trash'">
-                            <button (click)="confirmRestore('topic', topic.id)"
-                              class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              title="Khôi phục chủ đề">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="15 14 20 9 15 4"></polyline>
-                                <path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
-                              </svg>
-                            </button>
-                            <button (click)="confirmDeleteTopic(topic)"
-                              class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
-                              title="Xóa vĩnh viễn">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path
-                                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-                                <line x1="10" y1="11" x2="10" y2="17" />
-                                <line x1="14" y1="11" x2="14" y2="17" />
-                              </svg>
-                            </button>
-                          </ng-container>
-
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </ng-container>
-
-            <!-- Deleted Topics Section (Trash Mode Only) -->
-            <!-- We display this as a row spanning full width if trash mode, but actually it might be better as a separate list BELOW the table if merging is hard.
-                 However, simpler is to just append a new SECTION after the table inside the scroll container.
-                 Let's do that instead of inside the tbody. -->
-          </tbody>
-        </table>
-
-        <!-- Deleted Topics Section (Trash Mode Only) -->
-        <div *ngIf="viewMode() === 'trash' && filteredTrashTopics().length > 0"
-          class="mt-8 border-t border-gray-100 pt-8 pb-12">
-          <h3 class="px-8 pb-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Chủ đề đã xóa</h3>
-          <div class="px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div *ngFor="let topic of filteredTrashTopics()"
-              class="group flex items-center justify-between p-4 bg-red-50/30 hover:bg-white border border-red-100 hover:border-red-200 hover:shadow-md rounded-2xl transition-all duration-200">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xs">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </div>
-                <div>
-                  <div class="font-bold text-gray-700 text-sm">{{ topic.name }}</div>
-                  <div class="text-[10px] text-gray-400 font-mono mt-0.5" *ngIf="topic.createdAt">Đã xóa: {{
-                    topic.updatedAt | date:'short' }}</div>
-                </div>
+    } @else {
+      <ul class="divide-y divide-gray-50">
+        @for (category of categories(); track category.id) {
+          <li>
+            <button
+              type="button"
+              (click)="selectCategory(category.id)"
+              [attr.aria-current]="selectedCategoryId() === category.id ? 'true' : null"
+              class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-kindy-surface-soft focus:outline-none focus:bg-kindy-surface-soft transition-colors"
+              [class.bg-kindy-surface-soft]="selectedCategoryId() === category.id"
+              [class.border-l-4]="selectedCategoryId() === category.id"
+              [class.border-kindy-sidebar-active]="selectedCategoryId() === category.id"
+            >
+              <span aria-hidden="true" class="w-10 h-10 rounded-lg bg-kindy-sun-soft flex items-center justify-center text-xl flex-shrink-0">{{ category.icon || '📚' }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-kindy-ink truncate">{{ category.name }}</p>
+                <p class="text-xs text-kindy-ink-soft truncate">
+                  {{ category.topicCount ?? 0 }} chủ đề
+                  @if (category.isActive === false) {
+                    · Tạm ẩn
+                  }
+                </p>
               </div>
-              <div>
-                <div>
-                  <button (click)="confirmRestore('topic', topic.id)"
-                    class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    title="Khôi phục Chủ đề">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="15 14 20 9 15 4"></polyline>
-                      <path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
-                    </svg>
-                  </button>
-                  <button (click)="confirmDeleteTopic(topic)"
-                    class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
-                    title="Xóa Vĩnh viễn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      scale="0.9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
+  <!-- Topics panel -->
+  <section class="bg-white rounded-xl border border-gray-100 flex flex-col min-h-[400px]" aria-label="Chủ đề trong phân loại">
+    @if (selectedCategory(); as cat) {
+      <header class="p-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3 min-w-0">
+          <span aria-hidden="true" class="w-11 h-11 rounded-xl bg-kindy-sun-soft flex items-center justify-center text-2xl flex-shrink-0">{{ cat.icon || '📚' }}</span>
+          <div class="min-w-0">
+            <h2 class="text-lg font-bold text-kindy-ink font-display truncate">{{ cat.name }}</h2>
+            <p class="text-xs text-kindy-ink-soft truncate">
+              {{ cat.description || 'Chưa có mô tả' }}
+              @if (cat.isActive !== undefined) {
+                · <app-status-pill [label]="cat.isActive ? 'Hoạt động' : 'Ẩn'" [tone]="cat.isActive ? 'active' : 'inactive'" />
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 flex-shrink-0">
+          @if (view() === 'active') {
+            <button
+              type="button"
+              (click)="openCategoryForm(cat)"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg text-kindy-ink-soft hover:bg-kindy-surface-soft hover:text-kindy-sidebar focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+            >
+              <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              Sửa
+            </button>
+            <button
+              type="button"
+              (click)="confirmDeleteCategory(cat)"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg text-kindy-ink-soft hover:bg-kindy-coral-soft hover:text-kindy-coral-strong focus:outline-none focus:ring-2 focus:ring-kindy-coral-strong"
+            >
+              <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-1 13a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M10 4V2h4v2m-9 3h14" /></svg>
+              Xoá
+            </button>
+            <button
+              type="button"
+              (click)="openTopicForm(null)"
+              class="ml-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-kindy-sidebar text-white hover:bg-kindy-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar"
+            >
+              <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Thêm chủ đề
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="restoreCategory(cat)"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-kindy-mint-soft text-emerald-700 hover:bg-kindy-mint hover:text-white focus:outline-none focus:ring-2 focus:ring-kindy-mint"
+            >Khôi phục</button>
+            <button
+              type="button"
+              (click)="confirmDeleteCategory(cat)"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg text-kindy-coral-strong hover:bg-kindy-coral-soft"
+            >Xoá vĩnh viễn</button>
+          }
+        </div>
+      </header>
+
+      <div class="p-4">
+        @if (isLoadingTopics()) {
+          <div class="space-y-2">
+            @for (_ of [1,2,3]; track $index) {
+              <div class="h-14 bg-gray-100 rounded-lg animate-pulse"></div>
+            }
+          </div>
+        } @else if (topics().length === 0) {
+          <app-empty-state
+            [message]="view() === 'trash' ? 'Không có chủ đề nào trong thùng rác.' : 'Chưa có chủ đề nào'"
+            [subMessage]="view() === 'trash' ? '' : 'Bấm &quot;Thêm chủ đề&quot; ở trên để tạo chủ đề đầu tiên.'"
+          />
+        } @else {
+          <ul class="divide-y divide-gray-50 border border-gray-100 rounded-xl overflow-hidden">
+            @for (topic of topics(); track topic.id) {
+              <li class="flex items-center gap-3 px-4 py-3 hover:bg-kindy-surface-soft/40">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-kindy-ink">{{ topic.name }}</p>
+                  @if (topic.description) {
+                    <p class="text-xs text-kindy-ink-soft mt-0.5 truncate">{{ topic.description }}</p>
+                  }
+                  <p class="text-xs text-kindy-ink-soft/70 mt-0.5">Slug: {{ topic.slug }}</p>
                 </div>
-              </div>
-            </div>
-          </div>
+
+                <app-status-pill
+                  [label]="topic.isActive === false ? 'Ẩn' : 'Hoạt động'"
+                  [tone]="topic.isActive === false ? 'inactive' : 'active'"
+                />
+
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  @if (view() === 'active') {
+                    <app-icon-button
+                      icon="pencil"
+                      tone="primary"
+                      size="sm"
+                      [ariaLabel]="'Chỉnh sửa ' + topic.name"
+                      (click)="openTopicForm(topic)"
+                    />
+                    <app-icon-button
+                      icon="trash"
+                      tone="danger"
+                      size="sm"
+                      [ariaLabel]="'Xoá ' + topic.name"
+                      (click)="confirmDeleteTopic(topic)"
+                    />
+                  } @else {
+                    <button type="button" (click)="restoreTopic(topic)" class="text-xs font-semibold text-emerald-700 hover:underline px-2">Khôi phục</button>
+                    <button type="button" (click)="confirmDeleteTopic(topic)" class="text-xs font-semibold text-kindy-coral-strong hover:underline px-2">Xoá vĩnh viễn</button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    } @else {
+      <div class="flex-1 flex items-center justify-center p-10 text-center">
+        <div>
+          <p class="text-5xl mb-3" aria-hidden="true">👈</p>
+          <p class="text-sm text-kindy-ink-soft">Chọn một phân loại để xem chủ đề</p>
         </div>
       </div>
-      <!-- Pagination -->
-      <app-pagination class="mt-auto block" [currentPage]="currentPageCategories()" [totalItems]="totalCategories()"
-        [pageSize]="pageSize()" itemName="categories" (pageChange)="onCategoryPageChange($event)">
-      </app-pagination>
-    </div>
-
-  </div>
-
-  <!-- Bulk Actions Toolbar (Floating) -->
-  <div *ngIf="selectedIds().size > 0"
-    class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 animate-fade-in-up border border-slate-700">
-    <div class="flex items-center gap-3">
-      <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg">{{ selectedIds().size }}</span>
-      <span class="font-medium text-sm">đang chọn</span>
-    </div>
-
-    <div class="h-6 w-px bg-slate-700"></div>
-
-    <!-- Restore Button (Trash Mode Only) -->
-    <button *ngIf="viewMode() === 'trash'" (click)="confirmBulkRestore()"
-      class="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-bold text-sm transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 14 15 8"></polyline>
-        <polyline points="15 8 20 8 20 12"></polyline>
-        <path d="M4 14a8.03 8.03 0 1 1 7.218 6.96"></path>
-      </svg>
-      Khôi phục
-    </button>
-
-    <div *ngIf="viewMode() === 'trash'" class="h-6 w-px bg-slate-700"></div>
-
-    <button (click)="confirmBulkDelete()"
-      class="flex items-center gap-2 text-rose-400 hover:text-rose-300 font-bold text-sm transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path>
-      </svg>
-      {{ viewMode() === 'trash' ? 'Xóa Vĩnh viễn' : 'Xóa' }}
-    </button>
-
-    <button (click)="clearSelection()"
-      class="ml-2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-  </div>
-
-  <!-- Modals -->
-
-  <!-- Category Modal -->
-  <div *ngIf="isCategoryModalOpen()"
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
-    <div
-      class="bg-white rounded-3xl shadow-2xl max-w-lg w-full relative z-10 overflow-hidden border border-white/10 ring-1 ring-black/5 flex flex-col max-h-[90vh]">
-
-      <!-- Header -->
-      <div
-        class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white/95 backdrop-blur-sm z-10 shrink-0">
-        <div>
-          <h3 class="text-xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Sửa Danh mục' : 'Danh mục mới'
-            }}</h3>
-          <p class="text-xs text-gray-500 mt-1 font-medium">Định nghĩa danh mục nội dung của bạn.</p>
-        </div>
-        <button (click)="closeModals()"
-          class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
-
-      <form [formGroup]="categoryForm" (ngSubmit)="submitCategory()"
-        class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-        <!-- Icon Upload -->
-        <div>
-          <label for="categoryIconInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Biểu tượng / Hình ảnh <span
-              class="text-rose-500">*</span></label>
-          <!-- Preview -->
-          <div class="flex items-center gap-5">
-            <div
-              class="w-20 h-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden text-3xl shadow-sm"
-              [class.border-rose-300]="categoryForm.get('icon')?.invalid && (categoryForm.get('icon')?.dirty || categoryForm.get('icon')?.touched)">
-              <img
-                *ngIf="getIconUrl(categoryForm.get('icon')?.value).startsWith('data:') || getIconUrl(categoryForm.get('icon')?.value).startsWith('http') || getIconUrl(categoryForm.get('icon')?.value).startsWith('/')"
-                [src]="getIconUrl(categoryForm.get('icon')?.value)" alt="Icon Preview"
-                class="w-full h-full object-cover">
-              <span
-                *ngIf="!(getIconUrl(categoryForm.get('icon')?.value).startsWith('data:') || getIconUrl(categoryForm.get('icon')?.value).startsWith('http') || getIconUrl(categoryForm.get('icon')?.value).startsWith('/'))">{{
-                categoryForm.get('icon')?.value ||
-                '?' }}</span>
-            </div>
-            <div class="flex-1">
-              <input id="categoryIconInput" type="file" (change)="onCategoryIconSelected($event)" accept="image/*"
-                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer mb-2">
-              <p class="text-xs text-gray-400">Hoặc dán biểu tượng vào tên, khuyến nghị tải tệp lên.</p>
-              <div
-                *ngIf="categoryForm.get('icon')?.invalid && (categoryForm.get('icon')?.dirty || categoryForm.get('icon')?.touched)"
-                class="text-rose-500 text-xs mt-1 font-medium">
-                Vui lòng chọn biểu tượng danh mục.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label for="categoryNameInput" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tên
-            danh mục
-            <span class="text-rose-500">*</span></label>
-          <input id="categoryNameInput" type="text" formControlName="name" placeholder="VD: Mỹ thuật & Thủ công"
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium"
-            [class.border-rose-300]="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.dirty || categoryForm.get('name')?.touched)"
-            [class.focus:border-rose-500]="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.dirty || categoryForm.get('name')?.touched)"
-            [class.focus:ring-rose-500]="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.dirty || categoryForm.get('name')?.touched)">
-          <div
-            *ngIf="categoryForm.get('name')?.invalid && (categoryForm.get('name')?.dirty || categoryForm.get('name')?.touched)"
-            class="text-rose-500 text-xs mt-1 font-medium">
-            Vui lòng nhập tên danh mục.
-          </div>
-        </div>
-
-        <div>
-          <label for="categorySlugInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Đường dẫn
-            (Tùy chọn)</label>
-          <input id="categorySlugInput" type="text" formControlName="slug" placeholder="Tự động tạo nếu để trống"
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium">
-        </div>
-
-        <div>
-          <label for="categoryDescriptionInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mô tả (Tùy chọn)</label>
-          <textarea id="categoryDescriptionInput" formControlName="description" placeholder="Mô tả ngắn về danh mục này"
-            rows="3"
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium resize-none"></textarea>
-        </div>
-
-        <div>
-          <label for="categoryStatusInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái</label>
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" formControlName="isActive" class="sr-only peer">
-            <div
-              class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-            </div>
-            <span class="ms-3 text-sm font-medium text-gray-700">{{ categoryForm.get('isActive')?.value ? 'Hoạt động' :
-              'Khóa' }}</span>
-          </label>
-        </div>
-
-        <!-- Metadata (Edit Mode Only) -->
-        <div *ngIf="isEditMode() && getSelectedCategory() as category" class="pt-4 border-t border-gray-100">
-          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Đặc tính</h4>
-          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
-            <div>
-              <span class="block text-gray-400">ID</span>
-              <span class="font-mono text-gray-700">#{{ category.id }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Nền tảng</span>
-              <span class="font-medium text-gray-700 uppercase">{{ category.platform || 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Ngày tạo</span>
-              <span>{{ category.createdAt ? (category.createdAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật lần cuối</span>
-              <span>{{ category.updatedAt ? (category.updatedAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Tạo bởi</span>
-              <span class="font-medium text-gray-700">{{ category.createdBy || 'Hệ thống' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Cập nhật bởi</span>
-              <span class="font-medium text-gray-700">{{ category.updatedBy || 'Hệ thống' }}</span>
-            </div>
-          </div>
-        </div>
-
-      </form>
-      <!-- Footer / Actions (Sticky) -->
-      <div class="px-8 py-5 border-t border-gray-100 bg-white/95 backdrop-blur-sm z-10 shrink-0 flex justify-end gap-3">
-        <button type="button" (click)="closeModals()"
-          class="px-6 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">Đóng</button>
-        <button (click)="submitCategory()" [disabled]="categoryForm.invalid || categoryForm.pristine"
-          class="px-6 py-3.5 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 disabled:opacity-50 shadow-lg shadow-slate-200 active:scale-95 transition-all">Lưu
-          Danh mục</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Topic Modal -->
-  <div *ngIf="isTopicModalOpen()"
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
-    <div
-      class="bg-white rounded-3xl shadow-2xl max-w-lg w-full relative z-10 overflow-hidden border border-white/10 ring-1 ring-black/5 flex flex-col max-h-[90vh]">
-      <!-- Header -->
-      <div
-        class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white/95 backdrop-blur-sm z-10 shrink-0">
-        <div>
-          <h3 class="text-xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Sửa Chủ đề' : 'Chủ đề mới' }}
-          </h3>
-          <p class="text-xs text-gray-500 mt-1 font-medium">Tạo chủ đề bên trong danh mục.</p>
-        </div>
-        <button (click)="closeModals()"
-          class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
-
-      <form [formGroup]="topicForm" (ngSubmit)="submitTopic()" class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-        <div>
-          <label for="topicNameInput" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tên
-            chủ đề <span class="text-rose-500">*</span></label>
-          <input id="topicNameInput" type="text" formControlName="name" placeholder="VD: Bảng chữ cái"
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium"
-            [class.border-rose-300]="topicForm.get('name')?.invalid && (topicForm.get('name')?.dirty || topicForm.get('name')?.touched)"
-            [class.focus:border-rose-500]="topicForm.get('name')?.invalid && (topicForm.get('name')?.dirty || topicForm.get('name')?.touched)"
-            [class.focus:ring-rose-500]="topicForm.get('name')?.invalid && (topicForm.get('name')?.dirty || topicForm.get('name')?.touched)">
-          <div
-            *ngIf="topicForm.get('name')?.invalid && (topicForm.get('name')?.dirty || topicForm.get('name')?.touched)"
-            class="text-rose-500 text-xs mt-1 font-medium">
-            Vui lòng nhập tên chủ đề.
-          </div>
-        </div>
-
-        <div>
-          <label for="topicDescriptionInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mô tả (Tùy chọn)</label>
-          <textarea id="topicDescriptionInput" formControlName="description" rows="3" placeholder="Mô tả cho chủ đề..."
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium resize-none"></textarea>
-        </div>
-
-        <div>
-          <label for="topicCategorySelect"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Danh mục cha <span
-              class="text-rose-500">*</span></label>
-          <select id="topicCategorySelect" formControlName="categoryId"
-            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none"
-            [class.border-rose-300]="topicForm.get('categoryId')?.invalid && (topicForm.get('categoryId')?.dirty || topicForm.get('categoryId')?.touched)"
-            [class.focus:border-rose-500]="topicForm.get('categoryId')?.invalid && (topicForm.get('categoryId')?.dirty || topicForm.get('categoryId')?.touched)"
-            [class.focus:ring-rose-500]="topicForm.get('categoryId')?.invalid && (topicForm.get('categoryId')?.dirty || topicForm.get('categoryId')?.touched)">
-            <option value="" disabled selected>Chọn danh mục</option>
-            <option *ngFor="let cat of sortedCategoriesDropdown()" [value]="cat.id">{{ cat.name }}</option>
-          </select>
-          <div
-            *ngIf="topicForm.get('categoryId')?.invalid && (topicForm.get('categoryId')?.dirty || topicForm.get('categoryId')?.touched)"
-            class="text-rose-500 text-xs mt-1 font-medium">
-            Vui lòng chọn danh mục cha.
-          </div>
-        </div>
-
-        <div>
-          <label for="topicStatusInput"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái</label>
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" formControlName="isActive" class="sr-only peer">
-            <div
-              class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-            </div>
-            <span class="ms-3 text-sm font-medium text-gray-700">{{ topicForm.get('isActive')?.value ? 'Hoạt động' :
-              'Khóa' }}</span>
-          </label>
-        </div>
-
-        <!-- Metadata (Edit Mode Only) -->
-        <div *ngIf="isEditMode() && getSelectedTopic() as topic" class="pt-4 border-t border-gray-100">
-          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Đặc tính</h4>
-          <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
-            <div>
-              <span class="block text-gray-400">ID</span>
-              <span class="font-mono text-gray-700">#{{ topic.id }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Trạng thái</span>
-              <span class="font-medium text-gray-700 uppercase">{{ topic.isActive ? 'Hoạt động' : 'Khóa' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Created At</span>
-              <span>{{ topic.createdAt ? (topic.createdAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Last Updated</span>
-              <span>{{ topic.updatedAt ? (topic.updatedAt | date:'medium') : 'N/A' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Created By</span>
-              <span class="font-medium text-gray-700">{{ topic.createdBy || 'System' }}</span>
-            </div>
-            <div>
-              <span class="block text-gray-400">Updated By</span>
-              <span class="font-medium text-gray-700">{{ topic.updatedBy || 'System' }}</span>
-            </div>
-          </div>
-        </div>
-      </form>
-      <!-- Footer / Actions (Sticky) -->
-      <div class="px-8 py-5 border-t border-gray-100 bg-white/95 backdrop-blur-sm z-10 shrink-0 flex justify-end gap-3">
-        <button type="button" (click)="closeModals()"
-          class="px-6 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">Đóng</button>
-        <button (click)="submitTopic()" [disabled]="topicForm.invalid || topicForm.pristine"
-          class="px-6 py-3.5 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 disabled:opacity-50 shadow-lg shadow-slate-200 active:scale-95 transition-all">Lưu
-          Chủ đề</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Confirmation Modal -->
-  <div *ngIf="isConfirmationModalOpen()"
-    class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-    <div
-      class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100 border border-white/10 ring-1 ring-black/5">
-      <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 border-4 border-white shadow-lg"
-        [ngClass]="(pendingItem?.action === 'restore' || pendingItem?.action === 'bulk-restore') ? 'bg-emerald-50' : 'bg-rose-50'">
-        <svg *ngIf="pendingItem?.action === 'delete' || pendingItem?.action === 'bulk-delete'"
-          class="h-10 w-10 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <svg *ngIf="pendingItem?.action === 'restore' || pendingItem?.action === 'bulk-restore'"
-          class="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ deleteModalTitle() || 'Xác nhận hành động' }}</h3>
-      <p class="text-sm text-gray-500 mb-8 leading-relaxed px-2"
-        [innerHTML]="deleteModalMessage() || 'Bạn có chắc chắn muốn tiếp tục?'">
-      </p>
-      <div class="flex justify-center gap-3">
-        <button type="button" (click)="closeModals()"
-          class="flex-1 px-4 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-colors">Đóng</button>
-        <button (click)="onConfirmModalAction()"
-          class="flex-1 px-4 py-3.5 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all"
-          [ngClass]="(pendingItem?.action === 'restore' || pendingItem?.action === 'bulk-restore') ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-200'">
-          {{ (pendingItem?.action === 'restore' || pendingItem?.action === 'bulk-restore') ? 'Khôi phục' : 'Xóa' }}
-        </button>
-      </div>
-    </div>
-  </div>
+    }
+  </section>
 </div>

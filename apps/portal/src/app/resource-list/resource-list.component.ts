@@ -1,43 +1,44 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  inject,
+  DestroyRef,
   OnInit,
-  OnDestroy,
-  ChangeDetectorRef,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '../pipes/translate.pipe';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  Resource,
-  ResourceService,
-  CategoryService,
-  TopicService,
-  Topic,
-  Category,
-  AgeGroup,
-} from '@kindergarten-warehouse/data-access';
-import {
-  combineLatest,
   BehaviorSubject,
+  catchError,
+  combineLatest,
+  debounceTime,
+  finalize,
   map,
+  of,
+  shareReplay,
+  startWith,
   switchMap,
   tap,
-  finalize,
-  catchError,
-  of,
-  startWith,
-  debounceTime,
-  Subject,
-  takeUntil,
-  shareReplay,
 } from 'rxjs';
 
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  AgeGroup,
+  Category,
+  CategoryService,
+  Resource,
+  ResourceDownloadService,
+  ResourceService,
+  Topic,
+  TopicService,
+} from '@kindergarten-warehouse/data-access';
 
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
-
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-skeleton.component';
+import { PaginatorComponent } from '../shared/paginator/paginator.component';
+import { TranslatePipe } from '../pipes/translate.pipe';
 
 @Component({
   selector: 'app-resource-list',
@@ -47,9 +48,11 @@ import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-ske
     FormsModule,
     TranslatePipe,
     ResourceCardComponent,
-
+    EmptyStateComponent,
     LoadingSkeletonComponent,
+    PaginatorComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resource-list.component.html',
   styles: [
     `
@@ -75,15 +78,14 @@ import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-ske
     `,
   ],
 })
-export class ResourceListComponent implements OnInit, OnDestroy {
-  private resourceService = inject(ResourceService);
-  private categoryService = inject(CategoryService);
-  private topicService = inject(TopicService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef); // Add CDR
-
-  private destroy$ = new Subject<void>();
+export class ResourceListComponent implements OnInit {
+  private readonly resourceService = inject(ResourceService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly topicService = inject(TopicService);
+  private readonly downloadService = inject(ResourceDownloadService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   categories$ = this.categoryService.getCategories(1, 100).pipe(
     shareReplay(1) // Share the result to avoid multiple API calls
@@ -117,10 +119,6 @@ export class ResourceListComponent implements OnInit, OnDestroy {
 
   totalPages$ = this.totalItems$.pipe(
     map((total) => Math.ceil(total / this.itemsPerPage))
-  );
-
-  pages$ = this.totalPages$.pipe(
-    map((total) => Array.from({ length: total }, (_, i) => i + 1))
   );
 
   // Cache Update Signal
@@ -214,7 +212,7 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Initialization Logic: Load Categories & AgeGroups -> Read URL -> Find Object -> Activate
     combineLatest([this.categories$, this.ageGroups$, this.route.queryParams])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([categoriesRes, ageGroups, params]) => {
         const catSlug = params['category'];
         const topicSlug = params['topic'];
@@ -275,10 +273,8 @@ export class ResourceListComponent implements OnInit, OnDestroy {
               this.currentTopics$.next(this.topicsCache[targetCatId]);
               this.resolveTopic(topicSlug, targetCatId);
             }
-          } else {
-            // Slug not found in categories? Maybe handle 404 or just reset
-            console.warn(`Category slug '${catSlug}' not found.`);
           }
+          // Slug not found → silently fall through; filter UI stays on "all".
         } else {
           // No category slug -> Reset if needed, but 'resetFilters' handles the view logic usually
         }
@@ -296,9 +292,6 @@ export class ResourceListComponent implements OnInit, OnDestroy {
           this.selectedTopicId$.next(foundTopic.id);
         }
       } else {
-        console.warn(
-          `Topic param '${topicParam}' not found in category ${catId}.`
-        );
         this.selectedTopicId$.next(null);
       }
     } else {
@@ -306,10 +299,10 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  trackByResourceId = (_: number, r: Resource) => r.id;
+  trackByCategoryId = (_: number, c: Category) => c.id;
+  trackByTopicId = (_: number, t: Topic) => t.id;
+  trackByAgeGroupId = (_: number, a: AgeGroup) => a.id;
 
   // Filtered Resources (before pagination)
   // Filtered Resources with Pagination
@@ -340,15 +333,6 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     debounceTime(100), // Prevent rapid double-firing
     tap(() => this.isLoading$.next(true)),
     switchMap(({ category, topicId, ageGroups, search, sort, page }) => {
-      console.log('Filter changed:', {
-        category,
-        topicId,
-        ageGroups,
-        search,
-        sort,
-        page,
-      });
-
       let targetTopicIds: string[] | undefined = undefined;
 
       if (topicId) {
@@ -379,13 +363,10 @@ export class ResourceListComponent implements OnInit, OnDestroy {
         })
         .pipe(
           map((res) => {
-            console.log('API Response:', res);
             this.totalItems$.next(res.data.totalElements);
             return res.data.content;
           }),
-          catchError(() => {
-            return of([]);
-          }),
+          catchError(() => of<Resource[]>([])),
           finalize(() => this.isLoading$.next(false))
         );
     })
@@ -394,24 +375,8 @@ export class ResourceListComponent implements OnInit, OnDestroy {
   // Removed client-side pagination wrapping
   // resources$ = combineLatest...
 
-  nextPage() {
-    // Subscribe/take(1) to get values cleanly or use withLatestFrom in a stream, but manual check is fine here
-    const current = this.currentPage$.value;
-    const total = Math.ceil(this.totalItems$.value / this.itemsPerPage);
-    if (current < total) {
-      this.currentPage$.next(current + 1);
-      this.scrollToTop();
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage$.value > 1) {
-      this.currentPage$.next(this.currentPage$.value - 1);
-      this.scrollToTop();
-    }
-  }
-
-  goToPage(page: number) {
+  goToPage(page: number): void {
+    if (page === this.currentPage$.value) return;
     this.currentPage$.next(page);
     this.scrollToTop();
   }
@@ -541,52 +506,12 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/resources', resource.id]);
   }
 
-  downloadResource(resource: Resource) {
-    if (!resource || !resource.id) return;
-
-    this.resourceService.downloadFile(resource.id).subscribe({
-      next: (response) => {
-        const contentDisposition = response.headers.get('content-disposition');
-        let filename = 'tai_lieu_mac_dinh.pdf';
-
-        if (contentDisposition) {
-          const regex = /filename\*=UTF-8''(.+)/;
-          const matches = regex.exec(contentDisposition);
-          if (matches != null && matches[1]) {
-            filename = decodeURIComponent(matches[1]);
-          } else {
-            const fallbackRegex = /filename="?([^"]+)"?/;
-            const fallbackMatches = fallbackRegex.exec(contentDisposition);
-            if (fallbackMatches != null && fallbackMatches[1]) {
-              filename = fallbackMatches[1];
-            }
-          }
-        } else if (resource.title) {
-          const ext = resource.fileUrl?.split('.').pop() || 'pdf';
-          filename = `${resource.title}.${ext}`;
-        }
-
-        const blob = response.body;
-        if (blob) {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }
-
-        resource.downloadCount = (resource.downloadCount || 0) + 1;
+  downloadResource(resource: Resource): void {
+    this.downloadService.download(resource).subscribe({
+      next: () => {
+        resource.downloadCount = (resource.downloadCount ?? 0) + 1;
       },
-      error: (err) => {
-        console.error('Download failed', err);
-        // Fallback
-        if (resource.fileUrl) {
-          window.open(resource.fileUrl, '_blank');
-        }
-      },
+      error: () => void 0,
     });
   }
 
@@ -602,7 +527,7 @@ export class ResourceListComponent implements OnInit, OnDestroy {
     }
   }
 
-  isTopicSelected(topicId: any): boolean {
+  isTopicSelected(topicId: string | number): boolean {
     const selected = this.selectedTopicId$.value;
     return String(selected) === String(topicId);
   }
