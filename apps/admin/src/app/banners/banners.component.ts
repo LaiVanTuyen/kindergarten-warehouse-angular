@@ -99,22 +99,46 @@ export class BannersComponent {
   }
 
   onDrop(event: CdkDragDrop<Banner[]>) {
-    if (this.platformFilter() !== 'ALL' || this.statusFilter() !== 'ALL') {
-      this.toast.show('Vui lòng tắt bộ lọc trước khi sắp xếp lại.', 'info');
+    // Phải chọn đúng 1 nền tảng (Web/Mobile) để đảm bảo thứ tự độc lập theo platform
+    if (this.platformFilter() === 'ALL') {
+      this.toast.show('Vui lòng chọn nền tảng (Web hoặc Mobile) trước khi sắp xếp.', 'info');
+      return;
+    }
+    // Không cho kéo thả khi đang lọc trạng thái để tránh mất thứ tự các banner đang ẩn
+    if (this.statusFilter() !== 'ALL') {
+      this.toast.show('Vui lòng tắt bộ lọc trạng thái trước khi sắp xếp.', 'info');
       return;
     }
     if (event.previousIndex === event.currentIndex) return;
-    const next = [...this.banners()];
+
+    // Lưu trạng thái cũ để rollback nếu API thất bại
+    const prev = [...this.banners()];
+    const platform = this.platformFilter();
+
+    // Tạo bản sao object (spread) để tránh mutation vô tình làm hỏng prev (dùng cho rollback)
+    const next = this.filtered().map(b => ({ ...b }));
     moveItemInArray(next, event.previousIndex, event.currentIndex);
     next.forEach((b, i) => (b.displayOrder = i + 1));
-    this.banners.set(next);
+
+    // Optimistic UI: thay thế VỊ TRÍ VẬT LÝ các phần tử của platform hiện tại
+    // trong mảng banners() bằng thứ tự mới, giữ nguyên platform còn lại
+    let platformIdx = 0;
+    const reordered = this.banners().map(b =>
+      b.platform === platform ? next[platformIdx++] : b
+    );
+    this.banners.set(reordered);
+
     this.bannerService
       .updateReorderedBanners(next)
-      .pipe(
-        handleHttpError(this.toast, 'Không cập nhật được thứ tự.'),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(() => this.toast.show('Đã cập nhật thứ tự.', 'success'));
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.toast.show('Đã cập nhật thứ tự.', 'success'),
+        error: () => {
+          // Rollback về trạng thái cũ khi API lỗi
+          this.banners.set(prev);
+          this.toast.show('Không cập nhật được thứ tự. Đã hoàn tác.', 'error');
+        },
+      });
   }
 
   openCreate() {
