@@ -38,24 +38,6 @@ export interface PasswordResetDialogData {
         @if (error()) {
           <p role="alert" class="text-xs text-kindy-coral-strong">{{ error() }}</p>
         }
-        <div actions class="contents">
-          <button
-            type="button"
-            (click)="ref.close()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
-          >Huỷ</button>
-          <button
-            type="button"
-            (click)="initiate()"
-            [disabled]="loading()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-          >
-            @if (loading()) {
-              <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-            }
-            Gửi mã OTP
-          </button>
-        </div>
       } @else if (step() === 'otp') {
         <label for="reset-pw-otp" class="block text-sm font-medium text-kindy-ink mb-2">
           Mã OTP 6 chữ số
@@ -73,24 +55,6 @@ export interface PasswordResetDialogData {
         @if (error()) {
           <p role="alert" class="text-xs text-kindy-coral-strong mt-2">{{ error() }}</p>
         }
-        <div actions class="contents">
-          <button
-            type="button"
-            (click)="ref.close()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
-          >Huỷ</button>
-          <button
-            type="button"
-            (click)="confirm()"
-            [disabled]="otp().length !== 6 || loading()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-          >
-            @if (loading()) {
-              <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-            }
-            Xác nhận
-          </button>
-        </div>
       } @else {
         <p class="text-sm text-kindy-ink mb-2">Mật khẩu tạm thời:</p>
         <div class="bg-kindy-mint-soft border border-emerald-300 rounded-lg p-3 text-center font-mono text-base font-bold text-emerald-800 select-all mb-3">
@@ -108,14 +72,51 @@ export interface PasswordResetDialogData {
         <p class="text-xs text-kindy-ink-soft">
           Gửi an toàn cho người dùng. Yêu cầu họ đổi ngay sau khi đăng nhập.
         </p>
-        <div actions class="contents">
+      }
+
+      <div actions class="contents">
+        @if (step() === 'init') {
+          <button
+            type="button"
+            (click)="ref.close()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          >Huỷ</button>
+          <button
+            type="button"
+            (click)="initiate()"
+            [disabled]="loading()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            @if (loading()) {
+              <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            }
+            Gửi mã OTP
+          </button>
+        } @else if (step() === 'otp') {
+          <button
+            type="button"
+            (click)="ref.close()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          >Huỷ</button>
+          <button
+            type="button"
+            (click)="confirm()"
+            [disabled]="otp().length !== 6 || loading()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            @if (loading()) {
+              <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            }
+            Xác nhận
+          </button>
+        } @else {
           <button
             type="button"
             (click)="ref.close(true)"
             class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar"
           >Đóng</button>
-        </div>
-      }
+        }
+      </div>
     </app-dialog-shell>
   `,
 })

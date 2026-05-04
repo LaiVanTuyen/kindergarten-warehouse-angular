@@ -98,18 +98,26 @@ export class BreadcrumbComponent {
     breadcrumbs: BreadcrumbItem[] = []
   ): BreadcrumbItem[] {
     const children = route.children;
-    if (children.length === 0) {
+    if (!children || children.length === 0) {
       return breadcrumbs;
     }
     for (const child of children) {
+      // Skip auxiliary routes and guard against uninitialized snapshots
+      if (child.outlet !== 'primary' || !child.snapshot) {
+        continue;
+      }
+      
       const routeURL = child.snapshot.url
         .map((segment) => segment.path)
         .join('/');
+      
       const nextUrl = routeURL ? `${url}/${routeURL}` : url;
       const label = child.snapshot.data['breadcrumb'];
+      
       if (label) {
         breadcrumbs.push({ label, url: nextUrl });
       }
+      
       return this.createBreadcrumbs(child, nextUrl, breadcrumbs);
     }
     return breadcrumbs;

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   HostListener,
   inject,
@@ -9,7 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Dialog } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
@@ -18,6 +18,7 @@ import {
   ConfirmDialogData,
 } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from '@kindergarten-warehouse/data-access';
+import { DialogService } from '../shared/services/dialog.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -28,7 +29,8 @@ import { AuthService } from '@kindergarten-warehouse/data-access';
 })
 export class AdminLayoutComponent {
   private authService = inject(AuthService);
-  private dialog = inject(Dialog);
+  private dialogs = inject(DialogService);
+  private destroyRef = inject(DestroyRef);
 
   readonly isProfileOpen = signal(false);
   readonly isSidebarOpen = signal(false); // mobile drawer
@@ -80,21 +82,11 @@ export class AdminLayoutComponent {
       cancelText: 'Ở lại',
       tone: 'danger',
     };
-    this.dialog
-      .open<boolean>(ConfirmDialogComponent, {
-        data,
-        role: 'alertdialog',
-        ariaLabelledBy: 'confirm-dialog-title',
-        ariaDescribedBy: 'confirm-dialog-message',
-        disableClose: false,
-        hasBackdrop: true,
-        backdropClass: 'bg-kindy-ink/40 backdrop-blur-sm',
-      })
-      .closed.subscribe((confirmed) => {
-        if (confirmed) {
-          this.authService.logout('Hẹn gặp lại bạn! 👋');
-        }
-      });
+    this.dialogs.confirm(data, this.destroyRef).subscribe((confirmed) => {
+      if (confirmed) {
+        this.authService.logout('Hẹn gặp lại bạn! 👋');
+      }
+    });
   }
 
   @HostListener('document:keydown.escape')

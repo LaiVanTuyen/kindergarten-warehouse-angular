@@ -32,10 +32,14 @@ const BTN_BASE =
   template: `
     <app-dialog-shell
       [title]="data.title"
-      [subtitle]="data.message"
       size="sm"
       [scrollable]="false"
+      [noBorder]="true"
     >
+      <p class="text-base text-gray-700" id="dialog-subtitle">
+        {{ data.message }}
+      </p>
+
       <div actions class="contents">
         <button
           type="button"

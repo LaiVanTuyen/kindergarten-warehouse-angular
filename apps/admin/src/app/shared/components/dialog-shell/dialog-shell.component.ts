@@ -38,9 +38,7 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
       [class]="shellClass()"
       class="bg-white rounded-2xl shadow-2xl flex flex-col"
     >
-      <header
-        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3"
-      >
+      <header [class]="headerClass()">
         <div class="min-w-0">
           <h3
             id="dialog-title"
@@ -83,9 +81,7 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
         <ng-content />
       </div>
 
-      <footer
-        class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 flex-wrap"
-      >
+      <footer [class]="footerClass()">
         <ng-content select="[actions]" />
       </footer>
     </div>
@@ -97,6 +93,7 @@ export class DialogShellComponent {
   readonly size = input<DialogSize>('md');
   readonly scrollable = input<boolean>(true);
   readonly closable = input<boolean>(true);
+  readonly noBorder = input<boolean>(false);
 
   private dialogRef = inject(DialogRef, { optional: true });
 
@@ -104,9 +101,19 @@ export class DialogShellComponent {
     () => `${SIZE_CLASSES[this.size()]} w-[calc(100vw-2rem)] max-h-[calc(100vh-4rem)]`
   );
 
+  readonly headerClass = computed(() => {
+    const base = 'px-6 py-4 flex items-center justify-between gap-3';
+    return this.noBorder() ? base : `${base} border-b border-gray-100`;
+  });
+
   readonly bodyClass = computed(() =>
     this.scrollable() ? 'flex-1 overflow-y-auto px-6 py-5' : 'px-6 py-5'
   );
+
+  readonly footerClass = computed(() => {
+    const base = 'px-6 py-4 flex justify-end gap-3 flex-wrap';
+    return this.noBorder() ? base : `${base} border-t border-gray-100`;
+  });
 
   onClose() {
     this.dialogRef?.close();
