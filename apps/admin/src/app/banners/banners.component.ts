@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -24,6 +25,7 @@ import {
   BannerFormDialogComponent,
   BannerFormDialogData,
   BannerFormDialogResult,
+  getThemeByTailwind,
 } from './components/banner-form-dialog.component';
 
 type PlatformFilter = 'ALL' | 'WEB' | 'MOBILE';
@@ -39,6 +41,7 @@ type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
     StatusPillComponent,
     EmptyStateComponent,
     IconButtonComponent,
+    NgStyle,
   ],
   templateUrl: './banners.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +121,11 @@ export class BannersComponent {
     this.openDialog(null);
   }
 
+  getGradientStyle(banner: Banner) {
+    const theme = getThemeByTailwind(banner.bgFrom, banner.bgTo);
+    return { 'background-image': `linear-gradient(135deg, ${theme.hexFrom}, ${theme.hexTo})` };
+  }
+
   openEdit(banner: Banner) {
     this.openDialog(banner);
   }
@@ -164,8 +172,14 @@ export class BannersComponent {
     fd.append('bgTo', values.bgTo);
     fd.append('platform', values.platform);
     fd.append('isActive', String(values.isActive));
-    if (values.startDate) fd.append('startDate', values.startDate);
-    if (values.endDate) fd.append('endDate', values.endDate);
+    if (values.startDate) {
+      const start = values.startDate.split('T')[0];
+      fd.append('startDate', `${start}T00:00:00`);
+    }
+    if (values.endDate) {
+      const end = values.endDate.split('T')[0];
+      fd.append('endDate', `${end}T23:59:59`);
+    }
     if (imageFile) fd.append('image', imageFile);
     return fd;
   }
@@ -179,6 +193,17 @@ export class BannersComponent {
     fd.append('bgTo', banner.bgTo);
     fd.append('platform', banner.platform);
     fd.append('isActive', String(!banner.isActive));
+    
+    // Ensure dates are correctly formatted to prevent backend LocalDateTime parsing errors
+    if (banner.startDate) {
+      const start = banner.startDate.split('T')[0];
+      fd.append('startDate', `${start}T00:00:00`);
+    }
+    if (banner.endDate) {
+      const end = banner.endDate.split('T')[0];
+      fd.append('endDate', `${end}T23:59:59`);
+    }
+    
     const prev = this.banners();
     this.banners.set(
       prev.map((b) =>
