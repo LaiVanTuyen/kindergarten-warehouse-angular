@@ -3,12 +3,12 @@ import {
   Component,
   DestroyRef,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs/operators';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { forkJoin, of } from 'rxjs';
+import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import {
@@ -82,6 +82,21 @@ export class DashboardComponent {
   readonly period = signal<DashboardPeriod>('this_year');
   readonly startDate = signal<string>('');
   readonly endDate = signal<string>('');
+  readonly filterParams = computed(() => {
+    const period = this.period();
+    const range =
+      period === 'custom'
+        ? {
+            startDate: this.startDate(),
+            endDate: this.endDate(),
+          }
+        : {
+            startDate: '',
+            endDate: '',
+          };
+
+    return { period, range };
+  });
 
   // --- Data signals -------------------------------------------------------
   readonly stats = signal<DashboardStats | null>(null);
@@ -225,18 +240,88 @@ export class DashboardComponent {
   });
 
   constructor() {
-    // Any change to period (or to custom dates while on 'custom') triggers
-    // a reload of every widget. Non-custom dates are NOT tracked, so typing
-    // dates while period === 'this_year' does not cause re-fetches.
-    effect(() => {
-      const period = this.period();
-      if (period === 'custom') {
-        const start = this.startDate();
-        const end = this.endDate();
-        if (!start || !end) return;
-      }
-      this.loadAll(period);
-    });
+    toObservable(this.filterParams)
+      .pipe(
+        filter(
+          ({ period, range }) =>
+            period !== 'custom' || !!(range.startDate && range.endDate)
+        ),
+        switchMap(({ period, range }) => {
+          this.isLoadingStats.set(true);
+          this.isLoadingTrend.set(true);
+          this.isLoadingPending.set(true);
+
+          return forkJoin({
+            stats: this.dashService.getStats(period, range).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được số liệu tổng quan.', 'error');
+                return of(null);
+              }),
+              finalize(() => this.isLoadingStats.set(false))
+            ),
+            trend: this.dashService.getTrend(period, range).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được biểu đồ xu hướng.', 'error');
+                return of(null);
+              }),
+              finalize(() => this.isLoadingTrend.set(false))
+            ),
+            pending: this.dashService.getPending(5).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được tài nguyên chờ duyệt.', 'error');
+                return of([] as PendingResource[]);
+              }),
+              finalize(() => this.isLoadingPending.set(false))
+            ),
+            topResources: this.dashService.getTopResources(period, 5).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được top tài nguyên.', 'error');
+                return of([] as TopResource[]);
+              })
+            ),
+            topTeachers: this.dashService.getTopTeachers(period, 5).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được top giáo viên.', 'error');
+                return of([] as TopTeacher[]);
+              })
+            ),
+            topicDistribution: this.dashService
+              .getTopicDistribution(period)
+              .pipe(
+                catchError(() => {
+                  this.toast.show('Không tải được phân bố chủ đề.', 'error');
+                  return of([] as TopicDistribution[]);
+                })
+              ),
+            activity: this.dashService.getRecentActivity(8).pipe(
+              catchError(() => {
+                this.toast.show('Không tải được hoạt động gần đây.', 'error');
+                return of([] as ActivityItem[]);
+              })
+            ),
+          });
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(
+        ({
+          stats,
+          trend,
+          pending,
+          topResources,
+          topTeachers,
+          topicDistribution,
+          activity,
+        }) => {
+          if (stats) this.stats.set(stats);
+          if (trend) this.trend.set(trend);
+          this.pending.set(pending);
+          this.topResources.set(topResources);
+          this.topTeachers.set(topTeachers);
+          this.topicDistribution.set(topicDistribution);
+          this.activity.set(activity);
+        }
+      );
   }
 
   // --- Public event handlers ---------------------------------------------
@@ -289,75 +374,6 @@ export class DashboardComponent {
       });
   }
 
-  // --- Data loading -------------------------------------------------------
-  private loadAll(period: DashboardPeriod) {
-    const range = {
-      startDate: this.startDate(),
-      endDate: this.endDate(),
-    };
-
-    this.isLoadingStats.set(true);
-    this.dashService
-      .getStats(period, range)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được số liệu tổng quan.'),
-        finalize(() => this.isLoadingStats.set(false)),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((s) => this.stats.set(s));
-
-    this.isLoadingTrend.set(true);
-    this.dashService
-      .getTrend(period, range)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được biểu đồ xu hướng.'),
-        finalize(() => this.isLoadingTrend.set(false)),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((t) => this.trend.set(t));
-
-    this.isLoadingPending.set(true);
-    this.dashService
-      .getPending(5)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được tài nguyên chờ duyệt.'),
-        finalize(() => this.isLoadingPending.set(false)),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((p) => this.pending.set(p));
-
-    this.dashService
-      .getTopResources(period, 5)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được top tài nguyên.'),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((r) => this.topResources.set(r));
-
-    this.dashService
-      .getTopTeachers(period, 5)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được top giáo viên.'),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((t) => this.topTeachers.set(t));
-
-    this.dashService
-      .getTopicDistribution(period)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được phân bố chủ đề.'),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((d) => this.topicDistribution.set(d));
-
-    this.dashService
-      .getRecentActivity(8)
-      .pipe(
-        handleHttpError(this.toast, 'Không tải được hoạt động gần đây.'),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((a) => this.activity.set(a));
-  }
 }
 
 // ---------- Helpers ---------------------------------------------------------
