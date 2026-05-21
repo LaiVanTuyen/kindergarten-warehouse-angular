@@ -6,7 +6,14 @@ import {
 import { provideRouter } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { provideEchartsCore } from 'ngx-echarts';
-import * as echarts from 'echarts';
+import * as echarts from 'echarts/core';
+import { LineChart, PieChart } from 'echarts/charts';
+import {
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import {
   provideHttpClient,
   withInterceptors,
@@ -17,6 +24,15 @@ import {
   API_URL,
   environment,
 } from '@kindergarten-warehouse/data-access';
+
+echarts.use([
+  LineChart,
+  PieChart,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  CanvasRenderer,
+]);
 
 export const appConfig: ApplicationConfig = {
   providers: [
