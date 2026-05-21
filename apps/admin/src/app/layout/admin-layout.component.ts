@@ -18,11 +18,12 @@ import {
   ConfirmDialogData,
 } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from '@kindergarten-warehouse/data-access';
+import { RoleLabelPipe } from '../shared/pipes/role-label.pipe';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterModule, SidebarComponent, BreadcrumbComponent],
+  imports: [RouterModule, SidebarComponent, BreadcrumbComponent, RoleLabelPipe],
   templateUrl: './admin-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -50,6 +51,13 @@ export class AdminLayoutComponent {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  });
+
+  readonly currentUserRoles = computed(() => {
+    const user = this.currentUser();
+    if (!user) return [] as string[];
+    if (user.roles && user.roles.length > 0) return user.roles;
+    return user.role ? [user.role] : [];
   });
 
   private profileMenu = viewChild<ElementRef<HTMLElement>>('profileMenu');

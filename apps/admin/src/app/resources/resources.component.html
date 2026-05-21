@@ -125,7 +125,27 @@
     <app-empty-state
       message="Không có tài nguyên nào"
       subMessage="Thử điều chỉnh bộ lọc hoặc chờ giáo viên tải lên từ Portal."
-    />
+    >
+      @if (hasFilters()) {
+        <button
+          action
+          type="button"
+          (click)="resetFilters()"
+          class="px-4 py-2 bg-kindy-sidebar text-white rounded-lg text-sm font-semibold hover:bg-kindy-sidebar-hover transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar"
+        >
+          Xoá bộ lọc
+        </button>
+      } @else {
+        <button
+          action
+          type="button"
+          (click)="load()"
+          class="px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar"
+        >
+          Tải lại dữ liệu
+        </button>
+      }
+    </app-empty-state>
   } @else {
     <!-- DESKTOP table -->
     <div class="hidden md:block overflow-x-auto">

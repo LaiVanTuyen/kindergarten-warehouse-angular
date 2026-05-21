@@ -118,7 +118,6 @@
             <th scope="col" class="px-4 py-3 font-semibold">Người dùng</th>
             <th scope="col" class="px-4 py-3 font-semibold">Hành động</th>
             <th scope="col" class="px-4 py-3 font-semibold">Đối tượng</th>
-            <th scope="col" class="px-4 py-3 font-semibold">IP</th>
             <th scope="col" class="px-4 py-3 font-semibold text-right">Chi tiết</th>
           </tr>
         </thead>
@@ -139,9 +138,6 @@
               </td>
               <td class="px-4 py-3 text-kindy-ink-soft truncate max-w-xs">
                 {{ log.target }}
-              </td>
-              <td class="px-4 py-3 text-xs text-kindy-ink-soft/70 font-mono whitespace-nowrap">
-                {{ log.ipAddress || '—' }}
               </td>
               <td class="px-4 py-3 text-right">
                 <button
@@ -205,10 +201,6 @@
   @if (selectedLog(); as log) {
     <dl class="space-y-4 text-sm">
       <div>
-        <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Mã sự kiện</dt>
-        <dd class="text-kindy-ink font-mono">#{{ log.id }}</dd>
-      </div>
-      <div>
         <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Thời gian</dt>
         <dd class="text-kindy-ink">{{ log.timestamp | date:'EEEE, dd/MM/yyyy HH:mm:ss' }}</dd>
       </div>
@@ -226,25 +218,56 @@
         <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Đối tượng</dt>
         <dd class="text-kindy-ink break-all">{{ log.target }}</dd>
       </div>
-      @if (log.ipAddress) {
+    </dl>
+
+    @if (hasTechnicalDetails(log)) {
+      <button
+        type="button"
+        (click)="toggleTechnicalDetails()"
+        class="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sky rounded-md px-1"
+        [attr.aria-expanded]="showTechnicalDetails()"
+      >
+        {{ showTechnicalDetails() ? 'Ẩn chi tiết kỹ thuật' : 'Xem chi tiết kỹ thuật' }}
+        <svg
+          aria-hidden="true"
+          class="w-3 h-3 transition-transform"
+          [class.rotate-90]="showTechnicalDetails()"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    }
+
+    @if (showTechnicalDetails()) {
+      <dl class="mt-4 space-y-4 text-sm border-t border-gray-100 pt-4">
+        <div>
+          <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Mã sự kiện</dt>
+          <dd class="text-kindy-ink font-mono">#{{ log.id }}</dd>
+        </div>
+        @if (log.ipAddress) {
         <div>
           <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Địa chỉ IP</dt>
           <dd class="text-kindy-ink font-mono">{{ log.ipAddress }}</dd>
         </div>
-      }
-      @if (log.userAgent) {
+        }
+        @if (log.userAgent) {
         <div>
           <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Trình duyệt</dt>
           <dd class="text-kindy-ink-soft text-xs break-all">{{ log.userAgent }}</dd>
         </div>
-      }
-    </dl>
+        }
+      </dl>
 
-    @if (log.detail) {
-      <div class="mt-5">
-        <p class="text-xs uppercase tracking-wider text-kindy-ink-soft mb-1">Dữ liệu chi tiết</p>
-        <pre class="bg-kindy-surface-soft rounded-lg p-3 text-xs text-kindy-ink font-mono whitespace-pre-wrap break-all">{{ log.detail }}</pre>
-      </div>
+      @if (log.detail) {
+        <div class="mt-5">
+          <p class="text-xs uppercase tracking-wider text-kindy-ink-soft mb-1">Dữ liệu chi tiết</p>
+          <pre class="bg-kindy-surface-soft rounded-lg p-3 text-xs text-kindy-ink font-mono whitespace-pre-wrap break-all">{{ log.detail }}</pre>
+        </div>
+      }
     }
   }
 </app-drawer>

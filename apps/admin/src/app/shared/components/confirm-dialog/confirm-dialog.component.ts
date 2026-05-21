@@ -32,10 +32,35 @@ const BTN_BASE =
   template: `
     <app-dialog-shell
       [title]="data.title"
-      [subtitle]="data.message"
       size="sm"
       [scrollable]="false"
     >
+      <div class="flex items-start gap-4 py-1">
+        @if (data.tone === 'danger') {
+          <div class="w-10 h-10 rounded-full bg-rose-50 text-kindy-coral-strong flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-1 13a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M10 4V2h4v2m-9 3h14" />
+            </svg>
+          </div>
+        } @else if (data.tone === 'warning') {
+          <div class="w-10 h-10 rounded-full bg-amber-50 text-kindy-sun flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        } @else {
+          <div class="w-10 h-10 rounded-full bg-blue-50 text-kindy-sidebar flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        }
+        
+        <div class="text-sm text-gray-600 leading-relaxed pt-1">
+          {{ data.message }}
+        </div>
+      </div>
+
       <div actions class="contents">
         <button
           type="button"

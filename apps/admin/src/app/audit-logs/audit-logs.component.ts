@@ -84,6 +84,7 @@ export class AuditLogsComponent {
   readonly page = signal(1);
   readonly pageSize = signal(20);
   readonly selectedLog = signal<AuditLog | null>(null);
+  readonly showTechnicalDetails = signal(false);
 
   readonly username = signal('');
   readonly action = signal<string>('');
@@ -183,10 +184,20 @@ export class AuditLogsComponent {
 
   openDetail(log: AuditLog) {
     this.selectedLog.set(log);
+    this.showTechnicalDetails.set(false);
   }
 
   closeDetail() {
     this.selectedLog.set(null);
+    this.showTechnicalDetails.set(false);
+  }
+
+  toggleTechnicalDetails() {
+    this.showTechnicalDetails.update((shown) => !shown);
+  }
+
+  hasTechnicalDetails(log: AuditLog): boolean {
+    return !!(log.id || log.ipAddress || log.userAgent || log.detail);
   }
 
   actionTone(action: string): StatusPillTone {
@@ -220,10 +231,7 @@ export class AuditLogsComponent {
           'Thời gian': log.timestamp,
           'Người dùng': log.username,
           'Hành động': this.actionLabel(log.action),
-          'Mã hành động': log.action,
           'Đối tượng': log.target,
-          'Địa chỉ IP': log.ipAddress ?? '',
-          'Chi tiết': log.detail ?? '',
         }));
         const stamp = new Date().toISOString().slice(0, 10);
         downloadCsv(`audit-logs-${stamp}.csv`, rows);

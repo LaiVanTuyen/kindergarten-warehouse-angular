@@ -33,7 +33,7 @@
       <div class="flex items-center gap-2 mt-2 flex-wrap">
         @for (role of displayedRoles(); track role) {
           <app-status-pill
-            [label]="role"
+            [label]="role | roleLabel"
             [tone]="role === 'ADMIN' ? 'admin' : role === 'TEACHER' ? 'teacher' : 'user'"
           />
         }

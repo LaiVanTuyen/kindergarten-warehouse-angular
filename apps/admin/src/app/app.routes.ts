@@ -1,8 +1,5 @@
 import { Route } from '@angular/router';
 import { AdminLayoutComponent } from './layout/admin-layout.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { BannersComponent } from './banners/banners.component';
-import { CategoriesComponent } from './categories/categories.component';
 import { roleGuard } from '@kindergarten-warehouse/data-access';
 
 export const appRoutes: Route[] = [
@@ -33,17 +30,24 @@ export const appRoutes: Route[] = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
-        component: DashboardComponent,
+        loadComponent: () =>
+          import('./dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent
+          ),
         data: { breadcrumb: 'Bảng điều khiển' },
       },
       {
         path: 'banners',
-        component: BannersComponent,
+        loadComponent: () =>
+          import('./banners/banners.component').then((m) => m.BannersComponent),
         data: { breadcrumb: 'Banner' },
       },
       {
         path: 'categories',
-        component: CategoriesComponent,
+        loadComponent: () =>
+          import('./categories/categories.component').then(
+            (m) => m.CategoriesComponent
+          ),
         data: { breadcrumb: 'Phân loại & Chủ đề' },
       },
       {

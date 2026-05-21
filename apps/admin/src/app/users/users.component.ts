@@ -28,6 +28,7 @@ import { PaginationComponent } from '../shared/components/pagination/pagination.
 import { IconButtonComponent } from '../shared/components/icon-button/icon-button.component';
 import { SortHeaderComponent, SortState } from '../shared/components/sort-header/sort-header.component';
 import { RelativeTimePipe } from '../shared/pipes/relative-time.pipe';
+import { RoleLabelPipe } from '../shared/pipes/role-label.pipe';
 import { ConfirmDialogData } from '../shared/components/confirm-dialog/confirm-dialog.component';
 import { DialogService } from '../shared/services/dialog.service';
 import { handleHttpError } from '../shared/utils/rx-operators';
@@ -57,6 +58,7 @@ import {
     IconButtonComponent,
     SortHeaderComponent,
     RelativeTimePipe,
+    RoleLabelPipe,
   ],
   templateUrl: './users.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
