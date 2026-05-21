@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   computed,
+  inject,
   input,
   output,
+  signal,
 } from '@angular/core';
-import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { FormsModule } from '@angular/forms';
 import type { DashboardPeriod } from '@kindergarten-warehouse/data-access';
 
@@ -45,10 +48,10 @@ const OPTIONS: PeriodOption[] = [
 @Component({
   selector: 'app-date-filter',
   standalone: true,
-  imports: [CdkMenuTrigger, CdkMenu, CdkMenuItem, FormsModule],
+  imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex items-center gap-3 flex-wrap">
+    <div class="relative flex items-center gap-3 flex-wrap">
       @if (value() === 'custom') {
         <div class="flex items-center gap-2" role="group" aria-label="Khoảng ngày tuỳ chỉnh">
           <label class="sr-only" for="date-filter-start">Từ ngày</label>
@@ -75,8 +78,10 @@ const OPTIONS: PeriodOption[] = [
 
       <button
         type="button"
-        [cdkMenuTriggerFor]="periodMenu"
+        (click)="toggleMenu()"
         aria-label="Chọn khoảng thời gian"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="isMenuOpen()"
         class="inline-flex items-center gap-2 bg-white border border-gray-200 text-kindy-ink py-2 pl-4 pr-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar font-medium text-sm hover:bg-kindy-surface-soft transition-colors"
       >
         <svg
@@ -107,47 +112,50 @@ const OPTIONS: PeriodOption[] = [
           />
         </svg>
       </button>
-    </div>
-
-    <ng-template #periodMenu>
-      <div
-        cdkMenu
-        class="bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px] focus:outline-none"
-      >
-        @for (opt of options; track opt.value) {
-          <button
-            cdkMenuItem
-            type="button"
-            (click)="select(opt.value)"
-            [attr.aria-current]="value() === opt.value ? 'true' : null"
-            class="w-full text-left px-4 py-2.5 text-sm hover:bg-kindy-surface-soft flex items-center gap-2 focus:outline-none focus:bg-kindy-surface-soft"
-            [class.bg-kindy-surface-soft]="value() === opt.value"
-            [class.text-kindy-sidebar]="value() === opt.value"
-            [class.font-semibold]="value() === opt.value"
-          >
-            <svg
-              aria-hidden="true"
-              class="w-4 h-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              viewBox="0 0 24 24"
+      @if (isMenuOpen()) {
+        <div
+          role="menu"
+          aria-label="Chọn khoảng thời gian"
+          class="absolute right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px] focus:outline-none"
+        >
+          @for (opt of options; track opt.value) {
+            <button
+              role="menuitem"
+              type="button"
+              (click)="select(opt.value)"
+              [attr.aria-current]="value() === opt.value ? 'true' : null"
+              class="w-full text-left px-4 py-2.5 text-sm hover:bg-kindy-surface-soft flex items-center gap-2 focus:outline-none focus:bg-kindy-surface-soft"
+              [class.bg-kindy-surface-soft]="value() === opt.value"
+              [class.text-kindy-sidebar]="value() === opt.value"
+              [class.font-semibold]="value() === opt.value"
             >
-              <path [attr.d]="opt.iconPath" />
-            </svg>
-            {{ opt.label }}
-          </button>
-        }
-      </div>
-    </ng-template>
+              <svg
+                aria-hidden="true"
+                class="w-4 h-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                viewBox="0 0 24 24"
+              >
+                <path [attr.d]="opt.iconPath" />
+              </svg>
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
   `,
 })
 export class DateFilterComponent {
+  private readonly host = inject(ElementRef<HTMLElement>);
+
   readonly value = input.required<DashboardPeriod>();
   readonly startDate = input<string>('');
   readonly endDate = input<string>('');
+  readonly isMenuOpen = signal(false);
 
   readonly valueChange = output<DashboardPeriod>();
   readonly startDateChange = output<string>();
@@ -162,7 +170,19 @@ export class DateFilterComponent {
     () => OPTIONS.find((o) => o.value === this.value())?.iconPath ?? ''
   );
 
+  @HostListener('document:click', ['$event'])
+  closeOnOutsideClick(event: MouseEvent) {
+    if (!this.host.nativeElement.contains(event.target as Node)) {
+      this.isMenuOpen.set(false);
+    }
+  }
+
+  toggleMenu() {
+    this.isMenuOpen.update((open) => !open);
+  }
+
   select(value: DashboardPeriod) {
+    this.isMenuOpen.set(false);
     if (value !== this.value()) {
       this.valueChange.emit(value);
     }
