@@ -28,6 +28,18 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   return pw && cf && pw !== cf ? { passwordsMismatch: true } : null;
 }
 
+function passwordComplexity(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (value.length >= 12) score++;
+  if (/[A-Z]/.test(value)) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+  return score < 3 ? { passwordTooWeak: true } : null;
+}
+
 @Component({
   selector: 'app-reset-password',
   standalone: true,
@@ -55,7 +67,12 @@ export class ResetPasswordComponent implements OnInit {
     {
       newPassword: [
         '',
-        [Validators.required, Validators.minLength(8), Validators.maxLength(128)],
+        [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.maxLength(128),
+          passwordComplexity,
+        ],
       ],
       confirmPassword: ['', [Validators.required]],
     },

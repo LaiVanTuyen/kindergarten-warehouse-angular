@@ -117,7 +117,7 @@
         <app-form-field
           label="Số điện thoại"
           [control]="profileForm.controls.phoneNumber"
-          [errors]="{ pattern: 'Số điện thoại không đúng định dạng.' }"
+          [errors]="{ pattern: 'Số điện thoại chưa hợp lệ (chỉ chấp nhận số, dấu +, khoảng trắng, từ 6 đến 20 ký tự).' }"
         >
           <input
             type="tel"
@@ -209,6 +209,7 @@
           label="Mật khẩu mới"
           [required]="true"
           [control]="passwordForm.controls.newPassword"
+          [errors]="{ passwordTooWeak: 'Mật khẩu quá yếu. Vui lòng kết hợp ít nhất 3 yếu tố: chữ thường, chữ hoa, số hoặc ký tự đặc biệt.' }"
         >
           <div class="relative">
             <input

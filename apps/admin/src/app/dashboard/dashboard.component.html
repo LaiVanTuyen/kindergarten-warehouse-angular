@@ -2,16 +2,17 @@
 
   <!-- Welcome banner + date filter -->
   <header
-    class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-kindy-sidebar via-kindy-sidebar-hover to-kindy-sidebar-active text-white p-6 shadow-xl"
+    class="relative rounded-3xl bg-gradient-to-br from-kindy-sidebar via-kindy-sidebar-hover to-kindy-sidebar-active text-white p-6 shadow-xl"
   >
-    <div
-      aria-hidden="true"
-      class="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"
-    ></div>
-    <div
-      aria-hidden="true"
-      class="absolute -left-16 -bottom-16 w-56 h-56 bg-kindy-coral/30 rounded-full blur-3xl"
-    ></div>
+    <!-- Background wrapper to clip decorative blobs -->
+    <div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none" aria-hidden="true">
+      <div
+        class="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+      ></div>
+      <div
+        class="absolute -left-16 -bottom-16 w-56 h-56 bg-kindy-coral/30 rounded-full blur-3xl"
+      ></div>
+    </div>
 
     <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div class="min-w-0">
@@ -73,6 +74,7 @@
           <div
             echarts
             [options]="chart.option"
+            [autoResize]="true"
             class="h-[220px] w-full"
             role="img"
             [attr.aria-label]="'Biểu đồ ' + chart.title"
@@ -160,6 +162,7 @@
         <div
           echarts
           [options]="topicPieOption()"
+          [autoResize]="true"
           class="h-[240px] w-full"
           role="img"
           aria-label="Biểu đồ phân bố tài nguyên theo chủ đề"

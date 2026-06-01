@@ -12,3 +12,13 @@
     font-family: 'Quicksand', sans-serif;
   }
 }
+
+html,
+body,
+app-root,
+app-admin-layout {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
