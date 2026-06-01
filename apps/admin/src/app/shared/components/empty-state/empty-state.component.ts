@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -49,14 +49,19 @@ import { CommonModule } from '@angular/common';
         />
       </svg>
 
-      <h3 class="text-xl font-bold text-gray-800 mb-2">{{ message }}</h3>
-      <p class="text-gray-500 max-w-sm">{{ subMessage }}</p>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">{{ message() }}</h3>
+      <p class="text-gray-500 max-w-sm">{{ subMessage() }}</p>
+      
+      <div class="mt-4">
+        <ng-content select="[action]"></ng-content>
+      </div>
     </div>
   `,
   styles: [],
 })
 export class EmptyStateComponent {
-  @Input() message = 'Nothing to see here!';
-  @Input() subMessage =
-    'Try adjusting your filters or search to find what you are looking for.';
+  readonly message = input<string>('Không có dữ liệu');
+  readonly subMessage = input<string>(
+    'Thử điều chỉnh bộ lọc hoặc tìm kiếm để tìm thấy thông tin cần thiết.'
+  );
 }

@@ -28,6 +28,7 @@ import { PageHeaderComponent } from '../shared/components/page-header/page-heade
 import { AvatarComponent } from '../shared/components/avatar/avatar.component';
 import { StatusPillComponent } from '../shared/components/status-pill/status-pill.component';
 import { FormFieldComponent } from '../shared/components/form-field/form-field.component';
+import { RoleLabelPipe } from '../shared/pipes/role-label.pipe';
 
 type TabKey = 'general' | 'security';
 const MAX_AVATAR_SIZE = 3 * 1024 * 1024;
@@ -49,6 +50,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     AvatarComponent,
     StatusPillComponent,
     FormFieldComponent,
+    RoleLabelPipe,
   ],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

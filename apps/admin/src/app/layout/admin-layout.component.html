@@ -31,7 +31,7 @@
   </aside>
 
   <!-- Main Content Area -->
-  <div class="flex-1 flex flex-col overflow-hidden w-full">
+  <div class="flex-1 min-h-0 flex flex-col overflow-hidden w-full">
     <!-- Topbar -->
     <header
       class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 z-10 relative"
@@ -65,7 +65,7 @@
         </button>
 
         <h1 class="text-lg lg:text-xl font-bold font-display text-kindy-ink truncate">
-          Trang quản trị
+          Kho Học Liệu Mầm Non
         </h1>
       </div>
 
@@ -116,7 +116,13 @@
                   {{ user.email }}
                 </p>
                 <p class="text-xs text-kindy-sidebar-active font-semibold mt-1">
-                  {{ user.roles?.join(', ') || user.role || '—' }}
+                  @if (currentUserRoles().length > 0) {
+                    @for (role of currentUserRoles(); track role; let last = $last) {
+                      {{ role | roleLabel }}@if (!last) {, }
+                    }
+                  } @else {
+                    —
+                  }
                 </p>
               </div>
 
@@ -183,7 +189,7 @@
     <main
       id="main-content"
       tabindex="-1"
-      class="flex-1 overflow-y-auto bg-kindy-cream p-4 lg:p-6"
+      class="flex-1 min-h-0 overflow-y-auto bg-kindy-cream p-4 lg:p-6"
     >
       <router-outlet />
     </main>

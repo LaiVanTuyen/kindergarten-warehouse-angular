@@ -17,7 +17,7 @@ export class PaginationComponent {
   currentPage = input.required<number>();
   pageSize = input.required<number>();
   totalItems = input.required<number>();
-  itemName = input<string>('items');
+  itemName = input<string>('mục');
 
   @Output() pageChange = new EventEmitter<number>();
 
@@ -28,7 +28,7 @@ export class PaginationComponent {
     Math.min(this.currentPage() * this.pageSize(), this.totalItems())
   );
 
-  get pages(): (number | string)[] {
+  pages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
 
@@ -45,7 +45,7 @@ export class PaginationComponent {
     }
 
     return [1, '...', current - 1, current, current + 1, '...', total];
-  }
+  });
 
   onPageClick(page: number | string) {
     if (typeof page === 'number') {
