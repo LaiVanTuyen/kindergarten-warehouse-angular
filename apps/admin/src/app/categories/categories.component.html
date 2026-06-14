@@ -24,10 +24,10 @@
         [attr.aria-selected]="view() === opt.v"
         (click)="setView($any(opt.v))"
         class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-focus"
-        [class.bg-white]="view() === opt.v"
-        [class.text-kindy-sidebar]="view() === opt.v"
+        [class.bg-surface]="view() === opt.v"
+        [class.text-primary]="view() === opt.v"
         [class.shadow-sm]="view() === opt.v"
-        [class.text-kindy-ink-soft]="view() !== opt.v"
+        [class.text-ink-soft]="view() !== opt.v"
       >{{ opt.l }}</button>
     }
   </div>

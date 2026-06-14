@@ -20,11 +20,11 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      [class.bg-white]="boxed"
+      [class.bg-surface]="boxed"
       [class.rounded-3xl]="boxed"
       [class.shadow-sm]="boxed"
       [class.border]="boxed"
-      [class.border-gray-100]="boxed"
+      [class.border-line]="boxed"
       class="flex flex-col items-center justify-center py-14 px-6 text-center"
       role="alert"
     >

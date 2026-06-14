@@ -23,6 +23,7 @@ import {
   ToastService,
   TrendSeries,
   ActivityItem,
+  ThemeService,
   handleHttpError,
 } from '@kindergarten-warehouse/data-access';
 
@@ -56,6 +57,15 @@ interface TrendChartConfig {
   option: EChartsOption;
 }
 
+interface ChartPalette {
+  axis: string;
+  axisLine: string;
+  grid: string;
+  tooltipBg: string;
+  tooltipText: string;
+  surface: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -77,6 +87,28 @@ export class DashboardComponent {
   private toast = inject(ToastService);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
+  private theme = inject(ThemeService);
+
+  /** Theme-aware ECharts palette (recomputed when light/dark toggles). */
+  private chartPalette(): ChartPalette {
+    return this.theme.resolved() === 'dark'
+      ? {
+          axis: '#BCBAC2',
+          axisLine: '#4A4A54',
+          grid: '#38383F',
+          tooltipBg: '#27272E',
+          tooltipText: '#F4F4F5',
+          surface: '#202026',
+        }
+      : {
+          axis: '#57534E',
+          axisLine: '#E7E5E4',
+          grid: '#F1EFEE',
+          tooltipBg: '#FFFFFF',
+          tooltipText: '#1C1B22',
+          surface: '#FFFFFF',
+        };
+  }
 
   // --- Filter state -------------------------------------------------------
   readonly period = signal<DashboardPeriod>('this_year');
@@ -166,18 +198,19 @@ export class DashboardComponent {
   readonly trendCharts = computed<TrendChartConfig[]>(() => {
     const t = this.trend();
     if (!t) return [];
+    const p = this.chartPalette();
     return [
       {
         title: 'Tài nguyên mới',
-        option: buildLineChart(t.xAxis, t.resources, '#FB7185', '251, 113, 133'),
+        option: buildLineChart(t.xAxis, t.resources, '#FB7185', '251, 113, 133', p),
       },
       {
         title: 'Lượt xem',
-        option: buildLineChart(t.xAxis, t.views, '#60A5FA', '96, 165, 250'),
+        option: buildLineChart(t.xAxis, t.views, '#60A5FA', '96, 165, 250', p),
       },
       {
         title: 'Người dùng mới',
-        option: buildLineChart(t.xAxis, t.users, '#34D399', '52, 211, 153'),
+        option: buildLineChart(t.xAxis, t.users, '#34D399', '52, 211, 153', p),
       },
     ];
   });
@@ -209,15 +242,22 @@ export class DashboardComponent {
   // --- Pie chart ----------------------------------------------------------
   readonly topicPieOption = computed<EChartsOption>(() => {
     const data = this.topicDistribution();
+    const p = this.chartPalette();
     return {
-      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)',
+        backgroundColor: p.tooltipBg,
+        borderColor: p.axisLine,
+        textStyle: { color: p.tooltipText },
+      },
       legend: {
         orient: 'vertical',
         right: '0',
         top: 'middle',
         itemWidth: 10,
         itemHeight: 10,
-        textStyle: { fontSize: 11, color: '#6B6684' },
+        textStyle: { fontSize: 11, color: p.axis },
       },
       series: [
         {
@@ -226,7 +266,7 @@ export class DashboardComponent {
           radius: ['48%', '72%'],
           center: ['35%', '50%'],
           avoidLabelOverlap: true,
-          itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+          itemStyle: { borderRadius: 6, borderColor: p.surface, borderWidth: 2 },
           label: { show: false },
           labelLine: { show: false },
           data: data.map((d) => ({
@@ -380,14 +420,15 @@ function buildLineChart(
   xAxis: string[],
   data: number[],
   colorHex: string,
-  colorRgb: string
+  colorRgb: string,
+  p: ChartPalette
 ): EChartsOption {
   return {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#fff',
-      borderColor: '#e5e7eb',
-      textStyle: { color: '#1F1A37', fontSize: 12 },
+      backgroundColor: p.tooltipBg,
+      borderColor: p.axisLine,
+      textStyle: { color: p.tooltipText, fontSize: 12 },
       axisPointer: { type: 'line', lineStyle: { type: 'dashed' } },
     },
     grid: { containLabel: true, left: 8, right: 16, bottom: 8, top: 16 },
@@ -395,14 +436,14 @@ function buildLineChart(
       type: 'category',
       boundaryGap: false,
       data: xAxis,
-      axisLine: { lineStyle: { color: '#e5e7eb' } },
-      axisLabel: { color: '#6B6684', fontSize: 10 },
+      axisLine: { lineStyle: { color: p.axisLine } },
+      axisLabel: { color: p.axis, fontSize: 10 },
       axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { type: 'dashed', color: '#f3f4f6' } },
-      axisLabel: { color: '#6B6684', fontSize: 10 },
+      splitLine: { lineStyle: { type: 'dashed', color: p.grid } },
+      axisLabel: { color: p.axis, fontSize: 10 },
     },
     series: [
       {
@@ -411,7 +452,7 @@ function buildLineChart(
         smooth: true,
         showSymbol: true,
         symbolSize: 6,
-        itemStyle: { color: colorHex, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { color: colorHex, borderColor: p.surface, borderWidth: 2 },
         lineStyle: { width: 3, color: colorHex },
         areaStyle: {
           color: {

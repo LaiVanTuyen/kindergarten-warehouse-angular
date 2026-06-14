@@ -25,8 +25,8 @@
         [attr.aria-selected]="platformFilter() === opt.v"
         (click)="setPlatform($any(opt.v))"
         class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-        [class.bg-white]="platformFilter() === opt.v"
-        [class.text-kindy-sidebar]="platformFilter() === opt.v"
+        [class.bg-surface]="platformFilter() === opt.v"
+        [class.text-primary]="platformFilter() === opt.v"
         [class.shadow-sm]="platformFilter() === opt.v"
         [class.text-kindy-ink-soft]="platformFilter() !== opt.v"
       >{{ opt.l }}</button>
@@ -42,8 +42,8 @@
         [attr.aria-selected]="statusFilter() === opt.v"
         (click)="setStatus($any(opt.v))"
         class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-        [class.bg-white]="statusFilter() === opt.v"
-        [class.text-kindy-sidebar]="statusFilter() === opt.v"
+        [class.bg-surface]="statusFilter() === opt.v"
+        [class.text-primary]="statusFilter() === opt.v"
         [class.shadow-sm]="statusFilter() === opt.v"
         [class.text-kindy-ink-soft]="statusFilter() !== opt.v"
       >{{ opt.l }}</button>

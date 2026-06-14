@@ -37,10 +37,10 @@ export interface SegmentedOption<T extends string = string> {
           [attr.aria-selected]="opt.value === value()"
           (click)="valueChange.emit(opt.value)"
           class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-          [class.bg-white]="opt.value === value()"
-          [class.text-kindy-sidebar]="opt.value === value()"
+          [class.bg-surface]="opt.value === value()"
+          [class.text-primary]="opt.value === value()"
           [class.shadow-sm]="opt.value === value()"
-          [class.text-kindy-ink-soft]="opt.value !== value()"
+          [class.text-ink-soft]="opt.value !== value()"
         >
           {{ opt.label }}
         </button>

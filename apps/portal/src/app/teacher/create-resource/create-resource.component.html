@@ -112,13 +112,13 @@
               (click)="toggleAgeGroup(age.id)"
               [attr.aria-pressed]="isAgeSelected(age.id)"
               class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-              [class.bg-pink-500]="isAgeSelected(age.id)"
-              [class.text-white]="isAgeSelected(age.id)"
-              [class.ring-pink-500]="isAgeSelected(age.id)"
-              [class.bg-white]="!isAgeSelected(age.id)"
-              [class.text-gray-700]="!isAgeSelected(age.id)"
-              [class.ring-gray-200]="!isAgeSelected(age.id)"
-              [class.hover:bg-pink-50]="!isAgeSelected(age.id)">
+              [class.bg-primary-600]="isAgeSelected(age.id)"
+              [class.text-ink-onbrand]="isAgeSelected(age.id)"
+              [class.ring-primary-600]="isAgeSelected(age.id)"
+              [class.bg-surface]="!isAgeSelected(age.id)"
+              [class.text-ink-soft]="!isAgeSelected(age.id)"
+              [class.ring-line]="!isAgeSelected(age.id)"
+              [class.hover:bg-primary-50]="!isAgeSelected(age.id)">
               <i class="ph" [ngClass]="isAgeSelected(age.id) ? 'ph-check-circle' : 'ph-baby'" aria-hidden="true"></i>
               {{ age.name }}
             </button>
