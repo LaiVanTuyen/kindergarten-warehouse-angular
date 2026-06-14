@@ -1,92 +1,107 @@
-# BE Fixes Required — phát hiện từ FE E2E test
+# BE Action Items — tổng hợp từ FE E2E test
 
-> **Nguồn:** Test thực tế FE (Chrome + puppeteer) chạy trên working-tree mới (D1/D2/D3/SEC-4) trỏ vào BE `localhost:8080` (Flyway V21/V22 đã apply).
-> **Liên quan:** [API_CONTRACT_V1.md](./API_CONTRACT_V1.md) · [DESIGN_REVIEW.md](./DESIGN_REVIEW.md) · Ngày: 2026-06-14
-> **Quy ước:** 🔴 P0 chặn chức năng · 🟡 P1 cần cho môi trường thật · 🟢 xác nhận/giữ nguyên.
+> **Nguồn:** Test thực tế FE (Chrome + puppeteer + curl) trên working-tree mới (D1/D2/D3/SEC-4), BE `localhost:8080` (Flyway V21/V22, MySQL/Redis/MinIO docker).
+> **Đã verify live (đọc + ghi):** login/logout, CRUD category/topic/user, block, banner toggle, **upload→duyệt→từ chối resource, bình luận+rating, tăng view** — đều 2xx.
+> **Liên quan:** [API_CONTRACT_V1.md](./API_CONTRACT_V1.md) · [DESIGN_REVIEW.md](./DESIGN_REVIEW.md) · Cập nhật: 2026-06-15
+> **Mức:** 🔴 P0 chặn · 🟡 P1 nên sửa · 🟢 nhỏ/tuỳ chọn · ✅ đã xong.
 
 ---
 
 ## 0. Tóm tắt
 
-> **CẬP NHẬT 2026-06-14 (sau phản hồi BE):** BE-1 **KHÔNG phải lỗi BE** và **đã được giải quyết phía FE**. Giả thuyết "Xor handler" ban đầu **sai** — BE dùng `CsrfTokenRequestAttributeHandler` (raw) là đúng. Xem phần BE-1 đã sửa bên dưới. BE-2 đã có workaround (dev OTP log). Còn lại là 1 tối ưu CSRF tuỳ chọn + 2 lỗi nhỏ.
-
-| # | Vấn đề | Mức | Trạng thái |
-|---|---|---|---|
-| BE-1 | CSRF 403 ở request ghi | ✅ Đã hiểu đúng | **Đã fix FE** (retry). BE **không bắt buộc sửa**; có 1 tối ưu tuỳ chọn (token ổn định). |
-| BE-2 | SMTP chưa cấu hình | 🟡 P1 | BE đã thêm dev OTP log → test được không cần mail. Cần SMTP cho mail thật. |
-| BE-3 | Endpoint/param FE gọi | 🟢 | Đã khớp (BE xác nhận). |
-| BE-4 | `favorite` id sai trả 409 thay vì 404; sai method → 500 thay vì 405 | 🟢 nhỏ | Tuỳ BE (không chặn). |
-
-> ✅ Đã verify chạy đúng (không cần sửa): login cấp cookie; mọi endpoint **đọc** (list users/resources/categories/topics/banners/audit-logs) trả **200**; pagination `sort=field,dir` (D2); `visibility` (D1) end-to-end; chống mật khẩu yếu (D3).
-
----
-
-## BE-1 · CSRF 403 — ✅ ĐÃ FIX PHÍA FE (đính chính)
-
-> **Đính chính:** Giả thuyết "BE dùng XorCsrfTokenRequestAttributeHandler" ở bản trước **SAI**. BE đã xác nhận dùng `CsrfTokenRequestAttributeHandler` (raw double-submit) — **đúng**. **KHÔNG áp Cách B / `SpaCsrfTokenRequestHandler`** (sẽ thừa và có thể làm hỏng luồng raw đang chạy tốt).
-
-### Nguyên nhân thật (đo lại bằng curl)
-1. `login` → cookie `XSRF-TOKEN=T1`; **ghi ngay với T1 → 200** (BE chấp nhận, không cần xoay). ✅
-2. Nhưng **sau một GET, cookie `XSRF-TOKEN` bị rỗng/đổi** (đo: token sau GET = empty). Trên trình duyệt có nhiều GET giữa login và thao tác ghi đầu → request ghi đầu mang token **rỗng/cũ** → **403** (`{code:1012}`); BE phát token mới trong chính response 403 đó.
-
-### Đã xử lý phía FE (không cần BE sửa)
-- Đăng ký `csrfInterceptor` (trước đây có file nhưng **chưa đăng ký**) → gắn `X-XSRF-TOKEN` từ cookie cho mọi request.
-- `csrfInterceptor` **retry 1 lần khi gặp 403 ở request ghi**: đọc lại cookie (đã được BE phát mới) và gửi lại. An toàn vì 403 = chưa thực thi → không double-write.
-- Thứ tự interceptor `[auth, csrf]` để csrf nuốt 403 tạm thời trước khi auth kịp hiện toast.
-- **Verify live:** `PATCH /banners/1/toggle` và `POST /auth/logout` đều **403 → retry → 200**; logout huỷ phiên thật.
-
-### (Tuỳ chọn) Tối ưu phía BE — KHÔNG bắt buộc
-Hiện mỗi thao tác ghi tốn **2 round-trip** (403 rồi retry) do cookie CSRF bị rỗng/đổi sau GET. Nếu BE giữ **token CSRF ổn định theo phiên** (không clear/rotate `XSRF-TOKEN` trên mỗi GET response) thì request ghi đầu sẽ 200 ngay, bỏ được retry. Đây là tối ưu hiệu năng/UX, không phải lỗi chặn.
-
-> Câu hỏi cho BE: có chủ đích clear/rotate cookie `XSRF-TOKEN` sau mỗi request không? Nếu không, kiểm tra cấu hình `CookieCsrfTokenRepository`/filter nào đang xoá nó sau GET.
+| # | Việc | Mức |
+|---|---|---|
+| **BE-8** | **Tải file → 500** (`GET /resources/{id}/file` & `PUT /{id}/download`) | 🔴 **P0** |
+| BE-2 | `POST/PUT /categories` nhận JSON → **500 (9999)** (nên 415/400) | 🟡 P1 |
+| BE-9 | **Bulk payload chưa theo contract `{ids}`** (BE dùng `resourceIds`/mảng thô) | 🟡 P1 |
+| BE-6 | SMTP chưa cấu hình (đã có dev-OTP-log để test) | 🟡 P1 |
+| BE-3 | `favorite` id sai → **409** (nên **404**) | 🟢 |
+| BE-4 | Sai HTTP method → **500** (nên **405**) | 🟢 |
+| BE-5 | CSRF token bị clear sau GET → mỗi write 2 round-trip (tối ưu) | 🟢 |
+| ✅ | CSRF 403 (FE đã xử lý); `block`→PATCH; endpoint/param contract; luồng resource | đã xong |
 
 ---
 
-## BE-2 · SMTP chưa cấu hình 🟡 P1
+## BE-8 · Tải file → 500 🔴 P0
 
-- `MAIL_USERNAME` / `MAIL_PASSWORD` đang rỗng ⇒ luồng **register → verify-email OTP** và **reset mật khẩu** không gửi được mail.
-- **Cần:** điền SMTP vào `.env` (vd Gmail App Password / Mailtrap cho dev) rồi restart `warehouse_app`.
-- Tạm thời để test: admin tạo user trực tiếp (status `ACTIVE`) — nhưng chức năng OTP/verify chỉ phủ được khi có SMTP.
+Resource PUBLIC + APPROVED (của chính admin) nhưng **không tải được**:
+```
+GET  /api/v1/resources/{id}/file      -> 500  {"code":9999,"message":"Failed to download file"}
+PUT  /api/v1/resources/{id}/download  -> 500  {"code":9999,"message":"An unexpected error occurred"}
+```
+**Phân tích:** upload (ghi vào MinIO) **thành công 201**, nhưng đọc/stream tệp về **500**. Nghi BE dùng MinIO endpoint **`minio:9000`** (host nội bộ docker) trong khi BE chạy trên host máy → `getObject` không kết nối được. (FE đã bắt lỗi → toast; nhưng **tính năng tải về không dùng được**.)
+**Đề nghị:** dùng host MinIO reachable cho luồng đọc (vd `localhost:9000` khi chạy ngoài docker); trả `code` rõ (vd `8002 STORAGE_ERROR`) thay vì 9999. Kiểm tra cả endpoint counter `PUT /{id}/download`.
 
+---
+
+## BE-2 · `POST/PUT /categories` JSON → 500 (nên 415/400) 🟡 P1
+
+```bash
+# JSON -> 500 (unhandled)
+POST /api/v1/categories  (Content-Type: application/json)  =>  500 {"code":9999}
+# multipart/form-data -> 201 OK
+POST /api/v1/categories  (-F name=.. -F icon=.. -F visibility=..)  =>  201
+```
+Endpoint chỉ nhận **multipart/form-data** (hỗ trợ upload icon). **FE đã sửa để gửi multipart** → hết chặn. Nhưng BE ném exception chưa bắt khi sai content-type.
+**Đề nghị:** trả **415 Unsupported Media Type** (hoặc 400) có `code` rõ, không phải 500/9999 (thêm handler `HttpMediaTypeNotSupportedException`).
+
+---
+
+## BE-9 · Bulk payload không khớp contract `{ids}` 🟡 P1
+
+[API_CONTRACT_V1 §2.5](./API_CONTRACT_V1.md) nói mọi bulk dùng `{ "ids": [...] }`. **Thực tế BE (đo bằng curl):**
+
+| Endpoint | BE chấp nhận | Gửi `{ids}`? |
+|---|---|---|
+| `PATCH /admin/resources/bulk-approve` | `{ "resourceIds": [...] }` → 200 | ❌ 400 |
+| `PATCH /admin/resources/bulk-reject` | `{ "resourceIds": [...], "reason": "" }` → 200 | ❌ 400 |
+| `POST /resources/bulk-delete` | **mảng thô** `[...]` → 200 | ❌ 400 |
+| `PATCH /resources/bulk-restore` | **mảng thô** `[...]` → 200 | ❌ 400 |
+| `POST /categories/bulk-delete` | **mảng thô** `[...]` → 200 | ❌ 400 |
+| `PATCH /categories/bulk-restore` | **mảng thô** `[...]` → 200 | ❌ 400 |
+
+**FE đã chỉnh khớp BE thật** (gửi `resourceIds` / mảng thô) → bulk chạy 200.
+**Đề nghị chốt 1 trong 2:** (a) BE migrate sang `{ids}` đồng bộ theo contract (báo FE đổi lại), hoặc (b) **cập nhật API_CONTRACT_V1 §2.5** đúng thực tế. Hiện FE theo (b).
+
+---
+
+## BE-6 · SMTP cho mail thật 🟡 P1
+
+`MAIL_USERNAME`/`MAIL_PASSWORD` rỗng. BE đã thêm **dev-OTP-log** (`target/app-run.log`, info) → test verify-email/reset không cần mail. Cần SMTP cho mail thật:
 ```dotenv
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=...
-MAIL_PASSWORD=...            # App Password, KHÔNG phải mật khẩu thường
+MAIL_PASSWORD=...   # App Password / Mailtrap
 MAIL_SMTP_AUTH=true
 MAIL_SMTP_STARTTLS=true
 ```
 
 ---
 
-## BE-3 · Xác nhận endpoint/param FE đang gọi (để luồng ghi chạy thông) 🟢
+## BE-3 · `favorite` id sai → 409 (nên 404) 🟢
+`POST /resources/{id}/favorite` với id không tồn tại trả **409** thay vì **404 RESOURCE_NOT_FOUND** → kiểm tra tồn tại trước.
 
-Sau khi sửa CSRF, FE sẽ gọi các endpoint dưới đây. Nhờ BE xác nhận tồn tại + nhận đúng param/payload (theo [API_CONTRACT_V1](./API_CONTRACT_V1.md)):
+## BE-4 · Sai HTTP method → 500 (nên 405) 🟢
+Gọi sai method (vd PUT vào route giờ là PATCH) → **500**. Thêm handler `HttpRequestMethodNotSupportedException` → 405.
 
-| Chức năng | FE gọi | Ghi chú |
-|---|---|---|
-| Portal duyệt công khai | `GET /resources?page&size&sort=field,dir&keyword&topicId&ageGroupId&categorySlugs&ageSlugs&types` | **permitAll**; lọc `visibility=PUBLIC + status=APPROVED + !deleted` ở server. (FE vừa chuyển từ `/admin/resources` sang đây để khách xem được.) |
-| Tăng view | `POST /resources/{id}/view` | D2 (đổi từ PUT). |
-| Toggle favorite | `POST /resources/{id}/favorite` | |
-| Khôi phục resource | `PATCH /resources/{id}/restore` | D2. |
-| Bulk xoá resource | `POST /resources/bulk-delete?hard=` body `{ "ids": [...] }` | D2/D2.5. |
-| Bulk duyệt/từ chối | `PATCH /admin/resources/bulk-approve` `{ "ids": [...] }` · `bulk-reject` `{ "ids":[...], "reason":"" }` | field **`ids`** (không phải `resourceIds`). |
-| Bulk khôi phục | `PATCH /resources/bulk-restore` `{ "ids": [...] }` | |
-| Toggle banner | `PATCH /banners/{id}/toggle` | D2; trả Banner đã cập nhật (có `visibility`). |
-| Tạo/sửa banner | `POST`/`PUT /banners` (multipart) field **`visibility`** (`PUBLIC`/`PRIVATE`) | D1 (bỏ `isActive`). |
-| Tạo/sửa category/topic | `POST`/`PUT` body có **`visibility`** | D1. |
-| Bulk category | `POST /categories/bulk-delete` `{ ids }` · `PATCH /categories/bulk-restore` `{ ids }` | |
-| Khôi phục user | `PATCH /users/{id}/restore` | D2 (đổi từ PUT). |
-| Comment | `POST /comments` `{ resourceId, content, rating }` · `GET /comments?resourceId=&page&size&sort=createdAt,desc` | endpoint **flat** + `@RequestBody`. |
-| Download | `GET /resources/{id}/file` | Lỗi trả **JSON `ApiResponse`** (FE parse blob); owner/admin tải được file non-public; rate-limit `6009`. |
-
-> ❓ Một điểm cần BE chốt rõ: **`block/unblock user`** — API_CONTRACT_V1 §2.4 không liệt kê. FE hiện để `PUT /users/{id}/block`. Nếu BE chuẩn hoá theo D2 (đổi-trạng-thái → PATCH) thì báo để FE đổi `PUT → PATCH`.
+## BE-5 · (Tuỳ chọn) CSRF token ổn định theo phiên 🟢
+Cookie `XSRF-TOKEN` **bị rỗng/đổi sau mỗi GET** → request ghi đầu trên trình duyệt mang token cũ → 403, BE phát token mới trong response 403. **FE đã retry 1 lần** → write OK (chi phí 2 round-trip). Tối ưu: giữ token ổn định (không clear/rotate sau GET) để bỏ retry.
 
 ---
 
-## Thứ tự đề xuất
-1. **BE-1 (CSRF)** — ưu tiên cao nhất, mở khoá toàn bộ test ghi.
-2. **BE-3** — rà nhanh checklist, sửa lệch nếu có.
-3. **BE-2 (SMTP)** — khi cần phủ OTP/verify.
+## ✅ Đã xong / không cần làm
+- **CSRF (BE-1):** BE dùng `CsrfTokenRequestAttributeHandler` (raw) là **đúng**; 403 do FE thiếu header + token xoay → **FE đã sửa** (đăng ký `csrfInterceptor` + retry). Bỏ giả thuyết "Xor handler" (sai).
+- **`block/unblock`:** BE đã đổi PUT→PATCH; FE đồng bộ.
+- **Contract endpoints/param khớp:** sort=field,dir; restore/view/toggle method; comment flat; visibility (D1); public `GET /resources`; password (D3).
+- **Luồng resource verify live:** upload 201 · approve/reject 200 · comment 201 · view 200. (Admin/Super-Admin upload **auto-APPROVE**; teacher upload → PENDING.)
 
-Sau khi BE deploy, báo FE để chạy lại bộ E2E (puppeteer) phủ nốt các luồng ghi và báo cáo kết quả.
+---
+
+## Ưu tiên đề xuất
+1. **BE-8** (tải file 500) — 🔴 P0, chặn tính năng download/SEC-4.
+2. **BE-9** (chốt format bulk: BE↔contract) + **BE-2** (415 thay 500) — gom với BE-4/BE-3 (dọn GlobalExceptionHandler/validation).
+3. **BE-6** (SMTP) khi cần mail thật.
+4. **BE-5** (CSRF token ổn định) — tối ưu, làm khi rảnh.
+
+> Sau khi BE sửa **BE-8**, báo FE để chạy lại E2E phủ download + rate-limit (SEC-4 `6009`).

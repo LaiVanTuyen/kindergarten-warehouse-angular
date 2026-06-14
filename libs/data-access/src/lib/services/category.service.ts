@@ -98,8 +98,8 @@ export class CategoryService {
 
   /**
    * Bulk Delete Categories
-   * POST /categories/bulk-delete  (Contract v1 §2.4/§2.5)
-   * Payload: { ids: [...] }
+   * POST /categories/bulk-delete?hard=
+   * Payload: raw id array `[...]` (BE expects the array body, not `{ids}`).
    */
   deleteCategories(
     ids: (string | number)[],
@@ -107,24 +107,20 @@ export class CategoryService {
   ): Observable<ApiResponse<any>> {
     const params = new HttpParams().set('hard', hard);
     return this.http
-      .post<ApiResponse<any>>(
-        `${this.apiUrl}/categories/bulk-delete`,
-        { ids },
-        { params }
-      )
+      .post<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-delete`, ids, {
+        params,
+      })
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Bulk Restore Categories
-   * PATCH /categories/bulk-restore  (Contract v1 §2.5)
-   * Payload: { ids: [...] }
+   * PATCH /categories/bulk-restore
+   * Payload: raw id array `[...]` (BE expects the array body, not `{ids}`).
    */
   restoreCategories(ids: (string | number)[]): Observable<ApiResponse<any>> {
     return this.http
-      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, {
-        ids,
-      })
+      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, ids)
       .pipe(catchError(this.handleError));
   }
 
