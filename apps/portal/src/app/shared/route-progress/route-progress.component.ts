@@ -26,7 +26,7 @@ import { filter, map, startWith } from 'rxjs/operators';
       aria-hidden="true"
     >
       <div
-        class="h-full bg-gradient-to-r from-pink-400 via-pink-500 to-fuchsia-500 transition-all duration-300 ease-out"
+        class="h-full bg-gradient-to-r from-primary-500 via-primary-600 to-accent-500 transition-all duration-300 ease-out"
         [style.width.%]="navigating() ? 90 : 0"
         [style.opacity]="navigating() ? 1 : 0"
       ></div>

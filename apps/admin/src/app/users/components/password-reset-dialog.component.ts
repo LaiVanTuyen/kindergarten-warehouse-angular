@@ -50,7 +50,7 @@ export interface PasswordResetDialogData {
           [ngModel]="otp()"
           (ngModelChange)="onOtpChange($event)"
           placeholder="••••••"
-          class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-center tracking-[0.5em] text-lg font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+          class="w-full px-3 py-2.5 border border-line rounded-lg text-center tracking-[0.5em] text-lg font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         />
         @if (error()) {
           <p role="alert" class="text-xs text-kindy-coral-strong mt-2">{{ error() }}</p>
@@ -79,13 +79,13 @@ export interface PasswordResetDialogData {
           <button
             type="button"
             (click)="ref.close()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
           >Huỷ</button>
           <button
             type="button"
             (click)="initiate()"
             [disabled]="loading()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             @if (loading()) {
               <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
@@ -96,13 +96,13 @@ export interface PasswordResetDialogData {
           <button
             type="button"
             (click)="ref.close()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
           >Huỷ</button>
           <button
             type="button"
             (click)="confirm()"
             [disabled]="otp().length !== 6 || loading()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             @if (loading()) {
               <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
@@ -113,7 +113,7 @@ export interface PasswordResetDialogData {
           <button
             type="button"
             (click)="ref.close(true)"
-            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar"
+            class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus"
           >Đóng</button>
         }
       </div>

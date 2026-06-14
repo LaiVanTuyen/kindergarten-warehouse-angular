@@ -53,7 +53,7 @@
               ? 'true'
               : null
           "
-          class="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-kindy-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent transition-all"
+          class="w-full pl-10 pr-4 py-3 bg-surface border border-line rounded-xl text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
           [class.border-kindy-coral-strong]="
             form.controls.email.invalid && form.controls.email.touched
           "
@@ -122,7 +122,7 @@
               ? 'true'
               : null
           "
-          class="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl text-kindy-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent transition-all"
+          class="w-full pl-10 pr-12 py-3 bg-surface border border-line rounded-xl text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
           [class.border-kindy-coral-strong]="
             form.controls.password.invalid && form.controls.password.touched
           "
@@ -190,11 +190,11 @@
       <div
         role="alert"
         aria-live="assertive"
-        class="flex items-start gap-2 p-3 bg-kindy-coral-soft/40 border border-kindy-coral-soft rounded-xl text-kindy-coral-strong text-sm"
+        class="flex items-start gap-2.5 p-3.5 bg-kindy-coral-soft/30 border border-kindy-coral-soft/50 rounded-xl text-kindy-coral-strong text-sm animate-fade-in"
       >
         <svg
           aria-hidden="true"
-          class="w-4 h-4 flex-shrink-0 mt-0.5"
+          class="w-5 h-5 flex-shrink-0 text-kindy-coral-strong mt-0.5"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -204,7 +204,10 @@
             clip-rule="evenodd"
           />
         </svg>
-        <span>{{ msg }}</span>
+        <div class="flex-1">
+          <p class="font-semibold text-kindy-coral-strong mb-0.5">Lỗi đăng nhập</p>
+          <p class="text-kindy-ink/80 text-xs leading-relaxed">{{ msg }}</p>
+        </div>
       </div>
     }
 
@@ -212,7 +215,7 @@
     <button
       type="submit"
       [disabled]="form.invalid || isLoading()"
-      class="w-full py-3 px-4 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white font-semibold rounded-xl shadow-md shadow-kindy-sidebar/20 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+      class="w-full py-3 px-4 bg-gradient-to-r from-kindy-sidebar to-kindy-sidebar-hover text-white font-semibold rounded-xl shadow-md shadow-kindy-sidebar/20 hover:shadow-lg hover:shadow-kindy-sidebar/30 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-200 flex items-center justify-center gap-2"
     >
       @if (isLoading()) {
         <span

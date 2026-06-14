@@ -6,7 +6,7 @@
     type="button"
     (click)="toggleSortDir()"
     [attr.aria-label]="'Đảo chiều sắp xếp, hiện tại ' + (sortDir() === 'desc' ? 'mới nhất trước' : 'cũ nhất trước')"
-    class="inline-flex items-center gap-1.5 text-sm font-medium text-kindy-ink border border-gray-200 bg-white hover:bg-kindy-surface-soft px-3 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+    class="inline-flex items-center gap-1.5 text-sm font-medium text-kindy-ink border border-line bg-surface hover:bg-kindy-surface-soft px-3 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
   >
     <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
       [style.transform]="sortDir() === 'asc' ? 'rotate(180deg)' : ''">
@@ -19,7 +19,7 @@
     type="button"
     (click)="exportCsv()"
     [disabled]="isExporting() || total() === 0"
-    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
   >
     @if (isExporting()) {
       <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
@@ -33,7 +33,7 @@
 </app-page-header>
 
 <!-- Filter bar -->
-<div class="bg-white border border-gray-100 rounded-xl p-4 mb-4">
+<div class="bg-surface border border-line rounded-xl p-4 mb-4">
   <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
     <div>
       <label for="audit-username" class="block text-xs font-medium text-kindy-ink mb-1">Người dùng</label>
@@ -50,7 +50,7 @@
         id="audit-action"
         [ngModel]="action()"
         (ngModelChange)="action.set($event)"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         @for (opt of actionOptions; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
@@ -66,7 +66,7 @@
         [ngModel]="startDate()"
         (ngModelChange)="startDate.set($event)"
         [max]="endDate() || null"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
     </div>
 
@@ -78,7 +78,7 @@
         [ngModel]="endDate()"
         (ngModelChange)="endDate.set($event)"
         [min]="startDate() || null"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
     </div>
   </div>
@@ -96,11 +96,11 @@
 </div>
 
 <!-- Data -->
-<div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+<div class="bg-surface border border-line rounded-xl overflow-hidden">
   @if (isLoading()) {
     <div class="p-6 space-y-2">
       @for (_ of [1,2,3,4,5,6,7]; track $index) {
-        <div class="h-10 bg-gray-100 rounded animate-pulse"></div>
+        <div class="h-10 bg-surface-2 rounded animate-pulse"></div>
       }
     </div>
   } @else if (logs().length === 0) {
@@ -113,7 +113,7 @@
     <div class="hidden md:block overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="sticky top-0 bg-kindy-surface-soft/70 backdrop-blur z-10">
-          <tr class="border-b border-gray-100 text-left text-xs uppercase tracking-wider text-kindy-ink-soft">
+          <tr class="border-b border-line text-left text-xs uppercase tracking-wider text-kindy-ink-soft">
             <th scope="col" class="px-4 py-3 font-semibold">Thời gian</th>
             <th scope="col" class="px-4 py-3 font-semibold">Người dùng</th>
             <th scope="col" class="px-4 py-3 font-semibold">Hành động</th>
@@ -121,7 +121,7 @@
             <th scope="col" class="px-4 py-3 font-semibold text-right">Chi tiết</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-50">
+        <tbody class="divide-y divide-line">
           @for (log of logs(); track log.id) {
             <tr class="hover:bg-kindy-surface-soft/30 transition-colors">
               <td class="px-4 py-3 text-kindy-ink-soft whitespace-nowrap">
@@ -157,7 +157,7 @@
     </div>
 
     <!-- MOBILE cards -->
-    <ul class="md:hidden divide-y divide-gray-100">
+    <ul class="md:hidden divide-y divide-line">
       @for (log of logs(); track log.id) {
         <li>
           <button
@@ -177,7 +177,7 @@
     </ul>
 
     @if (total() > pageSize()) {
-      <div class="border-t border-gray-100 px-4 py-3">
+      <div class="border-t border-line px-4 py-3">
         <app-pagination
           [currentPage]="page()"
           [pageSize]="pageSize()"
@@ -196,7 +196,7 @@
   title="Chi tiết sự kiện"
   titleId="log-detail-title"
   size="md"
-  (close)="closeDetail()"
+  (closeDrawer)="closeDetail()"
 >
   @if (selectedLog(); as log) {
     <dl class="space-y-4 text-sm">
@@ -243,7 +243,7 @@
     }
 
     @if (showTechnicalDetails()) {
-      <dl class="mt-4 space-y-4 text-sm border-t border-gray-100 pt-4">
+      <dl class="mt-4 space-y-4 text-sm border-t border-line pt-4">
         <div>
           <dt class="text-xs uppercase tracking-wider text-kindy-ink-soft">Mã sự kiện</dt>
           <dd class="text-kindy-ink font-mono">#{{ log.id }}</dd>

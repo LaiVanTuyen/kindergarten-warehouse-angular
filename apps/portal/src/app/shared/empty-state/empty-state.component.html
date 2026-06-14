@@ -24,23 +24,23 @@
     </div>
   </ng-template>
 
-  <h3 class="font-bold text-gray-900 mb-2"
+  <h3 class="font-bold text-ink mb-2"
     [class.text-xl]="!compact" [class.text-lg]="compact">
     {{ title || ('empty.title' | translate) }}
   </h3>
-  <p class="text-gray-500 max-w-md mx-auto"
+  <p class="text-ink-soft max-w-md mx-auto"
     [class.mb-8]="actionLabel" [class.text-base]="!compact" [class.text-sm]="compact">
     {{ message || ('empty.message' | translate) }}
   </p>
 
   <!-- CTA: routerLink takes precedence over event emit. -->
   <a *ngIf="actionLabel && actionRoute" [routerLink]="actionRoute"
-    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
+    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary-600 to-accent-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
     <i *ngIf="actionIcon" [class]="actionIcon" aria-hidden="true"></i>
     {{ actionLabel }}
   </a>
   <button *ngIf="actionLabel && !actionRoute" type="button" (click)="action.emit()"
-    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
+    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary-600 to-accent-500 text-white font-bold shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
     <i *ngIf="actionIcon" [class]="actionIcon" aria-hidden="true"></i>
     {{ actionLabel }}
   </button>

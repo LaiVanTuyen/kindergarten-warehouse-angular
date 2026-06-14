@@ -12,7 +12,12 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { User, UserRole } from '@kindergarten-warehouse/data-access';
+import {
+  User,
+  UserRole,
+  passwordValidator,
+  PASSWORD_RULE_TEXT,
+} from '@kindergarten-warehouse/data-access';
 import { FormFieldComponent } from '../../shared/components/form-field/form-field.component';
 import { DialogShellComponent } from '../../shared/components/dialog-shell/dialog-shell.component';
 
@@ -52,15 +57,15 @@ function rolesMinLength(control: AbstractControl): ValidationErrors | null {
     >
       <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
         <app-form-field label="Họ và tên" [required]="true" [control]="form.controls.fullName">
-          <input type="text" formControlName="fullName" autofocus maxlength="100" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+          <input type="text" formControlName="fullName" maxlength="100" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
         </app-form-field>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <app-form-field label="Tên đăng nhập" [required]="true" [control]="form.controls.username">
-            <input type="text" formControlName="username" autocomplete="username" maxlength="50" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="text" formControlName="username" autocomplete="username" maxlength="50" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
           <app-form-field label="Email" [required]="true" [control]="form.controls.email">
-            <input type="email" formControlName="email" autocomplete="email" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="email" formControlName="email" autocomplete="email" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
         </div>
 
@@ -69,25 +74,26 @@ function rolesMinLength(control: AbstractControl): ValidationErrors | null {
             label="Mật khẩu khởi tạo"
             [required]="true"
             [control]="form.controls.password"
-            hint="Tối thiểu 8 ký tự — sẽ yêu cầu đổi sau lần đăng nhập đầu."
+            [hint]="passwordRuleText + ' Sẽ yêu cầu đổi sau lần đăng nhập đầu.'"
+            [errors]="{ weakPassword: passwordRuleText }"
           >
             <div class="flex gap-2">
               <input
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
                 autocomplete="new-password"
-                class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent"
+                class="flex-1 px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent"
               />
               <button
                 type="button"
                 (click)="togglePassword()"
                 [attr.aria-label]="showPassword() ? 'Ẩn' : 'Hiện'"
-                class="px-3 border border-gray-200 rounded-lg text-sm text-kindy-ink-soft hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+                class="px-3 border border-line rounded-lg text-sm text-kindy-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >{{ showPassword() ? 'Ẩn' : 'Hiện' }}</button>
               <button
                 type="button"
                 (click)="generatePassword()"
-                class="px-3 border border-gray-200 rounded-lg text-sm text-kindy-sidebar hover:bg-kindy-surface-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+                class="px-3 border border-line rounded-lg text-sm text-kindy-sidebar hover:bg-kindy-surface-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >Tạo ngẫu nhiên</button>
             </div>
           </app-form-field>
@@ -106,7 +112,7 @@ function rolesMinLength(control: AbstractControl): ValidationErrors | null {
                   type="checkbox"
                   [checked]="form.controls.roles.value.includes(opt.value)"
                   (change)="toggleRole(opt.value)"
-                  class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar"
+                  class="w-4 h-4 rounded text-kindy-sidebar focus:ring-focus"
                 />
                 <span class="text-sm text-kindy-ink">{{ opt.label }}</span>
               </label>
@@ -115,7 +121,7 @@ function rolesMinLength(control: AbstractControl): ValidationErrors | null {
         </app-form-field>
 
         <app-form-field label="Trạng thái" [control]="form.controls.status">
-          <select formControlName="status" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar">
+          <select formControlName="status" class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <option value="ACTIVE">Hoạt động</option>
             <option value="BLOCKED">Đã khoá</option>
           </select>
@@ -126,13 +132,13 @@ function rolesMinLength(control: AbstractControl): ValidationErrors | null {
         <button
           type="button"
           (click)="ref.close()"
-          class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
         >Huỷ</button>
         <button
           type="button"
           (click)="submit()"
           [disabled]="form.invalid"
-          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {{ isEdit ? 'Cập nhật' : 'Tạo tài khoản' }}
         </button>
@@ -148,6 +154,7 @@ export class UserFormDialogComponent {
   readonly isEdit = !!this.data.user;
   readonly roleOptions = ROLE_OPTIONS;
   readonly showPassword = signal(false);
+  readonly passwordRuleText = PASSWORD_RULE_TEXT;
 
   readonly form = this.fb.nonNullable.group({
     fullName: [
@@ -166,7 +173,7 @@ export class UserFormDialogComponent {
       '',
       this.isEdit
         ? []
-        : [Validators.required, Validators.minLength(8), Validators.maxLength(128)],
+        : [Validators.required, passwordValidator(), Validators.maxLength(128)],
     ],
     roles: [
       (this.data.user?.roles as string[] | undefined) ??
@@ -185,13 +192,26 @@ export class UserFormDialogComponent {
   }
 
   generatePassword() {
-    const charset =
-      'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$%';
-    const length = 14;
-    const arr = new Uint32Array(length);
-    crypto.getRandomValues(arr);
-    const pw = Array.from(arr, (n) => charset[n % charset.length]).join('');
-    this.form.controls.password.setValue(pw);
+    const upper = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+    const lower = 'abcdefghijkmnpqrstuvwxyz';
+    const digit = '23456789';
+    const all = upper + lower + digit + '@#$%';
+    const pick = (set: string) => {
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return set[a[0] % set.length];
+    };
+    // Guarantee ≥1 upper, lower, digit (shared policy), then fill to length 14.
+    const chars = [pick(upper), pick(lower), pick(digit)];
+    while (chars.length < 14) chars.push(pick(all));
+    // Fisher–Yates shuffle so the guaranteed chars aren't always first.
+    for (let i = chars.length - 1; i > 0; i--) {
+      const r = new Uint32Array(1);
+      crypto.getRandomValues(r);
+      const j = r[0] % (i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    this.form.controls.password.setValue(chars.join(''));
     this.showPassword.set(true);
   }
 

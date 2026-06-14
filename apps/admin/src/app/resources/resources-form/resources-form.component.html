@@ -1,17 +1,17 @@
 <div *ngIf="isOpen"
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
     <div
-        class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col border border-white/10 ring-1 ring-black/5">
+        class="bg-surface rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col border border-white/10 ring-1 ring-black/5">
         <div
-            class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+            class="px-8 py-6 border-b border-line flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10">
             <div>
-                <h3 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditMode() ? 'Chỉnh sửa Tài nguyên' :
+                <h3 class="text-2xl font-bold text-ink tracking-tight">{{ isEditMode() ? 'Chỉnh sửa Tài nguyên' :
                     'Tải lên
                     Tài nguyên mới' }}</h3>
-                <p class="text-xs text-gray-500 mt-1.5 font-medium">Điền thông tin chi tiết bên dưới.</p>
+                <p class="text-xs text-ink-soft mt-1.5 font-medium">Điền thông tin chi tiết bên dưới.</p>
             </div>
             <button (click)="closeModal()"
-                class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                class="text-ink-muted hover:text-ink-soft p-2 hover:bg-surface-2 rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -24,15 +24,15 @@
             <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="space-y-6">
 
                 <!-- Upload Type Toggle -->
-                <div *ngIf="!isEditMode()" class="flex mb-6 bg-gray-100 p-1 rounded-xl">
+                <div *ngIf="!isEditMode()" class="flex mb-6 bg-surface-2 p-1 rounded-xl">
                     <button type="button" (click)="setUploadMode('FILE')"
                         class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                        [ngClass]="uploadMode() === 'FILE' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                        [ngClass]="uploadMode() === 'FILE' ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'">
                         📤 Tải tập tin
                     </button>
                     <button type="button" (click)="setUploadMode('YOUTUBE')"
                         class="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                        [ngClass]="uploadMode() === 'YOUTUBE' ? 'bg-red-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                        [ngClass]="uploadMode() === 'YOUTUBE' ? 'bg-red-600 text-white shadow-sm' : 'text-ink-soft hover:text-ink-soft'">
                         🎥 Liên kết YouTube
                     </button>
                 </div>
@@ -45,13 +45,13 @@
                         <!-- Drop Zone (Show when NO file selected) -->
                         <div *ngIf="!selectedFile" (click)="fileInput.click()" (keydown.enter)="fileInput.click()"
                             tabindex="0"
-                            class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                            class="border-2 border-dashed border-line rounded-2xl p-10 text-center bg-surface-2 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                             <div
                                 class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200 opacity-80 filter drop-shadow-sm">
                                 ☁️</div>
-                            <p class="text-lg text-gray-700 font-bold group-hover:text-blue-700">Nhấn để tải lên hoặc
+                            <p class="text-lg text-ink-soft font-bold group-hover:text-blue-700">Nhấn để tải lên hoặc
                                 kéo thả</p>
-                            <p class="text-sm text-gray-400 mt-2 font-medium">PDF, Word, Excel, Video (Tối đa 50MB)</p>
+                            <p class="text-sm text-ink-muted mt-2 font-medium">PDF, Word, Excel, Video (Tối đa 50MB)</p>
                         </div>
 
                         <!-- Selected File View (Show when file IS selected) -->
@@ -59,15 +59,15 @@
                             class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-center justify-between animate-fade-in-up">
                             <div class="flex items-center gap-4">
                                 <div
-                                    class="h-12 w-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                                    class="h-12 w-12 bg-surface rounded-xl flex items-center justify-center text-2xl shadow-sm">
                                     📄
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs">{{
+                                    <h4 class="text-sm font-bold text-ink truncate max-w-[200px] sm:max-w-xs">{{
                                         selectedFile.name
                                         }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 mt-0.5 font-medium">{{ (selectedFile.size / 1024 /
+                                    <p class="text-xs text-ink-soft mt-0.5 font-medium">{{ (selectedFile.size / 1024 /
                                         1024) |
                                         number:'1.1-2' }} MB</p>
                                 </div>
@@ -89,13 +89,13 @@
                     <ng-container *ngIf="uploadMode() === 'YOUTUBE'">
                         <div class="group">
                             <label for="youtubeUrl"
-                                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-red-600 transition-colors">
+                                class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-red-600 transition-colors">
                                 Đường dẫn Video YouTube <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="youtubeUrl" formControlName="url"
                                 placeholder="https://www.youtube.com/watch?v=..."
-                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
-                            <p class="text-xs text-gray-400 mt-2 ml-1">Hình thu nhỏ sẽ được tự động lấy.</p>
+                                class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-shadow bg-surface-2 focus:bg-white text-ink font-medium" />
+                            <p class="text-xs text-ink-muted mt-2 ml-1">Hình thu nhỏ sẽ được tự động lấy.</p>
                         </div>
                     </ng-container>
 
@@ -104,17 +104,17 @@
                 <!-- Thumbnail Upload (Create Mode Only) -->
                 <div *ngIf="!isEditMode() && uploadMode() !== 'YOUTUBE'" class="space-y-4">
                     <div
-                        class="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-center justify-between transition-all hover:bg-white hover:shadow-sm">
+                        class="bg-surface-2 border border-line rounded-2xl p-5 flex items-center justify-between transition-all hover:bg-white hover:shadow-sm">
                         <div class="flex items-center gap-4">
                             <!-- Current Thumbnail Preview -->
                             <div
-                                class="h-16 w-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative shrink-0">
+                                class="h-16 w-24 bg-surface-3 rounded-lg overflow-hidden border border-line shadow-sm relative shrink-0">
                                 <!-- Show current thumbnail if exists -->
                                 <img *ngIf="currentThumbnailUrl()" [src]="currentThumbnailUrl()"
                                     class="w-full h-full object-cover" alt="Current Thumbnail">
 
                                 <div *ngIf="!currentThumbnailUrl()"
-                                    class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                    class="w-full h-full flex items-center justify-center bg-surface-2 text-ink-muted">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="w-6 h-6 opacity-50">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -123,8 +123,8 @@
                                 </div>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-gray-900">Ảnh Bìa (Tùy chọn)</h4>
-                                <p class="text-xs text-gray-500 font-medium">Chọn hình ảnh hiển thị cho tài nguyên này.
+                                <h4 class="text-sm font-bold text-ink">Ảnh Bìa (Tùy chọn)</h4>
+                                <p class="text-xs text-ink-soft font-medium">Chọn hình ảnh hiển thị cho tài nguyên này.
                                 </p>
                             </div>
                         </div>
@@ -132,9 +132,9 @@
                             <input #newThumbInput type="file" class="hidden" (change)="onNewThumbnailSelected($event)"
                                 accept="image/*">
                             <button type="button" (click)="newThumbInput.click()"
-                                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-xs uppercase tracking-wide font-bold rounded-xl transition-all shadow-sm">
+                                class="flex items-center gap-2 px-4 py-2 bg-surface border border-line hover:bg-surface-2 hover:border-gray-300 text-ink-soft text-xs uppercase tracking-wide font-bold rounded-xl transition-all shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                    class="w-4 h-4 text-gray-500">
+                                    class="w-4 h-4 text-ink-soft">
                                     <path fill-rule="evenodd"
                                         d="M1 5.25A2.25 2.25 0 0 1 3.25 3h13.5A2.25 2.25 0 0 1 19 5.25v9.5A2.25 2.25 0 0 1 16.75 17H3.25A2.25 2.25 0 0 1 1 14.75v-9.5Zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 0 0 .75-.75v-2.69l-2.22-2.219a.75.75 0 0 0-1.06 0l-1.91 1.909.47.47a.75.75 0 1 1-1.06 1.06L6.53 8.091a.75.75 0 0 0-1.06 0l-2.97 2.97ZM12 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
                                         clip-rule="evenodd" />
@@ -165,7 +165,7 @@
                                 <input type="text" formControlName="url"
                                     placeholder="https://www.youtube.com/watch?v=..."
                                     (input)="onYoutubeLinkInput($any($event.target).value)"
-                                    class="w-full px-3 py-2 text-sm border border-red-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-gray-900 font-medium" />
+                                    class="w-full px-3 py-2 text-sm border border-red-200 rounded-xl bg-surface focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-ink font-medium" />
                             </div>
                         </div>
                     </ng-container>
@@ -173,7 +173,7 @@
                     <!-- CASE 2: FILE resource → show file replacement row -->
                     <ng-container *ngIf="uploadMode() !== 'YOUTUBE'">
                         <div
-                            class="bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center justify-between">
+                            class="bg-surface-2 border border-line rounded-2xl p-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div
                                     class="h-10 w-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
@@ -185,10 +185,10 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-gray-900">
+                                    <h4 class="text-sm font-bold text-ink">
                                         {{ selectedFile ? selectedFile.name : 'Tệp đính kèm' }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 font-medium">
+                                    <p class="text-xs text-ink-soft font-medium">
                                         {{ selectedFile ? ((selectedFile.size / 1024 / 1024) | number:'1.1-2') + ' MB —
                                         sẽ thay thế file cũ
                                         khi lưu' : 'Tùy chọn: thay tệp nội dung mới' }}
@@ -197,7 +197,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <button type="button" (click)="fileInput.click()"
-                                    class="text-xs font-bold px-3 py-1.5 bg-white border border-gray-200 hover:border-amber-400 hover:text-amber-600 rounded-lg transition-colors shadow-sm">
+                                    class="text-xs font-bold px-3 py-1.5 bg-surface border border-line hover:border-amber-400 hover:text-amber-600 rounded-lg transition-colors shadow-sm">
                                     {{ selectedFile ? 'Đổi file' : 'Chọn file' }}
                                 </button>
                                 <button *ngIf="selectedFile" type="button" (click)="selectedFile = null"
@@ -210,14 +210,14 @@
 
 
                     <!-- Replace Thumbnail Row -->
-                    <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="bg-surface-2 border border-line rounded-2xl p-4 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div
-                                class="h-14 w-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm shrink-0 bg-gray-100">
+                                class="h-14 w-20 rounded-lg overflow-hidden border border-line shadow-sm shrink-0 bg-surface-2">
                                 <img *ngIf="currentThumbnailUrl()" loading="lazy" [src]="currentThumbnailUrl()"
                                     class="w-full h-full object-cover" alt="Thumbnail Preview" />
                                 <div *ngIf="!currentThumbnailUrl()"
-                                    class="w-full h-full flex items-center justify-center text-gray-300">
+                                    class="w-full h-full flex items-center justify-center text-ink-muted">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-50" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -226,8 +226,8 @@
                                 </div>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-gray-900">Ảnh Bìa</h4>
-                                <p class="text-xs text-gray-500 font-medium">{{ selectedThumbnail ? 'Ảnh mới đã chọn —
+                                <h4 class="text-sm font-bold text-ink">Ảnh Bìa</h4>
+                                <p class="text-xs text-ink-soft font-medium">{{ selectedThumbnail ? 'Ảnh mới đã chọn —
                                     sẽ thay thế khi
                                     lưu' : 'Tùy chọn: thay ảnh bìa mới' }}</p>
                             </div>
@@ -236,7 +236,7 @@
                             <input #editThumbInput type="file" class="hidden" (change)="onNewThumbnailSelected($event)"
                                 accept="image/*">
                             <button type="button" (click)="editThumbInput.click()"
-                                class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-700 text-xs font-bold rounded-lg transition-all shadow-sm">
+                                class="flex items-center gap-2 px-3 py-1.5 bg-surface border border-line hover:border-blue-400 hover:text-blue-600 text-ink-soft text-xs font-bold rounded-lg transition-all shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -256,36 +256,36 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2 group">
                         <label for="resourceTitle"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Tiêu
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Tiêu
                             đề
                             <span class="text-rose-500">*</span></label>
                         <input type="text" id="resourceTitle" formControlName="title"
                             placeholder="ví dụ: Bài hát bảng chữ cái"
-                            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white text-gray-900 font-medium" />
+                            class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-surface-2 focus:bg-white text-ink font-medium" />
                     </div>
 
                     <div class="md:col-span-2 group">
                         <label for="resourceDesc"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Mô
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Mô
                             tả</label>
                         <textarea id="resourceDesc" formControlName="description" rows="3"
                             placeholder="Mô tả ngắn gọn về nội dung..."
-                            class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-gray-50 focus:bg-white resize-none text-gray-900 font-medium"></textarea>
+                            class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-shadow bg-surface-2 focus:bg-white resize-none text-ink font-medium"></textarea>
                     </div>
 
                     <div class="group">
                         <label for="resourceCategory"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Danh
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Danh
                             mục
                             <span class="text-rose-500">*</span></label>
                         <div class="relative">
                             <select id="resourceCategory" formControlName="categoryId"
-                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+                                class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-surface-2 focus:bg-white cursor-pointer text-ink font-medium appearance-none">
                                 <option value="">Chọn Danh mục</option>
                                 <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
                             </select>
                             <div
-                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-ink-muted">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                     fill="currentColor">
                                     <path fill-rule="evenodd"
@@ -298,18 +298,18 @@
 
                     <div class="group">
                         <label for="resourceTopic"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Chủ
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Chủ
                             đề
                             <span class="text-rose-500">*</span></label>
                         <div class="relative">
                             <select id="resourceTopic" formControlName="topicId"
-                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+                                class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-surface-2 focus:bg-white cursor-pointer text-ink font-medium appearance-none">
                                 <option value="">Chọn Chủ đề</option>
                                 <option *ngFor="let topic of uploadTopics()" [value]="topic.id">{{ topic.name }}
                                 </option>
                             </select>
                             <div
-                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-ink-muted">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                     fill="currentColor">
                                     <path fill-rule="evenodd"
@@ -322,19 +322,19 @@
 
                     <div class="group" *ngIf="isEditMode()">
                         <label for="resourceStatus"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">
                             Trạng thái (Admin)
                         </label>
                         <div class="relative">
                             <select id="resourceStatus" formControlName="status"
-                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+                                class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-surface-2 focus:bg-white cursor-pointer text-ink font-medium appearance-none">
                                 <option value="PENDING">⏳ Chờ duyệt (Pending)</option>
                                 <option value="APPROVED">✅ Đã duyệt (Approved)</option>
                                 <option value="REJECTED">🚫 Từ chối (Rejected)</option>
                                 <option value="HIDDEN">👁️ Đã ẩn (Hidden)</option>
                             </select>
                             <div
-                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-ink-muted">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                     fill="currentColor">
                                     <path fill-rule="evenodd"
@@ -347,12 +347,12 @@
 
                     <div class="group" *ngIf="isEditMode() && uploadMode() !== 'YOUTUBE'">
                         <label for="resourceType"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Định
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-2 group-focus-within:text-blue-600 transition-colors">Định
                             dạng
                             (Ghi đè)</label>
                         <div class="relative">
                             <select id="resourceType" formControlName="type"
-                                class="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50 focus:bg-white cursor-pointer text-gray-900 font-medium appearance-none">
+                                class="w-full px-4 py-3.5 border border-line rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-surface-2 focus:bg-white cursor-pointer text-ink font-medium appearance-none">
                                 <option value="VIDEO">Video (.mp4, .mov...)</option>
                                 <option value="DOCUMENT">Tài liệu (.doc, .docx, .txt)</option>
                                 <option value="EXCEL">Excel (.xls, .xlsx, .csv)</option>
@@ -362,7 +362,7 @@
                                 <option value="OTHER">Khác (.zip, .rar...)</option>
                             </select>
                             <div
-                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-ink-muted">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                     fill="currentColor">
                                     <path fill-rule="evenodd"
@@ -375,7 +375,7 @@
 
                     <div class="md:col-span-2 group">
                         <p
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 transition-colors">
+                            class="block text-xs font-bold text-ink-soft uppercase tracking-wider mb-3 transition-colors">
                             Nhóm độ tuổi <span class="text-rose-500">*</span>
                         </p>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -383,7 +383,7 @@
                                 class="cursor-pointer relative min-h-[50px] flex items-center justify-center text-center px-4 py-3 rounded-2xl border-2 transition-all duration-200"
                                 [ngClass]="{
                   'border-blue-500 bg-blue-50 text-blue-700 shadow-md shadow-blue-100 scale-[1.02]': uploadForm.get('ageGroupIds')?.value?.includes(ag.id),
-                  'border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-gray-50': !uploadForm.get('ageGroupIds')?.value?.includes(ag.id)
+                  'border-line bg-surface text-ink-soft hover:border-blue-200 hover:bg-surface-2': !uploadForm.get('ageGroupIds')?.value?.includes(ag.id)
                 }">
                                 <input type="checkbox" [value]="ag.id" class="hidden"
                                     [checked]="uploadForm.get('ageGroupIds')?.value?.includes(ag.id)"
@@ -408,15 +408,15 @@
                 </div>
 
                 <!-- Metadata (Edit Mode Only) -->
-                <div *ngIf="isEditMode() && editResource as resource" class="pt-4 border-t border-gray-100">
-                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Thông tin bổ sung</h4>
-                    <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                <div *ngIf="isEditMode() && editResource as resource" class="pt-4 border-t border-line">
+                    <h4 class="text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">Thông tin bổ sung</h4>
+                    <div class="grid grid-cols-2 gap-4 text-xs text-ink-soft">
                         <div>
-                            <span class="block text-gray-400">ID</span>
-                            <span class="font-mono text-gray-700">#{{ resource.id }}</span>
+                            <span class="block text-ink-muted">ID</span>
+                            <span class="font-mono text-ink-soft">#{{ resource.id }}</span>
                         </div>
                         <div>
-                            <span class="block text-gray-400">Trạng thái</span>
+                            <span class="block text-ink-muted">Trạng thái</span>
                             <span
                                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border"
                                 [ngClass]="{
@@ -428,28 +428,28 @@
                             </span>
                         </div>
                         <div>
-                            <span class="block text-gray-400">Ngày tạo</span>
+                            <span class="block text-ink-muted">Ngày tạo</span>
                             <span>{{ resource.createdAt ? (resource.createdAt | date:'medium') : 'N/A' }}</span>
                         </div>
                         <div>
-                            <span class="block text-gray-400">Cập nhật cuối</span>
+                            <span class="block text-ink-muted">Cập nhật cuối</span>
                             <span>{{ resource.updatedAt ? (resource.updatedAt | date:'medium') : 'N/A' }}</span>
                         </div>
                         <div>
-                            <span class="block text-gray-400">Tạo bởi</span>
-                            <span class="font-medium text-gray-700">{{ resource.createdBy || resource.uploader || 'Hệ
+                            <span class="block text-ink-muted">Tạo bởi</span>
+                            <span class="font-medium text-ink-soft">{{ resource.createdBy || resource.uploader || 'Hệ
                                 thống' }}</span>
                         </div>
                         <div>
-                            <span class="block text-gray-400">Cập nhật bởi</span>
-                            <span class="font-medium text-gray-700">{{ resource.updatedBy || 'Hệ thống' }}</span>
+                            <span class="block text-ink-muted">Cập nhật bởi</span>
+                            <span class="font-medium text-ink-soft">{{ resource.updatedBy || 'Hệ thống' }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="pt-8 flex gap-4">
                     <button type="button" (click)="closeModal()"
-                        class="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-colors">
+                        class="flex-1 bg-surface border border-line text-ink-soft font-bold py-4 rounded-2xl hover:bg-surface-2 transition-colors">
                         Hủy
                     </button>
                     <button type="submit"

@@ -5,7 +5,7 @@
   <button
     type="button"
     (click)="openCreate()"
-    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar transition-colors"
+    class="inline-flex items-center gap-2 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus transition-colors"
   >
     <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -15,16 +15,16 @@
 </app-page-header>
 
 <!-- Filters -->
-<div class="bg-white border border-gray-100 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
+<div class="bg-surface border border-line rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
   <span class="text-sm font-medium text-kindy-ink-soft">Nền tảng:</span>
-  <div role="tablist" aria-label="Lọc theo nền tảng" class="inline-flex rounded-lg bg-gray-100 p-0.5">
+  <div role="tablist" aria-label="Lọc theo nền tảng" class="inline-flex rounded-lg bg-surface-2 p-0.5">
     @for (opt of [{v:'ALL',l:'Tất cả'},{v:'WEB',l:'Web'},{v:'MOBILE',l:'Mobile'}]; track opt.v) {
       <button
         type="button"
         role="tab"
         [attr.aria-selected]="platformFilter() === opt.v"
         (click)="setPlatform($any(opt.v))"
-        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         [class.bg-white]="platformFilter() === opt.v"
         [class.text-kindy-sidebar]="platformFilter() === opt.v"
         [class.shadow-sm]="platformFilter() === opt.v"
@@ -34,14 +34,14 @@
   </div>
 
   <span class="text-sm font-medium text-kindy-ink-soft ml-2">Trạng thái:</span>
-  <div role="tablist" aria-label="Lọc theo trạng thái" class="inline-flex rounded-lg bg-gray-100 p-0.5">
+  <div role="tablist" aria-label="Lọc theo trạng thái" class="inline-flex rounded-lg bg-surface-2 p-0.5">
     @for (opt of [{v:'ALL',l:'Tất cả'},{v:'ACTIVE',l:'Đang hiển thị'},{v:'INACTIVE',l:'Đã ẩn'}]; track opt.v) {
       <button
         type="button"
         role="tab"
         [attr.aria-selected]="statusFilter() === opt.v"
         (click)="setStatus($any(opt.v))"
-        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+        class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         [class.bg-white]="statusFilter() === opt.v"
         [class.text-kindy-sidebar]="statusFilter() === opt.v"
         [class.shadow-sm]="statusFilter() === opt.v"
@@ -61,7 +61,7 @@
 @if (isLoading()) {
   <div class="space-y-3">
     @for (_ of [1,2,3]; track $index) {
-      <div class="h-24 bg-white rounded-xl border border-gray-100 animate-pulse"></div>
+      <div class="h-24 bg-surface rounded-xl border border-line animate-pulse"></div>
     }
   </div>
 } @else if (filtered().length === 0) {
@@ -78,14 +78,14 @@
     @for (banner of filtered(); track banner.id; let i = $index) {
       <li
         cdkDrag
-        class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+        class="bg-surface rounded-xl border border-line overflow-hidden shadow-sm hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-3 p-3">
           <button
             type="button"
             cdkDragHandle
             aria-label="Kéo để sắp xếp"
-            class="p-2 text-kindy-ink-soft hover:text-kindy-sidebar cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md flex-shrink-0"
+            class="p-2 text-kindy-ink-soft hover:text-kindy-sidebar cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-md flex-shrink-0"
           >
             <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <circle cx="9" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" />
@@ -110,8 +110,8 @@
                 [tone]="banner.platform === 'WEB' ? 'neutral' : 'teacher'"
               />
               <app-status-pill
-                [label]="banner.isActive ? 'Đang hiển thị' : 'Đã ẩn'"
-                [tone]="banner.isActive ? 'active' : 'inactive'"
+                [label]="banner.visibility === 'PUBLIC' ? 'Đang hiển thị' : 'Đã ẩn'"
+                [tone]="banner.visibility === 'PUBLIC' ? 'active' : 'inactive'"
                 [dot]="true"
               />
             </div>
@@ -134,8 +134,8 @@
 
           <div class="flex items-center gap-1 flex-shrink-0">
             <app-icon-button
-              [icon]="banner.isActive ? 'eyeOff' : 'eye'"
-              [ariaLabel]="banner.isActive ? 'Ẩn banner' : 'Hiện banner'"
+              [icon]="banner.visibility === 'PUBLIC' ? 'eyeOff' : 'eye'"
+              [ariaLabel]="banner.visibility === 'PUBLIC' ? 'Ẩn banner' : 'Hiện banner'"
               (click)="toggleActive(banner)"
             />
             <app-icon-button

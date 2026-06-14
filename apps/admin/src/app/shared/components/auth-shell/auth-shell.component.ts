@@ -43,7 +43,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           </header>
 
           <!-- Form card -->
-          <div class="bg-white rounded-3xl border border-gray-100 shadow-xl p-7 sm:p-8">
+          <div class="bg-surface/95 backdrop-blur-md rounded-3xl border border-line shadow-xl p-7 sm:p-8 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-kindy-coral before:via-kindy-sun before:to-kindy-sky">
             <ng-content />
           </div>
 

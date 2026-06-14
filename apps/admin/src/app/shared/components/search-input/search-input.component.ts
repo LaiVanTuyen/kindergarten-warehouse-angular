@@ -50,7 +50,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         [ngModel]="local()"
         (ngModelChange)="onInput($event)"
         [placeholder]="placeholder()"
-        class="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white text-kindy-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+        class="w-full pl-9 pr-9 py-2 text-sm border border-line rounded-lg bg-surface text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-transparent"
       />
       @if (local()) {
         <button

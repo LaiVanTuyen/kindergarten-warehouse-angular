@@ -31,7 +31,7 @@ export interface SortState {
       type="button"
       (click)="toggle()"
       [attr.aria-sort]="ariaSort()"
-      class="group inline-flex items-center gap-1 text-xs uppercase tracking-wider font-semibold text-kindy-ink-soft hover:text-kindy-sidebar focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md transition-colors"
+      class="group inline-flex items-center gap-1 text-xs uppercase tracking-wider font-semibold text-kindy-ink-soft hover:text-kindy-sidebar focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-md transition-colors"
     >
       <ng-content />
       <svg

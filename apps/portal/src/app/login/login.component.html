@@ -1,8 +1,8 @@
-<div class="min-h-screen flex bg-white font-sans overflow-hidden">
+<div class="min-h-screen flex bg-surface font-sans overflow-hidden">
   <!-- Left Side: Login Form -->
   <div class="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12 md:p-16 lg:p-24 xl:p-32 z-10 relative">
     <a routerLink="/"
-      class="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-primary-500 transition-colors font-bold text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 rounded">
+      class="absolute top-8 left-8 flex items-center gap-2 text-ink-muted hover:text-primary-500 transition-colors font-bold text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded">
       <i class="ph ph-arrow-left text-lg" aria-hidden="true"></i>
       Quay lại trang chủ
     </a>
@@ -11,26 +11,26 @@
       <a routerLink="/" class="inline-flex mb-12 transform hover:scale-105 transition-transform"
         aria-label="KinderWorld">
         <span class="text-4xl font-black text-primary-500 tracking-tight">Kinder</span>
-        <span class="text-4xl font-black text-secondary-600 tracking-tight">World</span>
+        <span class="text-4xl font-black text-accent tracking-tight">World</span>
       </a>
 
-      <h1 class="text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+      <h1 class="text-4xl font-extrabold text-ink mb-4 leading-tight">
         Chào mừng quay trở lại!
       </h1>
-      <p class="text-lg text-gray-500 mb-10">
+      <p class="text-lg text-ink-soft mb-10">
         Vui lòng đăng nhập vào tài khoản của bạn
       </p>
 
       <form class="space-y-6" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
         <!-- Email -->
         <div>
-          <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Địa chỉ Email</label>
+          <label for="email" class="block text-sm font-bold text-ink-soft mb-2">Địa chỉ Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" aria-hidden="true">
-              <i class="ph ph-envelope-simple text-gray-500 text-xl"></i>
+              <i class="ph ph-envelope-simple text-ink-soft text-xl"></i>
             </div>
             <input id="email" type="email" formControlName="email" autocomplete="email"
-              class="appearance-none block w-full pl-11 pr-4 py-4 rounded-2xl bg-white border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-primary-pink shadow-sm"
+              class="appearance-none block w-full pl-11 pr-4 py-4 rounded-2xl bg-surface border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-primary-pink shadow-sm"
               [ngClass]="{'border-red-500 focus:border-red-500 focus:ring-red-500/10': f['email'].invalid && (f['email'].dirty || f['email'].touched)}"
               [attr.aria-invalid]="f['email'].invalid && (f['email'].dirty || f['email'].touched)"
               placeholder="Email của bạn" />
@@ -44,21 +44,21 @@
 
         <!-- Mật khẩu -->
         <div>
-          <label for="password" class="block text-sm font-bold text-gray-700 mb-2">Mật khẩu</label>
+          <label for="password" class="block text-sm font-bold text-ink-soft mb-2">Mật khẩu</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" aria-hidden="true">
-              <i class="ph ph-lock-key text-gray-500 text-xl"></i>
+              <i class="ph ph-lock-key text-ink-soft text-xl"></i>
             </div>
             <input id="password" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
               autocomplete="current-password"
-              class="appearance-none block w-full pl-11 pr-12 py-4 rounded-2xl bg-white border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-primary-pink shadow-sm"
+              class="appearance-none block w-full pl-11 pr-12 py-4 rounded-2xl bg-surface border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-primary-pink shadow-sm"
               [ngClass]="{'border-red-500 focus:border-red-500 focus:ring-red-500/10': f['password'].invalid && (f['password'].dirty || f['password'].touched)}"
               [attr.aria-invalid]="f['password'].invalid && (f['password'].dirty || f['password'].touched)"
               placeholder="Mật khẩu của bạn" />
             <button type="button" (click)="togglePassword()"
               [attr.aria-label]="showPassword() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
               [attr.aria-pressed]="showPassword()"
-              class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:text-pink-500">
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-ink-muted hover:text-ink-soft focus:outline-none focus-visible:text-primary">
               <i [class]="showPassword() ? 'ph ph-eye-slash text-xl' : 'ph ph-eye text-xl'" aria-hidden="true"></i>
             </button>
           </div>
@@ -78,8 +78,8 @@
         <!-- Ghi nhớ -->
         <div class="flex items-center">
           <input id="remember-me" type="checkbox" formControlName="rememberMe"
-            class="h-5 w-5 text-secondary-600 focus:ring-secondary-600 border-gray-300 rounded-lg cursor-pointer transition-colors" />
-          <label for="remember-me" class="ml-2 block text-sm font-bold text-gray-600 cursor-pointer">
+            class="h-5 w-5 text-accent focus:ring-accent border-gray-300 rounded-lg cursor-pointer transition-colors" />
+          <label for="remember-me" class="ml-2 block text-sm font-bold text-ink-soft cursor-pointer">
             Ghi nhớ đăng nhập
           </label>
         </div>
@@ -87,7 +87,7 @@
         <!-- Nút Đăng nhập -->
         <div>
           <button type="submit" [disabled]="isLoading()"
-            class="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
+            class="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-primary-600 to-accent-500 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-focus transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
             <span *ngIf="!isLoading()">Đăng nhập</span>
             <svg *ngIf="isLoading()" class="animate-spin size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -98,10 +98,10 @@
         </div>
       </form>
 
-      <p class="mt-8 text-center text-sm text-gray-500">
+      <p class="mt-8 text-center text-sm text-ink-soft">
         Chưa có tài khoản?
         <a routerLink="/register"
-          class="font-bold text-secondary-600 hover:text-secondary-700 transition-colors focus:outline-none focus-visible:underline">Đăng ký</a>
+          class="font-bold text-accent hover:text-accent transition-colors focus:outline-none focus-visible:underline">Đăng ký</a>
       </p>
     </div>
   </div>

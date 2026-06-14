@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   OnInit,
@@ -19,6 +20,7 @@ import {
   AuthService,
   FavoritesService,
   Lang,
+  ThemeService,
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
 
@@ -35,7 +37,9 @@ export class HeaderComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly favorites = inject(FavoritesService);
   private readonly eRef = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
   readonly translationService = inject(TranslationService);
+  readonly theme = inject(ThemeService);
 
   // Reactive user state ----------------------------------------------------
   readonly currentUser = this.authService.currentUser;
@@ -67,7 +71,7 @@ export class HeaderComponent implements OnInit {
       .pipe(
         debounceTime(400),
         distinctUntilChanged(),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((term) => this.runSearch(term));
   }
@@ -119,6 +123,11 @@ export class HeaderComponent implements OnInit {
   handleEscape(): void {
     this.closeUserMenu();
     this.closeMobileMenu();
+  }
+
+  // Theme ------------------------------------------------------------------
+  toggleTheme(): void {
+    this.theme.toggle();
   }
 
   // Language / auth --------------------------------------------------------

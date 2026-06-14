@@ -21,7 +21,7 @@ export class AuditLogService {
     let params = new HttpParams()
       .set('page', page - 1)
       .set('size', limit)
-      .set('sortDir', sortDir);
+      .set('sort', `timestamp,${sortDir}`); // Contract v1 §1.2 — sort=field,dir
 
     if (filters.action && filters.action !== 'ALL') {
       params = params.set('action', filters.action);

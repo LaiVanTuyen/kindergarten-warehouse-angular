@@ -16,10 +16,10 @@ export interface CreateCommentRequest {
 /**
  * Comment CRUD for resource threads.
  *
- * Backend contract expected:
- *   GET    /resources/:id/comments?page&size → Page<Comment>
- *   POST   /resources/:id/comments           → Comment (requires auth)
- *   DELETE /comments/:id                     → void    (author or admin)
+ * Backend contract (API Contract v1 §2.1 — flat endpoint, JSON body):
+ *   GET    /comments?resourceId={id}&page&size&sort=createdAt,desc → Page<Comment>
+ *   POST   /comments   body { resourceId, content, rating }        → Comment (auth)
+ *   DELETE /comments/:id                                           → void (author/admin)
  */
 @Injectable({ providedIn: 'root' })
 export class CommentService {
@@ -32,18 +32,19 @@ export class CommentService {
     size = 20
   ): Observable<PaginatedResponse<Comment>> {
     const params = new HttpParams()
+      .set('resourceId', resourceId)
       .set('page', Math.max(0, page - 1))
-      .set('size', size);
+      .set('size', size)
+      .set('sort', 'createdAt,desc'); // Contract v1 §1.2
     return this.http
       .get<RestResponse<PaginatedResponse<Comment>>>(
-        `${this.apiUrl}/resources/${resourceId}/comments`,
+        `${this.apiUrl}/comments`,
         { params }
       )
       .pipe(
         map(
           (res) =>
-            res.result ??
-            res.data ?? {
+            res.result ?? {
               content: [],
               totalElements: 0,
               totalPages: 0,
@@ -59,11 +60,11 @@ export class CommentService {
     payload: CreateCommentRequest
   ): Observable<Comment> {
     return this.http
-      .post<RestResponse<Comment>>(
-        `${this.apiUrl}/resources/${resourceId}/comments`,
-        payload
-      )
-      .pipe(map((res) => res.result ?? (res.data as Comment)));
+      .post<RestResponse<Comment>>(`${this.apiUrl}/comments`, {
+        resourceId,
+        ...payload,
+      })
+      .pipe(map((res) => res.result as Comment));
   }
 
   delete(commentId: string): Observable<void> {

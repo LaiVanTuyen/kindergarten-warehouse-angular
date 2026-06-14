@@ -22,6 +22,8 @@ import {
   AuthService,
   ToastService,
   UserService,
+  passwordValidator,
+  PASSWORD_RULE_TEXT,
 } from '@kindergarten-warehouse/data-access';
 
 type Tab = 'general' | 'security';
@@ -51,9 +53,11 @@ export class SettingsComponent implements OnInit {
     phoneNumber: ['', [Validators.pattern(/(84|0[3|5|7|8|9])+([0-9]{8})\b/)]],
   });
 
+  readonly passwordRuleText = PASSWORD_RULE_TEXT;
+
   readonly passwordForm: FormGroup = this.fb.group({
     oldPassword: ['', [Validators.required]],
-    newPassword: ['', [Validators.required, Validators.minLength(6)]],
+    newPassword: ['', [Validators.required, passwordValidator()]],
     confirmNewPassword: ['', [Validators.required]],
   });
 

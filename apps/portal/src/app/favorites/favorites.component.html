@@ -1,14 +1,14 @@
-<div class="min-h-screen bg-gray-50 pt-24 pb-16">
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mb-8 flex items-end justify-between flex-wrap gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+        <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2">
           Tài liệu yêu thích
           <i class="ph-fill ph-heart text-red-500" aria-hidden="true"></i>
         </h1>
-        <p class="mt-2 text-gray-600">
+        <p class="mt-2 text-ink-soft">
           Danh sách các tài liệu bạn đã lưu lại để xem sau.
-          <span *ngIf="totalElements() > 0" class="font-semibold text-gray-700">
+          <span *ngIf="totalElements() > 0" class="font-semibold text-ink-soft">
             ({{ totalElements() }} tài liệu)
           </span>
         </p>
@@ -26,7 +26,7 @@
     </app-error-state>
 
     <!-- Empty -->
-    <div *ngIf="isEmpty()" class="bg-white rounded-3xl shadow-sm border border-gray-100">
+    <div *ngIf="isEmpty()" class="bg-surface rounded-3xl shadow-sm border border-line">
       <app-empty-state
         icon="ph ph-heart-break"
         tone="pink"

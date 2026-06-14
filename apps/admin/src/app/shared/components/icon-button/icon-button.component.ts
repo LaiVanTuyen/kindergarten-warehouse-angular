@@ -16,9 +16,9 @@ export type IconButtonSize = 'xs' | 'sm' | 'md';
 
 const TONE_CLASSES: Record<IconButtonTone, string> = {
   neutral:
-    'text-kindy-ink-soft hover:bg-kindy-surface-soft hover:text-kindy-sidebar focus-visible:ring-kindy-sidebar',
+    'text-kindy-ink-soft hover:bg-kindy-surface-soft hover:text-kindy-sidebar focus-visible:ring-focus',
   primary:
-    'text-kindy-ink-soft hover:bg-kindy-sky-soft hover:text-blue-700 focus-visible:ring-kindy-sidebar',
+    'text-kindy-ink-soft hover:bg-kindy-sky-soft hover:text-blue-700 focus-visible:ring-focus',
   success:
     'text-kindy-ink-soft hover:bg-kindy-mint-soft hover:text-emerald-700 focus-visible:ring-kindy-mint',
   warning:

@@ -18,10 +18,11 @@ const TONE_CLASSES: Record<StatCardTone, string> = {
 };
 
 const CARD_STATIC =
-  'block bg-white rounded-2xl p-5 shadow-sm border border-gray-100';
+  'block bg-surface rounded-2xl p-5 shadow-sm border border-line';
+
 const CARD_INTERACTIVE =
   CARD_STATIC +
-  ' hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:ring-offset-2';
+  ' hover:shadow-lg hover:-translate-y-1.5 hover:border-kindy-coral/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2';
 
 @Component({
   selector: 'app-stat-card',

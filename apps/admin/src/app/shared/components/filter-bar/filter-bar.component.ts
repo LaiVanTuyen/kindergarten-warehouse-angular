@@ -15,14 +15,14 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="bg-white border border-gray-100 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3"
+      class="bg-surface border border-line rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3"
       role="search"
     >
       <ng-content />
       @if (canReset()) {
         <button
           type="button"
-          (click)="reset.emit()"
+          (click)="resetFilters.emit()"
           class="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sky rounded-md px-2 py-1"
         >
           <svg
@@ -47,5 +47,5 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 })
 export class FilterBarComponent {
   readonly canReset = input<boolean>(false);
-  readonly reset = output<void>();
+  readonly resetFilters = output<void>();
 }

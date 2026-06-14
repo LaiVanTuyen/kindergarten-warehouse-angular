@@ -342,15 +342,14 @@ export class DashboardComponent {
     this.dashService
       .approveResource(item.id)
       .pipe(
-        handleHttpError(this.toast, 'Không thể phê duyệt. Vui lòng thử lại.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không thể phê duyệt. Vui lòng thử lại.')
       )
       .subscribe(() => {
         this.pending.update((list) => list.filter((p) => p.id !== item.id));
         this.stats.update((s) =>
           s
-            ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
-            : s
+             ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
+             : s
         );
         this.toast.show(`Đã phê duyệt "${item.title}".`, 'success');
       });
@@ -360,8 +359,7 @@ export class DashboardComponent {
     this.dashService
       .rejectResource(item.id, reason)
       .pipe(
-        handleHttpError(this.toast, 'Không thể từ chối. Vui lòng thử lại.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không thể từ chối. Vui lòng thử lại.')
       )
       .subscribe(() => {
         this.pending.update((list) => list.filter((p) => p.id !== item.id));

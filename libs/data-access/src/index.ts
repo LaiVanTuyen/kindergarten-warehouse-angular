@@ -19,12 +19,15 @@ export * from './lib/services/resource-download.service';
 export * from './lib/guards/auth.guard';
 export * from './lib/guards/role.guard';
 export * from './lib/interceptors/auth.interceptor';
+export * from './lib/interceptors/csrf.interceptor';
 export * from './lib/utils/resource.utils';
 export * from './lib/utils/api-error.util';
+export * from './lib/utils/password.util';
 export * from './lib/utils/csv.util';
 export * from './lib/utils/rx-operators';
 
 export * from './lib/services/toast.service';
+export * from './lib/services/theme.service';
 
 export * from './lib/tokens';
 export * from './lib/environments/environment';

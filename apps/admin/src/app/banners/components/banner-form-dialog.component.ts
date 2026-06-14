@@ -28,7 +28,7 @@ export interface BannerFormDialogResult {
     bgFrom: string;
     bgTo: string;
     platform: 'WEB' | 'MOBILE';
-    isActive: boolean;
+    visibility: 'PUBLIC' | 'PRIVATE';
     startDate: string;
     endDate: string;
   };
@@ -86,7 +86,7 @@ function dateRangeValidator(group: AbstractControl) {
           <div class="flex items-start gap-4">
             <label
               for="banner-image"
-              class="w-32 h-20 rounded-lg border-2 border-dashed border-gray-200 hover:border-kindy-sidebar bg-kindy-surface-soft flex items-center justify-center cursor-pointer overflow-hidden focus-within:ring-2 focus-within:ring-kindy-sidebar flex-shrink-0"
+              class="w-32 h-20 rounded-lg border-2 border-dashed border-line hover:border-kindy-sidebar bg-kindy-surface-soft flex items-center justify-center cursor-pointer overflow-hidden focus-within:ring-2 focus-within:ring-kindy-sidebar flex-shrink-0"
             >
               @if (previewUrl()) {
                 <img [src]="previewUrl()" alt="" class="w-full h-full object-cover" />
@@ -115,10 +115,10 @@ function dateRangeValidator(group: AbstractControl) {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <app-form-field label="Tiêu đề" [required]="true" [control]="form.controls.title">
-            <input type="text" formControlName="title" maxlength="120" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="text" formControlName="title" maxlength="120" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
           <app-form-field label="Phụ đề" [control]="form.controls.subtitle">
-            <input type="text" formControlName="subtitle" maxlength="200" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="text" formControlName="subtitle" maxlength="200" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
         </div>
 
@@ -127,19 +127,19 @@ function dateRangeValidator(group: AbstractControl) {
           hint="URL nội bộ (/resources) hoặc đầy đủ (https://...)"
           [control]="form.controls.link"
         >
-          <input type="text" formControlName="link" placeholder="/resources hoặc https://..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+          <input type="text" formControlName="link" placeholder="/resources hoặc https://..." class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
         </app-form-field>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <app-form-field label="Phối màu nền" [required]="true" [control]="form.controls.theme">
-            <select formControlName="theme" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent">
+            <select formControlName="theme" class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent">
               @for (t of bannerThemes; track t.id) {
                 <option [value]="t.id">{{ t.name }}</option>
               }
             </select>
           </app-form-field>
           <app-form-field label="Nền tảng" [required]="true" [control]="form.controls.platform">
-            <select formControlName="platform" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent">
+            <select formControlName="platform" class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent">
               <option value="WEB">Web</option>
               <option value="MOBILE">Mobile</option>
             </select>
@@ -147,17 +147,17 @@ function dateRangeValidator(group: AbstractControl) {
         </div>
 
         <div
-          class="h-16 rounded-lg border border-gray-200"
+          class="h-16 rounded-lg border border-line"
           [ngStyle]="getGradientStyle()"
           aria-hidden="true"
         ></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <app-form-field label="Bắt đầu" [control]="form.controls.startDate">
-            <input type="date" formControlName="startDate" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="date" formControlName="startDate" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
           <app-form-field label="Kết thúc" [control]="form.controls.endDate">
-            <input type="date" formControlName="endDate" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+            <input type="date" formControlName="endDate" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
           </app-form-field>
         </div>
         @if (form.errors?.['dateRange']) {
@@ -165,7 +165,7 @@ function dateRangeValidator(group: AbstractControl) {
         }
 
         <label class="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" formControlName="isActive" class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar" />
+          <input type="checkbox" formControlName="isPublic" class="w-4 h-4 rounded text-kindy-sidebar focus:ring-focus" />
           <span class="text-sm font-medium text-kindy-ink">Hiển thị công khai</span>
         </label>
       </form>
@@ -174,13 +174,13 @@ function dateRangeValidator(group: AbstractControl) {
         <button
           type="button"
           (click)="ref.close()"
-          class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
         >Huỷ</button>
         <button
           type="button"
           (click)="submit()"
           [disabled]="form.invalid || (!isEdit() && !imageFile())"
-          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {{ isEdit() ? 'Cập nhật' : 'Tạo banner' }}
         </button>
@@ -205,7 +205,7 @@ export class BannerFormDialogComponent {
       link: [this.data.banner?.link ?? ''],
       theme: [getThemeByTailwind(this.data.banner?.bgFrom, this.data.banner?.bgTo).id],
       platform: [(this.data.banner?.platform as 'WEB' | 'MOBILE') ?? 'WEB'],
-      isActive: [this.data.banner?.isActive ?? true],
+      isPublic: [this.data.banner ? this.data.banner.visibility === 'PUBLIC' : true],
       startDate: [extractDateStr(this.data.banner?.startDate)],
       endDate: [extractDateStr(this.data.banner?.endDate)],
     },
@@ -260,7 +260,7 @@ export class BannerFormDialogComponent {
       bgFrom: theme.from,
       bgTo: theme.to,
       platform: raw.platform,
-      isActive: raw.isActive,
+      visibility: (raw.isPublic ? 'PUBLIC' : 'PRIVATE') as 'PUBLIC' | 'PRIVATE',
       startDate: raw.startDate,
       endDate: raw.endDate
     };

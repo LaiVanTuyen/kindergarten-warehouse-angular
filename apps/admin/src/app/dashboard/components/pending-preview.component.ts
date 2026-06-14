@@ -43,7 +43,7 @@ import { IconButtonComponent } from '../../shared/components/icon-button/icon-bu
         <p class="text-xs mt-1">Mọi tài nguyên đã được xử lý.</p>
       </div>
     } @else {
-      <ul class="divide-y divide-gray-100">
+      <ul class="divide-y divide-line">
         @for (item of items(); track item.id) {
           <li class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
             @if (item.thumbnailUrl) {

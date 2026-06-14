@@ -1,0 +1,130 @@
+/* =============================================================================
+ * KinderWorld — Design Tokens (single source of truth)
+ * Direction C "Hybrid: trustworthy + fun" — Teal primary + Coral/Amber accents
+ * on a warm-neutral base, with full light + dark support.
+ *
+ * Colours are stored as space-separated RGB *channels* so Tailwind can apply
+ * opacity modifiers, e.g. `bg-primary/50`, via `rgb(var(--c-…) / <alpha-value>)`.
+ * Shared by both `portal` and `admin` apps through the Tailwind preset.
+ * ============================================================================= */
+
+:root {
+  /* --- Brand ramps (stable across themes) ------------------------------- */
+  /* Primary · Teal */
+  --c-primary-50: 240 253 250;
+  --c-primary-100: 204 251 241;
+  --c-primary-200: 153 246 228;
+  --c-primary-300: 94 234 212;
+  --c-primary-400: 45 212 191;
+  --c-primary-500: 20 184 166;
+  --c-primary-600: 13 148 136;
+  --c-primary-700: 15 118 110;
+  --c-primary-800: 17 94 89;
+  --c-primary-900: 19 78 74;
+
+  /* Accent · Coral */
+  --c-accent-50: 255 241 238;
+  --c-accent-100: 255 224 217;
+  --c-accent-200: 255 196 184;
+  --c-accent-300: 255 159 140;
+  --c-accent-400: 251 126 102;
+  --c-accent-500: 249 115 98;
+  --c-accent-600: 229 83 63;
+  --c-accent-700: 193 62 44;
+  --c-accent-800: 154 52 38;
+  --c-accent-900: 120 44 34;
+
+  /* Sun · Amber */
+  --c-sun-50: 255 251 235;
+  --c-sun-100: 254 243 199;
+  --c-sun-200: 253 230 138;
+  --c-sun-300: 252 211 77;
+  --c-sun-400: 251 191 36;
+  --c-sun-500: 245 165 36;
+  --c-sun-600: 217 119 6;
+  --c-sun-700: 180 83 9;
+
+  /* --- Status ----------------------------------------------------------- */
+  --c-success: 16 185 129;
+  --c-success-soft: 209 250 229;
+  --c-warning: 245 158 11;
+  --c-warning-soft: 254 243 199;
+  --c-danger: 239 68 68;
+  --c-danger-soft: 254 226 226;
+  --c-info: 59 130 246;
+  --c-info-soft: 219 234 254;
+
+  /* --- Semantic surfaces / text (LIGHT) --------------------------------- */
+  --c-bg: 250 250 249; /* page background — warm stone-50 */
+  --c-surface: 255 255 255; /* cards, panels */
+  --c-surface-2: 245 245 244; /* subtle raised / hover */
+  --c-surface-3: 231 229 228; /* deeper fill */
+  --c-line: 231 229 228; /* borders / dividers */
+  --c-line-strong: 214 211 209;
+
+  --c-ink: 28 27 34; /* strong text / headings */
+  --c-ink-soft: 87 83 78; /* body text */
+  --c-ink-muted: 145 140 135; /* captions / placeholders */
+  --c-ink-onbrand: 255 255 255; /* text on primary/accent fills */
+
+  /* --- Sidebar (admin shell) -------------------------------------------- */
+  --c-sidebar: 17 30 38; /* deep teal-slate */
+  --c-sidebar-2: 23 40 50;
+  --c-sidebar-fg: 226 232 235;
+  --c-sidebar-muted: 148 163 168;
+  --c-sidebar-active: 20 184 166; /* primary teal */
+
+  /* --- Radius scale ----------------------------------------------------- */
+  --r-xs: 0.375rem; /* 6  */
+  --r-sm: 0.5rem; /* 8  */
+  --r-md: 0.75rem; /* 12 */
+  --r-lg: 0.875rem; /* 14 — default card */
+  --r-xl: 1.125rem; /* 18 */
+  --r-2xl: 1.5rem; /* 24 */
+  --r-pill: 9999px;
+
+  /* --- Elevation (neutral, soft) ---------------------------------------- */
+  --shadow-xs: 0 1px 2px rgb(28 27 34 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(28 27 34 / 0.07), 0 1px 2px rgb(28 27 34 / 0.04);
+  --shadow-md: 0 4px 12px rgb(28 27 34 / 0.08);
+  --shadow-lg: 0 12px 28px rgb(28 27 34 / 0.10);
+  --shadow-pop: 0 20px 45px rgb(28 27 34 / 0.14);
+  --ring-focus: 0 0 0 3px rgb(var(--c-primary-400) / 0.45);
+}
+
+/* =============================================================================
+ * DARK THEME — applied via `.dark` class on <html> (Tailwind darkMode: 'class')
+ * Brand ramps stay; only semantic surfaces / text / elevation swap.
+ * ============================================================================= */
+.dark {
+  --c-bg: 24 24 28; /* #18181C */
+  --c-surface: 32 32 38; /* #202026 */
+  --c-surface-2: 43 43 51;
+  --c-surface-3: 54 54 63;
+  --c-line: 56 56 64;
+  --c-line-strong: 74 74 84;
+
+  --c-ink: 244 244 245;
+  --c-ink-soft: 188 186 194;
+  --c-ink-muted: 138 135 145;
+  --c-ink-onbrand: 255 255 255;
+
+  --c-sidebar: 16 18 23; /* near-black */
+  --c-sidebar-2: 24 27 34;
+  --c-sidebar-fg: 228 230 235;
+  --c-sidebar-muted: 142 148 158;
+  --c-sidebar-active: 45 212 191;
+
+  /* Soften status fills on dark backgrounds */
+  --c-success-soft: 6 78 59;
+  --c-warning-soft: 69 47 8;
+  --c-danger-soft: 80 22 22;
+  --c-info-soft: 23 49 92;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 12px 28px rgb(0 0 0 / 0.55);
+  --shadow-pop: 0 20px 45px rgb(0 0 0 / 0.6);
+  --ring-focus: 0 0 0 3px rgb(var(--c-primary-400) / 0.55);
+}

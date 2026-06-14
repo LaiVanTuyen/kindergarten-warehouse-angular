@@ -68,7 +68,7 @@ const TONE_CLASSES = {
         <a
           [routerLink]="action.route"
           [queryParams]="action.queryParams || null"
-          class="group flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-kindy-sidebar/30 hover:bg-kindy-surface-soft transition-colors focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+          class="group flex items-center gap-3 p-3 rounded-xl border border-line hover:border-kindy-sidebar/30 hover:bg-kindy-surface-soft transition-colors focus:outline-none focus:ring-2 focus:ring-focus"
         >
           <span
             aria-hidden="true"

@@ -6,7 +6,7 @@ export interface Banner {
   bgFrom: string;
   bgTo: string;
   link: string;
-  isActive: boolean; // Refactored from is_active
+  visibility: 'PUBLIC' | 'PRIVATE'; // D1: replaces is_active/isActive
   displayOrder: number; // Refactored from display_order
   createdAt?: string; // Refactored from created_at
   updatedAt?: string; // Refactored from updated_at

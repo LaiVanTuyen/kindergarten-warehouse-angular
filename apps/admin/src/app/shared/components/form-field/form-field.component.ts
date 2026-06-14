@@ -4,7 +4,7 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { AbstractControl, FormControl } from '@angular/forms';
+import { AbstractControl } from '@angular/forms';
 
 /**
  * Reusable form-field wrapper that renders label + projected input + error.

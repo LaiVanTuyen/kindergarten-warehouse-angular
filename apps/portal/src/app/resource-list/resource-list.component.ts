@@ -352,12 +352,11 @@ export class ResourceListComponent implements OnInit {
       const ageGroupIds = ageGroups.map((g) => g.id);
 
       return this.resourceService
-        .getResources({
+        .getPublicResources({
           topicId: targetTopicIds ? targetTopicIds[0] : undefined, // Assuming single topic filter for now or update service to support array
           ageGroupId:
             ageGroupIds.length > 0 ? ageGroupIds.join(',') : undefined,
           keyword: search,
-          status: 'APPROVED',
           page,
           size: 9,
         })

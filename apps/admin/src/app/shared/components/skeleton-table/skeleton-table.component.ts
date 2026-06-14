@@ -13,7 +13,7 @@ interface SkeletonCell {
   template: `
     <div class="animate-pulse flex flex-col gap-3">
       <!-- Header Skeleton (Optional, just a line) -->
-      <div class="h-8 bg-slate-100 rounded-lg w-full mb-2 opacity-50"></div>
+      <div class="h-8 bg-surface-2 rounded-lg w-full mb-2 opacity-50"></div>
 
       <div
         *ngFor="let row of displayRows"
@@ -36,7 +36,7 @@ interface SkeletonCell {
           <!-- TEXT SM -->
           <div
             *ngIf="cell.type === 'text-sm'"
-            class="h-3 bg-slate-100 rounded-full"
+            class="h-3 bg-surface-2 rounded-full"
             [style.width]="cell.width"
           ></div>
 
@@ -49,13 +49,13 @@ interface SkeletonCell {
           <!-- BADGE (Pill) -->
           <div
             *ngIf="cell.type === 'badge'"
-            class="h-6 w-20 bg-slate-100 rounded-full shrink-0"
+            class="h-6 w-20 bg-surface-2 rounded-full shrink-0"
           ></div>
 
           <!-- ACTIONS -->
           <div *ngIf="cell.type === 'actions'" class="flex gap-2 ml-auto">
-            <div class="w-8 h-8 bg-slate-100 rounded-lg"></div>
-            <div class="w-8 h-8 bg-slate-100 rounded-lg"></div>
+            <div class="w-8 h-8 bg-surface-2 rounded-lg"></div>
+            <div class="w-8 h-8 bg-surface-2 rounded-lg"></div>
           </div>
 
           <!-- COMPOSITE: USER (Avatar + Lines) -->
@@ -66,7 +66,7 @@ interface SkeletonCell {
             <div class="w-9 h-9 bg-slate-200 rounded-full shrink-0"></div>
             <div class="flex flex-col gap-2 flex-1">
               <div class="h-3.5 bg-slate-200 rounded-full w-3/4"></div>
-              <div class="h-2.5 bg-slate-100 rounded-full w-1/2"></div>
+              <div class="h-2.5 bg-surface-2 rounded-full w-1/2"></div>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ interface SkeletonCell {
             <div class="w-12 h-12 bg-slate-200 rounded-xl shrink-0"></div>
             <div class="flex flex-col gap-2 flex-1">
               <div class="h-4 bg-slate-200 rounded-full w-4/5"></div>
-              <div class="h-3 bg-slate-100 rounded-full w-1/2"></div>
+              <div class="h-3 bg-surface-2 rounded-full w-1/2"></div>
             </div>
           </div>
         </ng-container>

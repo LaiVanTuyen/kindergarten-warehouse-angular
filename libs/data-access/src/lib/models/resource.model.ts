@@ -136,7 +136,7 @@ export interface Category {
   createdBy?: string;
   updatedBy?: string;
   platform?: 'WEB' | 'MOBILE' | 'BOTH';
-  isActive?: boolean;
+  visibility?: 'PUBLIC' | 'PRIVATE'; // D1: replaces isActive
 }
 
 export interface Topic {
@@ -150,7 +150,7 @@ export interface Topic {
   updatedAt?: string;
   createdBy?: string;
   updatedBy?: string;
-  isActive?: boolean;
+  visibility?: 'PUBLIC' | 'PRIVATE'; // D1: replaces isActive
 }
 
 export interface AgeGroup {

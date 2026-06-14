@@ -45,7 +45,7 @@ const PRESET_REASONS = [
                 [value]="preset"
                 [ngModel]="selectedPreset()"
                 (ngModelChange)="onPreset($event)"
-                class="mt-1 text-kindy-sidebar focus:ring-kindy-sidebar"
+                class="mt-1 text-kindy-sidebar focus:ring-focus"
               />
               <span class="text-sm text-kindy-ink">{{ preset }}</span>
             </label>
@@ -57,7 +57,7 @@ const PRESET_REASONS = [
               value=""
               [ngModel]="selectedPreset()"
               (ngModelChange)="onPreset($event)"
-              class="mt-1 text-kindy-sidebar focus:ring-kindy-sidebar"
+              class="mt-1 text-kindy-sidebar focus:ring-focus"
             />
             <span class="text-sm text-kindy-ink">Lý do khác…</span>
           </label>
@@ -75,7 +75,7 @@ const PRESET_REASONS = [
           (ngModelChange)="customReason.set($event)"
           maxlength="500"
           placeholder="Thông tin thêm để người tải lên sửa đổi…"
-          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-kindy-ink placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent"
+          class="w-full px-3 py-2 border border-line rounded-lg text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent"
         ></textarea>
       </div>
 
@@ -83,7 +83,7 @@ const PRESET_REASONS = [
         <button
           type="button"
           (click)="ref.close()"
-          class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
         >
           Huỷ
         </button>

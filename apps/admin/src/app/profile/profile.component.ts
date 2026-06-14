@@ -161,7 +161,6 @@ export class ProfileComponent {
     this.isUploadingAvatar.set(true);
     this.userService
       .uploadAvatar(file)
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.isUploadingAvatar.set(false);
@@ -188,7 +187,6 @@ export class ProfileComponent {
     this.isSavingProfile.set(true);
     this.userService
       .updateProfile(data)
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.isSavingProfile.set(false);
@@ -223,7 +221,6 @@ export class ProfileComponent {
     this.isChangingPassword.set(true);
     this.userService
       .changePassword(data)
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isChangingPassword.set(false);

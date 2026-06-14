@@ -33,7 +33,7 @@ import { CommonModule } from '@angular/common';
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
 
       <div
-        class="relative w-full max-w-md rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 p-6 sm:p-7"
+        class="relative w-full max-w-md rounded-3xl bg-surface shadow-2xl ring-1 ring-black/5 p-6 sm:p-7"
         (click)="$event.stopPropagation()"
       >
         <div class="flex items-start gap-4">

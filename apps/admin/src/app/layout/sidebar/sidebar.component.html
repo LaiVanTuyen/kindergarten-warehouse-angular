@@ -1,6 +1,6 @@
 <aside
   id="admin-sidebar"
-  class="bg-kindy-sidebar text-white flex flex-col h-full transition-all duration-300 border-r border-white/10"
+  class="bg-sidebar text-sidebar-fg flex flex-col h-full transition-all duration-300 border-r border-white/10"
   [class.w-64]="!collapsed()"
   [class.w-20]="collapsed()"
   [attr.aria-label]="'Thanh điều hướng quản trị'"
@@ -19,7 +19,7 @@
         aria-label="Về trang chủ quản trị"
       >
         <span
-          class="w-9 h-9 rounded-xl bg-kindy-coral text-white flex items-center justify-center text-xl"
+          class="w-9 h-9 rounded-xl bg-accent text-ink-onbrand flex items-center justify-center text-xl"
           aria-hidden="true"
         >🌱</span>
         <span class="text-lg font-bold font-display tracking-wide whitespace-nowrap">
@@ -29,7 +29,7 @@
     } @else {
       <a
         routerLink="/dashboard"
-        class="w-9 h-9 rounded-xl bg-kindy-coral text-white flex items-center justify-center text-xl focus:outline-none focus:ring-2 focus:ring-white/40"
+        class="w-9 h-9 rounded-xl bg-accent text-ink-onbrand flex items-center justify-center text-xl focus:outline-none focus:ring-2 focus:ring-white/40"
         aria-label="Về trang chủ quản trị"
       >🌱</a>
     }
@@ -38,7 +38,7 @@
       <button
         type="button"
         (click)="onToggle()"
-        class="p-1.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
+        class="p-1.5 rounded-lg text-sidebar-muted hover:bg-white/10 hover:text-sidebar-fg transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
         [attr.aria-label]="'Thu gọn thanh điều hướng'"
         [attr.aria-expanded]="!collapsed()"
       >
@@ -65,7 +65,7 @@
     <button
       type="button"
       (click)="onToggle()"
-      class="mx-auto mt-2 p-1.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
+      class="mx-auto mt-2 p-1.5 rounded-lg text-sidebar-muted hover:bg-white/10 hover:text-sidebar-fg transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
       [attr.aria-label]="'Mở rộng thanh điều hướng'"
       [attr.aria-expanded]="!collapsed()"
     >
@@ -95,7 +95,7 @@
       <div class="mb-4">
         @if (!collapsed()) {
           <p
-            class="px-5 mb-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold"
+            class="px-5 mb-2 text-[11px] uppercase tracking-wider text-sidebar-muted font-semibold"
           >
             {{ group.label }}
           </p>
@@ -108,10 +108,10 @@
             <li>
               <a
                 [routerLink]="item.path"
-                routerLinkActive="bg-white/10 border-kindy-sidebar-active text-white"
+                routerLinkActive="bg-white/10 border-sidebar-active text-sidebar-fg"
                 #rla="routerLinkActive"
                 [attr.aria-current]="rla.isActive ? 'page' : null"
-                class="flex items-center py-2.5 border-l-4 border-transparent text-white/70 hover:bg-white/5 hover:text-white transition-colors focus:outline-none focus:bg-white/10"
+                class="flex items-center py-2.5 border-l-4 border-transparent text-sidebar-muted hover:bg-white/5 hover:text-sidebar-fg transition-colors focus:outline-none focus:bg-white/10"
                 [class.px-5]="!collapsed()"
                 [class.justify-start]="!collapsed()"
                 [class.justify-center]="collapsed()"
@@ -147,7 +147,7 @@
 
   <!-- Footer / Version -->
   <div
-    class="border-t border-white/10 text-xs text-white/40 whitespace-nowrap overflow-hidden"
+    class="border-t border-white/10 text-xs text-sidebar-muted whitespace-nowrap overflow-hidden"
     [class.p-4]="!collapsed()"
     [class.p-3]="collapsed()"
     [class.text-center]="collapsed()"

@@ -57,8 +57,7 @@ export class UserService {
       .set('page', (page - 1).toString()) // Backend expects 0-indexed
       .set('size', limit)
       .set('keyword', query)
-      .set('sortBy', sort)
-      .set('sortDir', dir);
+      .set('sort', `${sort},${dir}`); // Contract v1 §1.2 — sort=field,dir
 
     if (role && role !== 'ALL') params = params.set('role', role);
     if (status && status !== 'ALL') params = params.set('status', status);
@@ -123,7 +122,8 @@ export class UserService {
   }
 
   blockUser(id: string): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
+    // Contract v1 §2.4 — state change → PATCH (BE standardised PUT→PATCH)
+    return this.http.patch<ApiResponse<any>>(
       `${this.apiUrl}/users/${id}/block`,
       {},
       { withCredentials: true }
@@ -137,7 +137,8 @@ export class UserService {
   }
 
   restoreUser(id: string): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
+    // Contract v1 §2.4 — state change → PATCH
+    return this.http.patch<ApiResponse<any>>(
       `${this.apiUrl}/users/${id}/restore`,
       {},
       { withCredentials: true }

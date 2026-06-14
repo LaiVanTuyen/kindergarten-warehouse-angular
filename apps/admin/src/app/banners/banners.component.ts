@@ -63,14 +63,14 @@ export class BannersComponent {
     const status = this.statusFilter();
     return list.filter((b) => {
       if (platform !== 'ALL' && b.platform !== platform) return false;
-      if (status === 'ACTIVE' && !b.isActive) return false;
-      if (status === 'INACTIVE' && b.isActive) return false;
+      if (status === 'ACTIVE' && b.visibility !== 'PUBLIC') return false;
+      if (status === 'INACTIVE' && b.visibility === 'PUBLIC') return false;
       return true;
     });
   });
 
   readonly activeCount = computed(
-    () => this.banners().filter((b) => b.isActive).length
+    () => this.banners().filter((b) => b.visibility === 'PUBLIC').length
   );
 
   constructor() {
@@ -112,7 +112,7 @@ export class BannersComponent {
     if (event.previousIndex === event.currentIndex) return;
 
     // Lưu trạng thái cũ để rollback nếu API thất bại
-    const prev = [...this.banners()];
+    const prev = this.banners().map((b) => ({ ...b }));
     const platform = this.platformFilter();
 
     // Tạo bản sao object (spread) để tránh mutation vô tình làm hỏng prev (dùng cho rollback)
@@ -195,7 +195,7 @@ export class BannersComponent {
     fd.append('bgFrom', values.bgFrom);
     fd.append('bgTo', values.bgTo);
     fd.append('platform', values.platform);
-    fd.append('isActive', String(values.isActive));
+    fd.append('visibility', values.visibility);
     if (values.startDate) {
       const start = values.startDate.split('T')[0];
       fd.append('startDate', `${start}T00:00:00`);
@@ -209,40 +209,32 @@ export class BannersComponent {
   }
 
   toggleActive(banner: Banner) {
-    const fd = new FormData();
-    fd.append('title', banner.title);
-    fd.append('subtitle', banner.subtitle);
-    fd.append('link', banner.link);
-    fd.append('bgFrom', banner.bgFrom);
-    fd.append('bgTo', banner.bgTo);
-    fd.append('platform', banner.platform);
-    fd.append('isActive', String(!banner.isActive));
-    
-    // Ensure dates are correctly formatted to prevent backend LocalDateTime parsing errors
-    if (banner.startDate) {
-      const start = banner.startDate.split('T')[0];
-      fd.append('startDate', `${start}T00:00:00`);
-    }
-    if (banner.endDate) {
-      const end = banner.endDate.split('T')[0];
-      fd.append('endDate', `${end}T23:59:59`);
-    }
-    
+    // Contract v1 §2.4 — PATCH /banners/:id/toggle flips PUBLIC ⇄ PRIVATE.
+    const willBe = banner.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
     const prev = this.banners();
     this.banners.set(
       prev.map((b) =>
-        b.id === banner.id ? { ...b, isActive: !b.isActive } : b
+        b.id === banner.id ? { ...b, visibility: willBe } : b
       )
     );
     this.bannerService
-      .updateBanner(banner.id, fd)
+      .toggleBanner(banner.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () =>
+        next: (res) => {
+          const updated = res.result;
+          if (updated) {
+            this.banners.update((list) =>
+              list.map((b) =>
+                b.id === banner.id ? { ...b, visibility: updated.visibility } : b
+              )
+            );
+          }
           this.toast.show(
-            `Đã ${banner.isActive ? 'ẩn' : 'hiển thị'} banner.`,
+            `Đã ${willBe === 'PUBLIC' ? 'hiển thị' : 'ẩn'} banner.`,
             'success'
-          ),
+          );
+        },
         error: (err) => {
           // Roll back optimistic update on failure.
           this.banners.set(prev);

@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full flex flex-col"
+      class="bg-surface rounded-2xl shadow-sm border border-line p-6 h-full flex flex-col"
     >
       @if (title()) {
         <header class="flex items-center justify-between mb-5 gap-3">

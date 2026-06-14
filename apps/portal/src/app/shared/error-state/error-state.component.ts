@@ -38,13 +38,13 @@ import { CommonModule } from '@angular/common';
       >
         <i class="text-4xl" [class]="icon"></i>
       </div>
-      <h3 class="text-lg font-bold text-gray-900 mb-1.5">{{ title }}</h3>
-      <p class="text-gray-500 mb-6 max-w-md">{{ message }}</p>
+      <h3 class="text-lg font-bold text-ink mb-1.5">{{ title }}</h3>
+      <p class="text-ink-soft mb-6 max-w-md">{{ message }}</p>
       <button
         *ngIf="retryLabel"
         type="button"
         (click)="retry.emit()"
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-600 to-accent-500 text-white font-bold hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
         <i class="ph ph-arrow-clockwise" aria-hidden="true"></i>
         {{ retryLabel }}

@@ -28,7 +28,7 @@ export interface SegmentedOption<T extends string = string> {
     <div
       role="tablist"
       [attr.aria-label]="ariaLabel()"
-      class="inline-flex rounded-lg bg-gray-100 p-0.5"
+      class="inline-flex rounded-lg bg-surface-2 p-0.5"
     >
       @for (opt of options(); track opt.value) {
         <button
@@ -36,7 +36,7 @@ export interface SegmentedOption<T extends string = string> {
           role="tab"
           [attr.aria-selected]="opt.value === value()"
           (click)="valueChange.emit(opt.value)"
-          class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar"
+          class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           [class.bg-white]="opt.value === value()"
           [class.text-kindy-sidebar]="opt.value === value()"
           [class.shadow-sm]="opt.value === value()"

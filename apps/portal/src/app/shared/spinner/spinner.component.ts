@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="flex flex-col items-center justify-center gap-3 py-8"
          role="status" [attr.aria-label]="label">
-      <svg class="animate-spin text-pink-500" xmlns="http://www.w3.org/2000/svg"
+      <svg class="animate-spin text-primary" xmlns="http://www.w3.org/2000/svg"
         fill="none" viewBox="0 0 24 24"
         [class.size-6]="size === 'sm'"
         [class.size-10]="size === 'md'"

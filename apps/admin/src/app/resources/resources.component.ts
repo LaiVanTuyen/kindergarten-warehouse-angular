@@ -289,8 +289,7 @@ export class ResourcesComponent {
         this.resourceService
           .approveResource(resource.id)
           .pipe(
-            handleHttpError(this.toast, 'Không phê duyệt được.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không phê duyệt được.')
           )
           .subscribe(() => {
             this.toast.show(`Đã phê duyệt "${resource.title}".`, 'success');
@@ -307,8 +306,7 @@ export class ResourcesComponent {
         this.resourceService
           .rejectResource(resource.id, reason)
           .pipe(
-            handleHttpError(this.toast, 'Không từ chối được.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không từ chối được.')
           )
           .subscribe(() => {
             this.toast.show(`Đã từ chối "${resource.title}".`, 'info');
@@ -339,8 +337,7 @@ export class ResourcesComponent {
       this.resourceService
         .deleteResource(resource.id, isTrash)
         .pipe(
-          handleHttpError(this.toast, 'Không xoá được.'),
-          takeUntilDestroyed(this.destroyRef)
+          handleHttpError(this.toast, 'Không xoá được.')
         )
         .subscribe(() => {
           this.toast.show(
@@ -356,8 +353,7 @@ export class ResourcesComponent {
     this.resourceService
       .restoreResource(resource.id)
       .pipe(
-        handleHttpError(this.toast, 'Không khôi phục được.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không khôi phục được.')
       )
       .subscribe(() => {
         this.toast.show('Đã khôi phục tài nguyên.', 'success');
@@ -386,8 +382,7 @@ export class ResourcesComponent {
         this.resourceService
           .bulkApproveResources(ids)
           .pipe(
-            handleHttpError(this.toast, 'Không phê duyệt được.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không phê duyệt được.')
           )
           .subscribe((res) => {
             const n = res.result?.successCount ?? ids.length;
@@ -411,8 +406,7 @@ export class ResourcesComponent {
         this.resourceService
           .bulkRejectResources(ids, reason)
           .pipe(
-            handleHttpError(this.toast, 'Không từ chối được.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không từ chối được.')
           )
           .subscribe((res) => {
             const n = res.result?.successCount ?? ids.length;
@@ -445,8 +439,7 @@ export class ResourcesComponent {
         this.resourceService
           .bulkDeleteResources(ids, isTrash)
           .pipe(
-            handleHttpError(this.toast, 'Không xoá được.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không xoá được.')
           )
           .subscribe(() => {
             this.toast.show(`Đã xoá ${ids.length} tài nguyên.`, 'success');
@@ -462,8 +455,7 @@ export class ResourcesComponent {
     this.resourceService
       .bulkRestoreResources(ids)
       .pipe(
-        handleHttpError(this.toast, 'Không khôi phục được.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không khôi phục được.')
       )
       .subscribe(() => {
         this.toast.show(`Đã khôi phục ${ids.length} mục.`, 'success');

@@ -19,7 +19,7 @@ export interface TopicFormDialogResult {
   name: string;
   slug: string;
   description: string;
-  isActive: boolean;
+  visibility: 'PUBLIC' | 'PRIVATE';
   categoryId: string;
 }
 
@@ -48,16 +48,16 @@ function slugify(text: string): string {
     >
       <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
         <app-form-field label="Tên chủ đề" [required]="true" [control]="form.controls.name">
-          <input type="text" formControlName="name" autofocus maxlength="100" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
+          <input type="text" formControlName="name" maxlength="100" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent" />
         </app-form-field>
 
         <app-form-field label="Mô tả" [control]="form.controls.description">
-          <textarea formControlName="description" rows="3" maxlength="300" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent resize-none"></textarea>
+          <textarea formControlName="description" rows="3" maxlength="300" class="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus:border-transparent resize-none"></textarea>
         </app-form-field>
 
         <label class="flex items-center gap-2">
-          <input type="checkbox" formControlName="isActive" class="w-4 h-4 rounded text-kindy-sidebar focus:ring-kindy-sidebar" />
-          <span class="text-sm font-medium text-kindy-ink">Đang hoạt động</span>
+          <input type="checkbox" formControlName="isPublic" class="w-4 h-4 rounded text-kindy-sidebar focus:ring-focus" />
+          <span class="text-sm font-medium text-kindy-ink">Hiển thị công khai</span>
         </label>
       </form>
 
@@ -65,13 +65,13 @@ function slugify(text: string): string {
         <button
           type="button"
           (click)="ref.close()"
-          class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
+          class="px-4 py-2 text-sm font-semibold rounded-lg border border-line text-ink-soft hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sky"
         >Huỷ</button>
         <button
           type="button"
           (click)="submit()"
           [disabled]="form.invalid"
-          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="px-4 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {{ data.topic ? 'Cập nhật' : 'Tạo mới' }}
         </button>
@@ -88,7 +88,7 @@ export class TopicFormDialogComponent {
     name: [this.data.topic?.name ?? '', [Validators.required, Validators.maxLength(100)]],
     slug: [this.data.topic?.slug ?? ''],
     description: [this.data.topic?.description ?? '', [Validators.maxLength(300)]],
-    isActive: [this.data.topic?.isActive ?? true],
+    isPublic: [this.data.topic ? this.data.topic.visibility !== 'PRIVATE' : true],
   });
 
   submit() {
@@ -101,7 +101,7 @@ export class TopicFormDialogComponent {
       name: v.name,
       slug: v.slug || slugify(v.name),
       description: v.description,
-      isActive: v.isActive,
+      visibility: v.isPublic ? 'PUBLIC' : 'PRIVATE',
       categoryId: this.data.categoryId,
     });
   }

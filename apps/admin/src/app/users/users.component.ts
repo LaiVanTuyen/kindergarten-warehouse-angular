@@ -270,8 +270,7 @@ export class UsersComponent {
             handleHttpError(
               this.toast,
               user ? 'Không cập nhật được.' : 'Không tạo được tài khoản.'
-            ),
-            takeUntilDestroyed(this.destroyRef)
+            )
           )
           .subscribe(() => {
             this.toast.show(
@@ -299,8 +298,7 @@ export class UsersComponent {
       this.userService
         .blockUser(String(user.id))
         .pipe(
-          handleHttpError(this.toast, 'Không thay đổi được trạng thái.'),
-          takeUntilDestroyed(this.destroyRef)
+          handleHttpError(this.toast, 'Không thay đổi được trạng thái.')
         )
         .subscribe(() => {
           this.toast.show(
@@ -325,8 +323,7 @@ export class UsersComponent {
       this.userService
         .deleteUser(String(user.id))
         .pipe(
-          handleHttpError(this.toast, 'Không xoá được tài khoản.'),
-          takeUntilDestroyed(this.destroyRef)
+          handleHttpError(this.toast, 'Không xoá được tài khoản.')
         )
         .subscribe(() => {
           this.toast.show('Đã xoá tài khoản.', 'success');
@@ -339,8 +336,7 @@ export class UsersComponent {
     this.userService
       .restoreUser(String(user.id))
       .pipe(
-        handleHttpError(this.toast, 'Không khôi phục được.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không khôi phục được.')
       )
       .subscribe(() => {
         this.toast.show('Đã khôi phục tài khoản.', 'success');

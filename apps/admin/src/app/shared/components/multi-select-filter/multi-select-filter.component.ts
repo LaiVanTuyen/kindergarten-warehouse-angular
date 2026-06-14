@@ -17,24 +17,24 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
       <button
         type="button"
         (click)="toggleOpen.emit()"
-        class="min-w-[180px] pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
+        class="min-w-[180px] pl-4 pr-10 py-2.5 bg-surface border border-line rounded-xl text-sm font-medium text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors shadow-sm hover:border-slate-300 relative z-40"
         [class.ring-2]="isOpen"
         [class.border-blue-500]="isOpen"
       >
         <span
-          class="truncate block text-slate-700"
+          class="truncate block text-ink-soft"
           *ngIf="selectedValues.size === 0"
         >
           {{ label }}
         </span>
         <span
-          class="truncate block text-slate-900 font-bold"
+          class="truncate block text-ink font-bold"
           *ngIf="selectedValues.size > 0"
         >
           {{ label }}: {{ selectedValues.size }}
         </span>
         <span
-          class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400"
+          class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-ink-muted"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -55,11 +55,11 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
       <div
         *ngIf="isOpen"
-        class="absolute z-50 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 left-0"
+        class="absolute z-50 mt-1 w-64 bg-surface rounded-xl shadow-xl border border-line ring-1 ring-black/5 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 left-0"
       >
         <!-- Quick Actions Header -->
         <div
-          class="sticky top-0 bg-slate-50 border-b border-slate-100 px-3 py-2 flex items-center justify-between z-10"
+          class="sticky top-0 bg-surface-2 border-b border-line px-3 py-2 flex items-center justify-between z-10"
         >
           <button
             (click)="onSelectAll($event)"
@@ -69,7 +69,7 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
           </button>
           <button
             (click)="onClear($event)"
-            class="text-xs font-semibold text-slate-500 hover:text-red-600 hover:underline"
+            class="text-xs font-semibold text-ink-muted hover:text-red-600 hover:underline"
           >
             Clear
           </button>
@@ -78,7 +78,7 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
         <div class="p-1.5 space-y-0.5">
           <div
             *ngFor="let option of options"
-            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group/item"
+            class="flex items-center px-3 py-2.5 rounded-lg hover:bg-surface-2 cursor-pointer transition-colors group/item"
             (click)="onOptionClick(option.value)"
             (keydown.enter)="onOptionClick(option.value)"
             tabindex="0"
@@ -87,7 +87,7 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
               <input
                 type="checkbox"
                 [checked]="selectedValues.has(option.value)"
-                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-white checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                class="peer appearance-none h-5 w-5 border-2 border-slate-300 rounded text-blue-600 bg-surface checked:bg-blue-600 checked:border-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
                 tabindex="-1"
               />
               <svg
@@ -104,12 +104,12 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
               </svg>
             </div>
             <span
-              class="text-sm text-slate-700 font-medium truncate select-none flex-1 group-hover/item:text-slate-900 flex items-center gap-2.5"
+              class="text-sm text-ink-soft font-medium truncate select-none flex-1 group-hover/item:text-ink flex items-center gap-2.5"
             >
               <span
                 *ngIf="option.icon"
                 [innerHTML]="option.icon | safeHtml"
-                [class]="option.colorClass || 'text-slate-500'"
+                [class]="option.colorClass || 'text-ink-muted'"
                 class="flex items-center justify-center w-4 h-4 mt-px"
               ></span>
               {{ option.label }}

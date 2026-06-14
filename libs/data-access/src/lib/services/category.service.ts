@@ -32,8 +32,7 @@ export class CategoryService {
     let params = new HttpParams()
       .set('page', (page - 1).toString()) // Backend usually 0-indexed
       .set('size', limit.toString())
-      .set('sortBy', sortBy)
-      .set('sortDir', order); // Backend expects 'sortDir'
+      .set('sort', `${sortBy},${order}`); // Contract v1 §1.2 — sort=field,dir
 
     if (search) {
       params = params.set('keyword', search);
@@ -99,7 +98,8 @@ export class CategoryService {
 
   /**
    * Bulk Delete Categories
-   * DELETE /categories/bulk
+   * POST /categories/bulk-delete  (Contract v1 §2.4/§2.5)
+   * Payload: { ids: [...] }
    */
   deleteCategories(
     ids: (string | number)[],
@@ -107,20 +107,24 @@ export class CategoryService {
   ): Observable<ApiResponse<any>> {
     const params = new HttpParams().set('hard', hard);
     return this.http
-      .request<ApiResponse<any>>('delete', `${this.apiUrl}/categories/bulk`, {
-        body: ids,
-        params,
-      })
+      .post<ApiResponse<any>>(
+        `${this.apiUrl}/categories/bulk-delete`,
+        { ids },
+        { params }
+      )
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Bulk Restore Categories
-   * PATCH /categories/bulk-restore
+   * PATCH /categories/bulk-restore  (Contract v1 §2.5)
+   * Payload: { ids: [...] }
    */
   restoreCategories(ids: (string | number)[]): Observable<ApiResponse<any>> {
     return this.http
-      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, ids)
+      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, {
+        ids,
+      })
       .pipe(catchError(this.handleError));
   }
 

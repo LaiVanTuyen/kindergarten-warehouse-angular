@@ -14,10 +14,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { BreadcrumbComponent } from '../shared/components/breadcrumb/breadcrumb.component';
 import {
-  ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../shared/components/confirm-dialog/confirm-dialog.component';
-import { AuthService } from '@kindergarten-warehouse/data-access';
+import { AuthService, ThemeService } from '@kindergarten-warehouse/data-access';
 import { DialogService } from '../shared/services/dialog.service';
 import { RoleLabelPipe } from '../shared/pipes/role-label.pipe';
 
@@ -32,6 +31,11 @@ export class AdminLayoutComponent {
   private authService = inject(AuthService);
   private dialogs = inject(DialogService);
   private destroyRef = inject(DestroyRef);
+  readonly theme = inject(ThemeService);
+
+  toggleTheme() {
+    this.theme.toggle();
+  }
 
   readonly isProfileOpen = signal(false);
   readonly isSidebarOpen = signal(false); // mobile drawer
@@ -88,7 +92,8 @@ export class AdminLayoutComponent {
       message: 'Bạn có chắc muốn đăng xuất khỏi trang quản trị?',
       confirmText: 'Đăng xuất',
       cancelText: 'Ở lại',
-      tone: 'danger',
+      tone: 'primary',
+      icon: 'logout',
     };
     this.dialogs.confirm(data, this.destroyRef).subscribe((confirmed) => {
       if (confirmed) {

@@ -26,16 +26,16 @@ import {
       >
         <button
           type="button"
-          (click)="close.emit()"
+          (click)="closeDrawer.emit()"
           aria-label="Đóng"
           class="absolute inset-0 bg-kindy-ink/40 backdrop-blur-sm animate-fade-in"
         ></button>
         <aside
           [class]="asideClass()"
-          class="relative bg-white h-full shadow-2xl flex flex-col animate-slide-in-right"
+          class="relative bg-surface h-full shadow-2xl flex flex-col animate-slide-in-right"
         >
           <header
-            class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between gap-3 z-10"
+            class="sticky top-0 bg-surface border-b border-line px-5 py-4 flex items-center justify-between gap-3 z-10"
           >
             <div class="min-w-0">
               <h3
@@ -52,9 +52,9 @@ import {
             </div>
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="closeDrawer.emit()"
               aria-label="Đóng"
-              class="p-1 text-kindy-ink-soft hover:text-kindy-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md flex-shrink-0"
+              class="p-1 text-kindy-ink-soft hover:text-kindy-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-md flex-shrink-0"
             >
               <svg
                 aria-hidden="true"
@@ -104,7 +104,7 @@ export class DrawerComponent {
   readonly titleId = input<string>('drawer-title');
   readonly size = input<'sm' | 'md' | 'lg'>('md');
 
-  readonly close = output<void>();
+  readonly closeDrawer = output<void>();
 
   asideClass(): string {
     const sizes = {
@@ -117,6 +117,6 @@ export class DrawerComponent {
 
   @HostListener('document:keydown.escape')
   onEscape() {
-    if (this.open()) this.close.emit();
+    if (this.open()) this.closeDrawer.emit();
   }
 }

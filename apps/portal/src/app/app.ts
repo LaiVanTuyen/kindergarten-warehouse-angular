@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
+import { ThemeService } from '@kindergarten-warehouse/data-access';
 
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
@@ -25,6 +26,8 @@ import { RouteProgressComponent } from './shared/route-progress/route-progress.c
 })
 export class AppComponent {
   private readonly router = inject(Router);
+  // Instantiate ThemeService so the saved light/dark preference is applied.
+  private readonly theme = inject(ThemeService);
 
   /**
    * Reactively derive the "chromeless" state (login/register) from router

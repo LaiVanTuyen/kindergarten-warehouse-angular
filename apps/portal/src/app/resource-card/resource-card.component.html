@@ -1,14 +1,14 @@
 <article
-  class="group relative bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full animate-fade-in-up">
+  class="group relative bg-surface rounded-2xl shadow-sm border border-line overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full animate-fade-in-up">
   <!-- Navigational overlay covers the whole card so ⌘/Ctrl-click opens in a
        new tab, Tab-focus gets a ring, and the heart/download buttons sit
        above it with z-10. -->
   <a [routerLink]="['/resources', resource.slug || resource.id]"
-    class="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 rounded-3xl z-0"
+    class="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-2xl z-0"
     [attr.aria-label]="'Xem chi tiết: ' + resource.title"></a>
 
   <!-- Thumbnail -->
-  <div class="relative overflow-hidden h-48 bg-gray-50 pointer-events-none">
+  <div class="relative overflow-hidden h-48 bg-surface-2 pointer-events-none">
     <ng-container *ngIf="autoThumbnail() && !imageError(); else placeholder">
       <img [src]="autoThumbnail()" (error)="onImageError()" loading="lazy" decoding="async"
         [alt]="resource.title"
@@ -26,14 +26,14 @@
       <div class="w-full h-full flex items-center justify-center transition-transform duration-500 group-hover:scale-105"
         aria-hidden="true"
         [ngClass]="{
-          'bg-purple-100':  rType() === 'VIDEO',
-          'bg-rose-100':    rType() === 'PDF',
-          'bg-blue-100':    rType() === 'DOCUMENT',
-          'bg-emerald-100': rType() === 'EXCEL',
-          'bg-orange-100':  rType() === 'POWERPOINT',
-          'bg-indigo-100':  rType() === 'IMAGE',
-          'bg-violet-100':  rType() === 'AUDIO',
-          'bg-gray-100':    rType() === 'OTHER'
+          'bg-purple-500/10':  rType() === 'VIDEO',
+          'bg-rose-500/10':    rType() === 'PDF',
+          'bg-blue-500/10':    rType() === 'DOCUMENT',
+          'bg-emerald-500/10': rType() === 'EXCEL',
+          'bg-orange-500/10':  rType() === 'POWERPOINT',
+          'bg-indigo-500/10':  rType() === 'IMAGE',
+          'bg-violet-500/10':  rType() === 'AUDIO',
+          'bg-surface-2':      rType() === 'OTHER'
         }">
         <i *ngIf="rType() === 'VIDEO'"      class="ph-fill ph-play-circle text-7xl text-purple-400 drop-shadow-md"></i>
         <i *ngIf="rType() === 'PDF'"        class="ph-fill ph-file-pdf text-7xl text-rose-400 drop-shadow-md"></i>
@@ -42,7 +42,7 @@
         <i *ngIf="rType() === 'POWERPOINT'" class="ph-fill ph-presentation text-7xl text-orange-400 drop-shadow-md"></i>
         <i *ngIf="rType() === 'IMAGE'"      class="ph-fill ph-image text-7xl text-indigo-400 drop-shadow-md"></i>
         <i *ngIf="rType() === 'AUDIO'"      class="ph-fill ph-music-notes text-7xl text-violet-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-7xl text-gray-300 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-7xl text-ink-muted drop-shadow-md"></i>
       </div>
     </ng-template>
 
@@ -50,9 +50,9 @@
     <button type="button" (click)="toggleFavorite($event)"
       [attr.aria-label]="isFavorited() ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
       [attr.aria-pressed]="isFavorited()"
-      class="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
+      class="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-surface/90 backdrop-blur-sm shadow-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
       <i class="text-xl transition-colors"
-        [ngClass]="isFavorited() ? 'ph-fill ph-heart text-red-500' : 'ph ph-heart text-gray-400'"
+        [ngClass]="isFavorited() ? 'ph-fill ph-heart text-accent' : 'ph ph-heart text-ink-muted'"
         aria-hidden="true"></i>
     </button>
 
@@ -60,11 +60,11 @@
     <div *ngIf="resource.status === 'PENDING' || resource.status === 'REJECTED'"
       class="absolute top-3 right-3 z-10">
       <span *ngIf="resource.status === 'PENDING'"
-        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/95 backdrop-blur-sm shadow-sm rounded-md border border-amber-200">
+        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-warning bg-warning-soft backdrop-blur-sm shadow-sm rounded-md">
         <i class="ph-bold ph-hourglass-high mr-1" aria-hidden="true"></i> Chờ duyệt
       </span>
       <span *ngIf="resource.status === 'REJECTED'"
-        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-100/95 backdrop-blur-sm shadow-sm rounded-md border border-rose-200">
+        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-danger bg-danger-soft backdrop-blur-sm shadow-sm rounded-md">
         <i class="ph-bold ph-warning-circle mr-1" aria-hidden="true"></i> Bị từ chối
       </span>
     </div>
@@ -72,31 +72,31 @@
 
   <!-- Content -->
   <div class="p-4 flex-1 flex flex-col pointer-events-none">
-    <h3 class="font-extrabold text-gray-900 text-[1.05rem] mb-1 line-clamp-2 group-hover:text-primary-pink transition-colors leading-snug">
+    <h3 class="font-extrabold text-ink text-[1.05rem] mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
       {{ resource.title }}
     </h3>
-    <p class="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">
+    <p class="text-sm text-ink-muted mb-4 line-clamp-2 flex-1">
       {{ resource.description || 'Chưa có mô tả.' }}
     </p>
 
     <div *ngIf="ratingValue() > 0" class="flex items-center gap-1.5 mb-3">
-      <span class="font-bold text-gray-700 text-xs leading-none">
+      <span class="font-bold text-ink text-xs leading-none">
         {{ ratingValue().toFixed(1) }}
       </span>
       <app-rating-stars [value]="ratingValue()" size="sm"></app-rating-stars>
     </div>
 
     <!-- Footer -->
-    <div class="flex justify-between items-center mt-auto pt-3 border-t border-gray-100 pointer-events-auto relative z-10">
-      <div class="flex items-center gap-3 text-gray-400 text-xs font-medium">
+    <div class="flex justify-between items-center mt-auto pt-3 border-t border-line pointer-events-auto relative z-10">
+      <div class="flex items-center gap-3 text-ink-muted text-xs font-medium">
         <span class="flex items-center gap-1" [attr.aria-label]="resource.viewsCount + ' lượt xem'">
           <i class="ph ph-eye text-base" aria-hidden="true"></i>
           <span>{{ resource.viewsCount }}</span>
         </span>
-        <span class="flex items-center gap-1 pl-3 border-l border-gray-200">
+        <span class="flex items-center gap-1 pl-3 border-l border-line">
           <ng-container *ngIf="resource.resourceType === 'YOUTUBE'">
             <i class="ph-fill ph-youtube-logo text-lg text-[#FF0000]" aria-hidden="true"></i>
-            <span class="text-xs font-semibold text-gray-600">{{ displayType() }}</span>
+            <span class="text-xs font-semibold text-ink-soft">{{ displayType() }}</span>
           </ng-container>
           <ng-container *ngIf="resource.resourceType !== 'YOUTUBE'">
             <i *ngIf="rType() === 'VIDEO'"      class="ph-fill ph-video text-base text-rose-500" aria-hidden="true"></i>
@@ -106,7 +106,7 @@
             <i *ngIf="rType() === 'POWERPOINT'" class="ph-fill ph-presentation text-base text-amber-500" aria-hidden="true"></i>
             <i *ngIf="rType() === 'IMAGE'"      class="ph-fill ph-image text-base text-indigo-500" aria-hidden="true"></i>
             <i *ngIf="rType() === 'AUDIO'"      class="ph-fill ph-music-note text-base text-purple-500" aria-hidden="true"></i>
-            <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-base text-gray-400" aria-hidden="true"></i>
+            <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-base text-ink-muted" aria-hidden="true"></i>
             <span class="uppercase tracking-wider text-[10px] font-bold px-1.5 py-0.5 rounded border"
               [ngClass]="badgeClass()">{{ displayType() }}</span>
           </ng-container>
@@ -115,13 +115,13 @@
 
       <div class="flex gap-2 items-center">
         <button type="button" (click)="onView(); $event.stopPropagation(); $event.preventDefault()"
-          class="px-4 py-1.5 rounded-full border border-primary-pink text-primary-pink text-xs font-bold hover:bg-primary-pink hover:text-white transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
+          class="px-4 py-1.5 rounded-pill border border-primary text-primary text-xs font-bold hover:bg-primary hover:text-ink-onbrand transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <i *ngIf="rType() === 'VIDEO' || rType() === 'AUDIO'" class="ph-fill ph-play text-xs" aria-hidden="true"></i>
           Xem
         </button>
         <button type="button" (click)="onDownload($event)"
           aria-label="Tải tài liệu về máy"
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-pink-100 text-primary-pink hover:bg-pink-200 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary hover:bg-primary-200 dark:bg-primary-500/15 dark:hover:bg-primary-500/25 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <i class="ph-bold ph-download-simple text-sm" aria-hidden="true"></i>
         </button>
       </div>

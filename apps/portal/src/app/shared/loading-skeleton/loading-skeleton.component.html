@@ -1,23 +1,23 @@
 <div class="animate-pulse space-y-4">
-    <div *ngFor="let i of counter(count)" class="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm">
+    <div *ngFor="let i of counter(count)" class="bg-surface rounded-3xl p-4 border border-line shadow-sm">
         <!-- Card Skeleton -->
         <div *ngIf="type === 'card'" class="flex flex-col h-full">
-            <div class="h-48 bg-gray-200 rounded-2xl mb-4 w-full"></div>
-            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div class="mt-auto flex justify-between pt-4 border-t border-gray-50">
-                <div class="h-3 bg-gray-200 rounded w-1/4"></div>
-                <div class="h-8 w-20 bg-gray-200 rounded-full"></div>
+            <div class="h-48 bg-surface-3 rounded-2xl mb-4 w-full"></div>
+            <div class="h-4 bg-surface-3 rounded w-3/4 mb-2"></div>
+            <div class="h-4 bg-surface-3 rounded w-1/2 mb-4"></div>
+            <div class="mt-auto flex justify-between pt-4 border-t border-line">
+                <div class="h-3 bg-surface-3 rounded w-1/4"></div>
+                <div class="h-8 w-20 bg-surface-3 rounded-full"></div>
             </div>
         </div>
 
         <!-- List Item Skeleton -->
         <div *ngIf="type === 'list'" class="flex items-center space-x-4">
-            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
+            <div class="rounded-full bg-surface-3 h-10 w-10"></div>
             <div class="flex-1 space-y-2 py-1">
-                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-surface-3 rounded w-3/4"></div>
                 <div class="space-y-2">
-                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div class="h-4 bg-surface-3 rounded w-5/6"></div>
                 </div>
             </div>
         </div>

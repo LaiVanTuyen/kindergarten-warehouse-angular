@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
+import type { Subscriber } from 'rxjs';
 import { Resource } from '../models/resource.model';
 import { ResourceService } from './resource.service';
 import { ToastService } from './toast.service';
@@ -48,16 +49,7 @@ export class ResourceDownloadService {
           subscriber.complete();
         },
         error: (err) => {
-          if (this.openFallback(resource.fileUrl)) {
-            subscriber.next();
-            subscriber.complete();
-          } else {
-            this.toast.show(
-              'Không tải được tệp. Vui lòng thử lại sau.',
-              'error'
-            );
-            subscriber.error(err);
-          }
+          void this.handleDownloadError(err, resource, subscriber);
         },
       });
 
@@ -77,6 +69,72 @@ export class ResourceDownloadService {
       tap(() => this.toast.show('Đã tải tệp về máy.', 'success')),
       finalize(() => void 0)
     );
+  }
+
+  /**
+   * Contract v1 §2.3: download errors are returned as `ApiResponse` JSON (even
+   * though the success path is a binary stream, so the error body arrives as a
+   * Blob). Parse it, then react by HTTP status:
+   *  - 403 (6004): not the owner / not allowed — DO NOT fall back to the raw URL
+   *    (it's a private MinIO object that would also 403).
+   *  - 429 (6009): rate-limited — surface Retry-After if present.
+   *  - 0 / CORS / external link: keep the open-in-new-tab fallback.
+   */
+  private async handleDownloadError(
+    err: unknown,
+    resource: Pick<Resource, 'fileUrl'>,
+    subscriber: Subscriber<void>
+  ): Promise<void> {
+    const status = err instanceof HttpErrorResponse ? err.status : 0;
+
+    if (status === 403) {
+      const msg = await this.parseBlobError(err);
+      this.toast.show(
+        msg || 'Bạn không có quyền tải tệp này.',
+        'error'
+      );
+      subscriber.error(err);
+      return;
+    }
+
+    if (status === 429) {
+      const retry =
+        err instanceof HttpErrorResponse
+          ? err.headers.get('Retry-After')
+          : null;
+      const suffix = retry ? ` Thử lại sau ${retry}s.` : '';
+      this.toast.show(`Bạn thao tác quá nhanh.${suffix}`, 'error');
+      subscriber.error(err);
+      return;
+    }
+
+    // Network/CORS/external — fall back to opening the file URL directly.
+    if (status === 0 && this.openFallback(resource.fileUrl)) {
+      subscriber.next();
+      subscriber.complete();
+      return;
+    }
+
+    const msg = await this.parseBlobError(err);
+    this.toast.show(msg || 'Không tải được tệp. Vui lòng thử lại sau.', 'error');
+    subscriber.error(err);
+  }
+
+  /** Best-effort extraction of `message` from an ApiResponse blob error body. */
+  private async parseBlobError(err: unknown): Promise<string | null> {
+    if (!(err instanceof HttpErrorResponse)) return null;
+    const body = err.error;
+    try {
+      if (body instanceof Blob) {
+        const text = await body.text();
+        return JSON.parse(text)?.message ?? null;
+      }
+      if (typeof body === 'string') return JSON.parse(body)?.message ?? null;
+      if (body && typeof body === 'object') return (body as any).message ?? null;
+    } catch {
+      /* not JSON — ignore */
+    }
+    return null;
   }
 
   private resolveFilename(

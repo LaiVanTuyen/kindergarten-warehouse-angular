@@ -41,13 +41,13 @@ export class HomeComponent {
   readonly categories$ = this.categoryService
     .getCategories(1, 12, undefined, false)
     .pipe(
-      map((res) => (res.data ?? []).filter((cat: Category) => cat.isActive)),
+      map((res) => (res.data ?? []).filter((cat: Category) => cat.visibility !== 'PRIVATE')),
       catchError(() => of<Category[]>([])),
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
   readonly latestResources$ = this.resourceService
-    .getResources({ page: 1, size: 4 })
+    .getPublicResources({ page: 1, size: 4, sort: 'createdAt,desc' })
     .pipe(
       map((res) => res.data?.content ?? []),
       catchError(() => of<Resource[]>([])),

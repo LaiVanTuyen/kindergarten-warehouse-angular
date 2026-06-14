@@ -61,7 +61,7 @@ const OPTIONS: PeriodOption[] = [
             [ngModel]="startDate()"
             (ngModelChange)="startDateChange.emit($event)"
             [attr.max]="endDate() || null"
-            class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-kindy-ink focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+            class="border border-line rounded-lg px-3 py-2 text-sm bg-surface text-kindy-ink focus:outline-none focus:ring-2 focus:ring-focus"
           />
           <span aria-hidden="true" class="text-kindy-ink-soft">→</span>
           <label class="sr-only" for="date-filter-end">Đến ngày</label>
@@ -71,7 +71,7 @@ const OPTIONS: PeriodOption[] = [
             [ngModel]="endDate()"
             (ngModelChange)="endDateChange.emit($event)"
             [attr.min]="startDate() || null"
-            class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-kindy-ink focus:outline-none focus:ring-2 focus:ring-kindy-sidebar"
+            class="border border-line rounded-lg px-3 py-2 text-sm bg-surface text-kindy-ink focus:outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
       }
@@ -82,7 +82,7 @@ const OPTIONS: PeriodOption[] = [
         aria-label="Chọn khoảng thời gian"
         aria-haspopup="menu"
         [attr.aria-expanded]="isMenuOpen()"
-        class="inline-flex items-center gap-2 bg-white border border-gray-200 text-kindy-ink py-2 pl-4 pr-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar font-medium text-sm hover:bg-kindy-surface-soft transition-colors"
+        class="inline-flex items-center gap-2 bg-surface border border-line text-kindy-ink py-2 pl-4 pr-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-focus font-medium text-sm hover:bg-kindy-surface-soft transition-colors"
       >
         <svg
           aria-hidden="true"
@@ -116,7 +116,7 @@ const OPTIONS: PeriodOption[] = [
         <div
           role="menu"
           aria-label="Chọn khoảng thời gian"
-          class="absolute right-0 top-full mt-2 z-50 bg-white text-kindy-ink rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px] focus:outline-none"
+          class="absolute right-0 top-full mt-2 z-50 bg-surface text-kindy-ink rounded-xl shadow-xl border border-line py-1 min-w-[180px] focus:outline-none"
         >
           @for (opt of options; track opt.value) {
             <button

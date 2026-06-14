@@ -49,8 +49,8 @@ import { CommonModule } from '@angular/common';
         />
       </svg>
 
-      <h3 class="text-xl font-bold text-gray-800 mb-2">{{ message() }}</h3>
-      <p class="text-gray-500 max-w-sm">{{ subMessage() }}</p>
+      <h3 class="text-xl font-bold text-ink mb-2">{{ message() }}</h3>
+      <p class="text-ink-soft max-w-sm">{{ subMessage() }}</p>
       
       <div class="mt-4">
         <ng-content select="[action]"></ng-content>

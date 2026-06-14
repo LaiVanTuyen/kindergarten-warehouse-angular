@@ -84,6 +84,55 @@ export class ResourceService {
   }
 
   /**
+   * Public resource listing for the portal (guests + logged-in users).
+   * GET /resources  — visibility/status filtering enforced server-side.
+   * Unlike `getResources` (which hits the admin-only `/admin/resources` and
+   * 401s for guests), this is the permitAll endpoint the public site must use.
+   */
+  getPublicResources(
+    params: ResourceFilterParams
+  ): Observable<RestResponse<PaginatedResponse<Resource>>> {
+    let httpParams = new HttpParams();
+
+    if (params.page !== undefined)
+      httpParams = httpParams.set('page', params.page - 1); // Backend is 0-indexed
+    if (params.size !== undefined)
+      httpParams = httpParams.set('size', params.size);
+
+    const appendParam = (key: string, value: string | string[] | undefined) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => (httpParams = httpParams.append(key, v)));
+      } else {
+        httpParams = httpParams.set(key, value as string);
+      }
+    };
+
+    appendParam('topicId', params.topicId);
+    appendParam('categoryId', params.categoryId);
+    appendParam('ageGroupId', params.ageGroupId);
+    appendParam('topicSlugs', params.topicSlugs);
+    appendParam('categorySlugs', params.categorySlugs);
+    appendParam('ageSlugs', params.ageSlugs);
+    appendParam('types', params.types);
+    if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<RestResponse<PaginatedResponse<Resource>>>(
+        `${this.apiUrl}/resources`,
+        { params: httpParams }
+      )
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
    * List the resources owned by the currently authenticated user
    * (teacher "My Uploads" page). Unlike `getResources` — which hits
    * `/admin/resources` — this uses `/me/resources` so it respects the
@@ -174,8 +223,8 @@ export class ResourceService {
 
   /**
    * Bulk Delete Resources
-   * DELETE /resources/bulk?hard={true/false}
-   * Payload: Array of IDs
+   * POST /resources/bulk-delete?hard={true/false}  (Contract v1 §2.4/§2.5)
+   * Payload: { ids: string[] }
    */
   bulkDeleteResources(
     ids: string[],
@@ -184,20 +233,21 @@ export class ResourceService {
     let params = new HttpParams();
     if (hard) params = params.set('hard', 'true');
     return this.http
-      .delete<RestResponse<void>>(`${this.apiUrl}/resources/bulk`, {
-        body: ids,
-        params,
-      })
+      .post<RestResponse<void>>(
+        `${this.apiUrl}/resources/bulk-delete`,
+        { ids },
+        { params }
+      )
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Increment View Count
-   * PUT /resources/:id/view
+   * POST /resources/:id/view  (Contract v1 §2.4 — counter bump is not idempotent)
    */
   incrementViewCount(id: string): Observable<void> {
     return this.http
-      .put<void>(`${this.apiUrl}/resources/${id}/view`, {})
+      .post<void>(`${this.apiUrl}/resources/${id}/view`, {})
       .pipe(catchError(this.handleError));
   }
 
@@ -325,7 +375,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-approve`, {
-        resourceIds: ids,
+        ids,
       })
       .pipe(catchError(this.handleError));
   }
@@ -348,7 +398,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-reject`, {
-        resourceIds: ids,
+        ids,
         reason,
       })
       .pipe(catchError(this.handleError));
@@ -396,6 +446,14 @@ export class ResourceService {
         case 6007:
           errorMsg =
             'Kích thước ảnh thu nhỏ quá lớn. Vui lòng chọn ảnh nhỏ hơn.';
+          break;
+        case 6009:
+          errorMsg =
+            'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.';
+          break;
+        case 7004:
+          errorMsg =
+            'Tài nguyên vừa được người khác thay đổi. Vui lòng tải lại và thử lại.';
           break;
         case 9001:
           errorMsg =
@@ -450,22 +508,24 @@ export class ResourceService {
 
   /**
    * Restore Resource
-   * PUT /resources/:id/restore
+   * PATCH /resources/:id/restore  (Contract v1 §2.4 — state change → PATCH)
    */
   restoreResource(id: string): Observable<RestResponse<void>> {
     return this.http
-      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
       .pipe(catchError(this.handleError));
   }
 
   /**
    * Bulk Restore Resources
-   * PATCH /resources/bulk-restore
-   * Payload: Array of IDs
+   * PATCH /resources/bulk-restore  (Contract v1 §2.5)
+   * Payload: { ids: string[] }
    */
   bulkRestoreResources(ids: string[]): Observable<RestResponse<void>> {
     return this.http
-      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, ids)
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, {
+        ids,
+      })
       .pipe(catchError(this.handleError));
   }
 }

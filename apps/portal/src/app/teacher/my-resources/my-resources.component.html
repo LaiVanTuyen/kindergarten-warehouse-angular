@@ -1,19 +1,19 @@
-<div class="min-h-screen bg-gradient-to-b from-pink-50/30 via-white to-white pt-24 pb-16">
+<div class="min-h-screen bg-gradient-to-b from-primary-50/30 via-surface to-surface pt-24 pb-16">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
       <div>
-        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 class="text-3xl font-extrabold text-ink tracking-tight">
           Tài liệu của tôi
         </h1>
-        <p class="mt-1.5 text-gray-600">
+        <p class="mt-1.5 text-ink-soft">
           Quản lý các tài liệu bạn đã đăng — theo dõi trạng thái duyệt và cập nhật nội dung.
-          <span *ngIf="totalElements() > 0" class="font-semibold text-gray-700">
+          <span *ngIf="totalElements() > 0" class="font-semibold text-ink-soft">
             ({{ totalElements() }} tài liệu)
           </span>
         </p>
       </div>
       <a routerLink="/teacher/upload"
-        class="self-start md:self-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white font-bold shadow-md hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2">
+        class="self-start md:self-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-600 to-accent-500 text-white font-bold shadow-md hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
         <i class="ph-fill ph-plus-circle text-lg" aria-hidden="true"></i>
         Đăng mới
       </a>
@@ -24,7 +24,7 @@
       <button *ngFor="let filter of STATUS_FILTERS" type="button"
         role="tab" [attr.aria-selected]="status() === filter.value"
         (click)="setStatus(filter.value)"
-        class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400"
+        class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition ring-1 ring-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         [class.bg-pink-500]="status() === filter.value"
         [class.text-white]="status() === filter.value"
         [class.ring-pink-500]="status() === filter.value"
@@ -48,7 +48,7 @@
     </app-error-state>
 
     <!-- Empty -->
-    <div *ngIf="isEmpty()" class="bg-white rounded-3xl shadow-sm border border-gray-100">
+    <div *ngIf="isEmpty()" class="bg-surface rounded-3xl shadow-sm border border-line">
       <app-empty-state
         icon="ph-duotone ph-books"
         tone="pink"
@@ -63,15 +63,15 @@
     <!-- List -->
     <div *ngIf="!isEmpty() && !error()" class="space-y-4" [class.opacity-60]="loading()">
       <article *ngFor="let resource of resources(); trackBy: trackById"
-        class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-6 flex flex-col sm:flex-row gap-5 hover:shadow-md transition">
+        class="bg-surface rounded-3xl shadow-sm border border-line p-5 sm:p-6 flex flex-col sm:flex-row gap-5 hover:shadow-md transition">
         <!-- Thumbnail -->
-        <div class="relative w-full sm:w-40 h-32 sm:h-24 rounded-2xl overflow-hidden bg-pink-50 shrink-0">
+        <div class="relative w-full sm:w-40 h-32 sm:h-24 rounded-2xl overflow-hidden bg-primary-50 shrink-0">
           <img *ngIf="resource.thumbnailUrl; else thumbIcon"
             [src]="resource.thumbnailUrl" [alt]="resource.title"
             loading="lazy" decoding="async"
             class="w-full h-full object-cover" />
           <ng-template #thumbIcon>
-            <div class="w-full h-full flex items-center justify-center text-pink-400" aria-hidden="true">
+            <div class="w-full h-full flex items-center justify-center text-primary" aria-hidden="true">
               <i class="ph-fill ph-file-text text-4xl"></i>
             </div>
           </ng-template>
@@ -80,14 +80,14 @@
         <!-- Main -->
         <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-start gap-2 mb-1.5">
-            <h3 class="text-lg font-bold text-gray-900 leading-snug line-clamp-2 flex-1 min-w-0">
+            <h3 class="text-lg font-bold text-ink leading-snug line-clamp-2 flex-1 min-w-0">
               {{ resource.title }}
             </h3>
             <app-status-pill [status]="resource.status"></app-status-pill>
           </div>
-          <p class="text-sm text-gray-500 line-clamp-2 mb-3">{{ resource.description || 'Chưa có mô tả.' }}</p>
+          <p class="text-sm text-ink-soft line-clamp-2 mb-3">{{ resource.description || 'Chưa có mô tả.' }}</p>
 
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-soft">
             <span class="inline-flex items-center gap-1.5" [attr.aria-label]="resource.viewsCount + ' lượt xem'">
               <i class="ph ph-eye" aria-hidden="true"></i>
               {{ resource.viewsCount }}
@@ -115,7 +115,7 @@
         <!-- Actions -->
         <div class="flex sm:flex-col gap-2 sm:justify-center shrink-0">
           <a [routerLink]="['/resources', resource.slug || resource.id]"
-            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white ring-1 ring-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
+            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-surface ring-1 ring-line text-ink-soft text-sm font-semibold hover:bg-surface-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <i class="ph ph-eye" aria-hidden="true"></i>
             Xem
           </a>

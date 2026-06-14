@@ -36,7 +36,7 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
   template: `
     <div
       [class]="shellClass()"
-      class="bg-white rounded-2xl shadow-2xl flex flex-col"
+      class="bg-surface rounded-2xl shadow-2xl flex flex-col"
     >
       <header [class]="headerClass()">
         <div class="min-w-0">
@@ -57,7 +57,7 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
             type="button"
             (click)="onClose()"
             aria-label="Đóng"
-            class="p-1 text-kindy-ink-soft hover:text-kindy-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar rounded-md flex-shrink-0"
+            class="p-1 text-kindy-ink-soft hover:text-kindy-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-md flex-shrink-0"
           >
             <svg
               aria-hidden="true"
@@ -103,7 +103,7 @@ export class DialogShellComponent {
 
   readonly headerClass = computed(() => {
     const base = 'px-6 py-4 flex items-center justify-between gap-3';
-    return this.noBorder() ? base : `${base} border-b border-gray-100`;
+    return this.noBorder() ? base : `${base} border-b border-line`;
   });
 
   readonly bodyClass = computed(() =>
@@ -112,7 +112,7 @@ export class DialogShellComponent {
 
   readonly footerClass = computed(() => {
     const base = 'px-6 py-4 flex justify-end gap-3 flex-wrap';
-    return this.noBorder() ? base : `${base} border-t border-gray-100`;
+    return this.noBorder() ? base : `${base} border-t border-line`;
   });
 
   onClose() {

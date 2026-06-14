@@ -18,14 +18,14 @@ export type StatusPillTone =
 
 const TONE_CLASSES: Record<StatusPillTone, string> = {
   active: 'bg-kindy-mint-soft text-emerald-700',
-  inactive: 'bg-gray-100 text-gray-600',
+  inactive: 'bg-surface-2 text-ink-soft',
   pending: 'bg-kindy-sun-soft text-amber-700',
   approved: 'bg-kindy-mint-soft text-emerald-700',
   rejected: 'bg-kindy-coral-soft text-kindy-coral-strong',
   neutral: 'bg-kindy-surface-soft text-kindy-sidebar',
   admin: 'bg-kindy-coral-soft text-kindy-coral-strong',
   teacher: 'bg-kindy-sky-soft text-blue-700',
-  user: 'bg-gray-100 text-gray-600',
+  user: 'bg-surface-2 text-ink-soft',
 };
 
 /**

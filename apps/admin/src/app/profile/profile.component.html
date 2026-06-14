@@ -5,12 +5,14 @@
 
 @if (user(); as u) {
   <!-- Header card with avatar -->
-  <div class="bg-white border border-gray-100 rounded-2xl p-5 mb-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+  <div class="bg-white/80 backdrop-blur-md border border-line rounded-3xl p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-sm relative overflow-hidden">
+    <!-- Top thin gradient line -->
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-kindy-sky via-kindy-lavender to-kindy-coral"></div>
     <div class="relative">
       <app-avatar [src]="avatarUrl()" [name]="u.fullName" size="lg" />
       <label
         for="profile-avatar-input"
-        class="absolute -bottom-1 -right-1 w-8 h-8 bg-kindy-sidebar hover:bg-kindy-sidebar-hover text-white rounded-full flex items-center justify-center cursor-pointer shadow-md focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-kindy-sidebar"
+        class="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-br from-kindy-sidebar to-kindy-sidebar-hover text-white rounded-full flex items-center justify-center cursor-pointer shadow-md hover:scale-110 active:scale-95 transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-kindy-sidebar"
         [attr.aria-label]="'Đổi ảnh đại diện'"
       >
         @if (isUploadingAvatar()) {
@@ -45,8 +47,8 @@
   </div>
 
   <!-- Tabs -->
-  <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-    <div role="tablist" aria-label="Nhóm cài đặt" class="border-b border-gray-100 flex">
+  <div class="bg-surface border border-line rounded-3xl shadow-sm overflow-hidden">
+    <div role="tablist" aria-label="Nhóm cài đặt" class="border-b border-line flex p-2 bg-surface-2/50 gap-2">
       <button
         type="button"
         role="tab"
@@ -54,12 +56,18 @@
         id="tab-general"
         aria-controls="panel-general"
         (click)="setTab('general')"
-        class="px-5 py-3 text-sm font-semibold transition-colors focus:outline-none focus:bg-kindy-surface-soft"
+        class="px-5 py-2.5 text-sm font-bold rounded-2xl transition-all duration-300 focus:outline-none"
+        [class.bg-white]="activeTab() === 'general'"
         [class.text-kindy-sidebar]="activeTab() === 'general'"
-        [class.border-b-2]="activeTab() === 'general'"
-        [class.border-kindy-sidebar-active]="activeTab() === 'general'"
+        [class.shadow-sm]="activeTab() === 'general'"
         [class.text-kindy-ink-soft]="activeTab() !== 'general'"
-      >Thông tin chung</button>
+        [class.hover:text-kindy-sidebar]="activeTab() !== 'general'"
+      >
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          Thông tin chung
+        </span>
+      </button>
       <button
         type="button"
         role="tab"
@@ -67,12 +75,18 @@
         id="tab-security"
         aria-controls="panel-security"
         (click)="setTab('security')"
-        class="px-5 py-3 text-sm font-semibold transition-colors focus:outline-none focus:bg-kindy-surface-soft"
+        class="px-5 py-2.5 text-sm font-bold rounded-2xl transition-all duration-300 focus:outline-none"
+        [class.bg-white]="activeTab() === 'security'"
         [class.text-kindy-sidebar]="activeTab() === 'security'"
-        [class.border-b-2]="activeTab() === 'security'"
-        [class.border-kindy-sidebar-active]="activeTab() === 'security'"
+        [class.shadow-sm]="activeTab() === 'security'"
         [class.text-kindy-ink-soft]="activeTab() !== 'security'"
-      >Bảo mật</button>
+        [class.hover:text-kindy-sidebar]="activeTab() !== 'security'"
+      >
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          Bảo mật
+        </span>
+      </button>
     </div>
 
     <!-- General tab -->
@@ -95,21 +109,22 @@
             formControlName="fullName"
             autocomplete="name"
             maxlength="100"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+            class="w-full px-4 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
           />
         </app-form-field>
 
         <div>
-          <label class="block text-sm font-medium text-kindy-ink mb-1.5">
+          <label for="profile-email-input" class="block text-sm font-medium text-kindy-ink mb-1.5">
             Email
           </label>
           <input
+            id="profile-email-input"
             type="email"
             [value]="u.email"
             readonly
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-kindy-ink-soft cursor-not-allowed"
+            class="w-full px-4 py-2.5 bg-surface-2 border border-line rounded-xl text-sm text-kindy-ink-soft cursor-not-allowed"
           />
-          <p class="text-xs text-kindy-ink-soft mt-1">
+          <p class="text-xs text-kindy-ink-soft mt-1.5">
             Email dùng để đăng nhập, liên hệ quản trị hệ thống nếu cần đổi.
           </p>
         </div>
@@ -124,7 +139,7 @@
             formControlName="phoneNumber"
             autocomplete="tel"
             placeholder="VD: 0912 345 678"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+            class="w-full px-4 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
           />
         </app-form-field>
 
@@ -137,7 +152,7 @@
             formControlName="bio"
             rows="3"
             maxlength="500"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent resize-none"
+            class="w-full px-4 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300 resize-none"
           ></textarea>
         </app-form-field>
 
@@ -145,7 +160,7 @@
           <button
             type="submit"
             [disabled]="profileForm.invalid || profileForm.pristine || isSavingProfile()"
-            class="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            class="px-6 py-2.5 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-kindy-sidebar to-kindy-sidebar-hover shadow-md shadow-kindy-sidebar/10 hover:shadow-lg hover:shadow-kindy-sidebar/20 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-focus disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-200 flex items-center gap-2"
           >
             @if (isSavingProfile()) {
               <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
@@ -166,9 +181,12 @@
         (ngSubmit)="changePassword()"
         class="p-5 space-y-5 max-w-2xl"
       >
-        <div class="bg-kindy-sun-soft/40 border border-kindy-sun-soft rounded-lg p-3 text-xs text-amber-800">
-          <p class="font-semibold">Khuyến nghị đặt mật khẩu mạnh</p>
-          <ul class="list-disc list-inside mt-1 space-y-0.5">
+        <div class="bg-amber-50/50 border border-amber-200/60 rounded-xl p-4 text-xs text-amber-800 animate-fade-in">
+          <p class="font-bold text-amber-900 mb-1 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-amber-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 102 0v-4a1 1 0 10-2 0v4z" clip-rule="evenodd"/></svg>
+            Khuyến nghị đặt mật khẩu mạnh
+          </p>
+          <ul class="list-disc list-inside mt-1 space-y-1 text-amber-800/90 leading-relaxed pl-1">
             <li>Tối thiểu 8 ký tự, nên có 12 ký tự trở lên</li>
             <li>Kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt</li>
             <li>Không dùng lại mật khẩu từ các dịch vụ khác</li>
@@ -185,7 +203,7 @@
               [type]="showOldPw() ? 'text' : 'password'"
               formControlName="currentPassword"
               autocomplete="current-password"
-              class="w-full pl-3 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+              class="w-full pl-4 pr-10 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
             />
             <button
               type="button"
@@ -216,7 +234,7 @@
               [type]="showNewPw() ? 'text' : 'password'"
               formControlName="newPassword"
               autocomplete="new-password"
-              class="w-full pl-3 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+              class="w-full pl-4 pr-10 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
             />
             <button
               type="button"
@@ -235,17 +253,17 @@
             </button>
           </div>
           @if (passwordForm.controls.newPassword.value) {
-            <div class="mt-2">
-              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div class="mt-2.5 animate-fade-in">
+              <div class="h-2 bg-surface-2 rounded-full overflow-hidden">
                 <div
-                  class="h-full transition-all"
+                  class="h-full transition-all duration-300"
                   [class]="passwordStrength(passwordForm.controls.newPassword.value).cls"
                   [style.width.%]="passwordStrength(passwordForm.controls.newPassword.value).pct"
                 ></div>
               </div>
-              <p class="text-xs text-kindy-ink-soft mt-1">
+              <p class="text-xs text-kindy-ink-soft mt-1.5 font-medium">
                 Độ mạnh:
-                <span class="font-medium text-kindy-ink">
+                <span class="font-bold text-kindy-ink">
                   {{ passwordStrength(passwordForm.controls.newPassword.value).label }}
                 </span>
               </p>
@@ -263,7 +281,7 @@
               [type]="showConfirmPw() ? 'text' : 'password'"
               formControlName="confirmPassword"
               autocomplete="new-password"
-              class="w-full pl-3 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kindy-sidebar focus:border-transparent"
+              class="w-full pl-4 pr-10 py-2.5 bg-surface border border-line rounded-xl text-sm text-kindy-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-kindy-coral/40 focus:border-kindy-coral transition-all duration-300"
             />
             <button
               type="button"
@@ -282,7 +300,7 @@
             </button>
           </div>
           @if (passwordForm.errors?.['passwordsMismatch'] && passwordForm.controls.confirmPassword.touched) {
-            <p role="alert" class="text-xs text-kindy-coral-strong mt-1">
+            <p role="alert" class="text-xs text-kindy-coral-strong mt-1.5 font-medium animate-fade-in">
               Mật khẩu xác nhận không khớp.
             </p>
           }
@@ -292,7 +310,7 @@
           <button
             type="submit"
             [disabled]="passwordForm.invalid || isChangingPassword()"
-            class="px-5 py-2 text-sm font-semibold rounded-lg text-white bg-kindy-sidebar hover:bg-kindy-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kindy-sidebar disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            class="px-6 py-2.5 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-kindy-sidebar to-kindy-sidebar-hover shadow-md shadow-kindy-sidebar/10 hover:shadow-lg hover:shadow-kindy-sidebar/20 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-focus disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-200 flex items-center gap-2"
           >
             @if (isChangingPassword()) {
               <span aria-hidden="true" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
@@ -304,7 +322,7 @@
     }
   </div>
 } @else {
-  <div class="bg-white border border-gray-100 rounded-2xl p-10 text-center text-kindy-ink-soft">
+  <div class="bg-surface border border-line rounded-2xl p-10 text-center text-kindy-ink-soft">
     Đang tải hồ sơ…
   </div>
 }

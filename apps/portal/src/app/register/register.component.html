@@ -1,11 +1,11 @@
-<div class="min-h-screen flex bg-white font-sans overflow-hidden">
+<div class="min-h-screen flex bg-surface font-sans overflow-hidden">
 
   <!-- Left Side: Register Form -->
   <div class="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12 md:p-16 lg:p-24 xl:p-28 z-10 relative overflow-y-auto">
 
     <!-- Quay lại -->
     <a routerLink="/"
-      class="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-primary-500 transition-colors font-bold text-sm">
+      class="absolute top-8 left-8 flex items-center gap-2 text-ink-muted hover:text-primary-500 transition-colors font-bold text-sm">
       <i class="ph ph-arrow-left text-lg"></i>
       Quay lại trang chủ
     </a>
@@ -14,13 +14,13 @@
       <!-- Logo -->
       <a routerLink="/" class="inline-flex mb-8 transform hover:scale-105 transition-transform">
         <span class="text-3xl font-black text-primary-500 tracking-tight">Kinder</span>
-        <span class="text-3xl font-black text-secondary-600 tracking-tight">World</span>
+        <span class="text-3xl font-black text-accent tracking-tight">World</span>
       </a>
 
-      <h2 class="text-3xl font-extrabold text-gray-900 mb-2 leading-tight">
+      <h2 class="text-3xl font-extrabold text-ink mb-2 leading-tight">
         Tạo tài khoản mới
       </h2>
-      <p class="text-base text-gray-500 mb-8">
+      <p class="text-base text-ink-soft mb-8">
         Tham gia cùng cộng đồng KinderWorld ngay hôm nay!
       </p>
 
@@ -28,17 +28,17 @@
 
         <!-- Họ và tên -->
         <div>
-          <label for="fullName" class="block text-sm font-bold text-gray-700 mb-1.5">Họ và tên</label>
+          <label for="fullName" class="block text-sm font-bold text-ink-soft mb-1.5">Họ và tên</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <i class="ph ph-user text-gray-400 text-xl"></i>
+              <i class="ph ph-user text-ink-muted text-xl"></i>
             </div>
             <input id="fullName" type="text" formControlName="fullName"
-              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-gray-300 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-gray-400 shadow-sm"
-              [ngClass]="{'border-red-400': f['fullName'].invalid && f['fullName'].touched}"
+              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-surface border border-line focus:border-primary focus:ring-4 focus:ring-primary/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-line-strong shadow-sm"
+              [ngClass]="{'border-danger': f['fullName'].invalid && f['fullName'].touched}"
               placeholder="Nguyễn Văn A" />
           </div>
-          <div *ngIf="f['fullName'].invalid && f['fullName'].touched" class="mt-1.5 text-sm text-red-600 font-medium">
+          <div *ngIf="f['fullName'].invalid && f['fullName'].touched" class="mt-1.5 text-sm text-danger font-medium">
             <div *ngIf="f['fullName'].errors?.['required']">Vui lòng nhập họ và tên.</div>
             <div *ngIf="f['fullName'].errors?.['minlength']">Tên phải có ít nhất 2 ký tự.</div>
           </div>
@@ -46,17 +46,17 @@
 
         <!-- Email -->
         <div>
-          <label for="email" class="block text-sm font-bold text-gray-700 mb-1.5">Địa chỉ Email</label>
+          <label for="email" class="block text-sm font-bold text-ink-soft mb-1.5">Địa chỉ Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <i class="ph ph-envelope-simple text-gray-400 text-xl"></i>
+              <i class="ph ph-envelope-simple text-ink-muted text-xl"></i>
             </div>
             <input id="email" type="text" formControlName="email"
-              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-gray-300 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-gray-400 shadow-sm"
-              [ngClass]="{'border-red-400': f['email'].invalid && f['email'].touched}"
+              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-surface border border-line focus:border-primary focus:ring-4 focus:ring-primary/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-line-strong shadow-sm"
+              [ngClass]="{'border-danger': f['email'].invalid && f['email'].touched}"
               placeholder="email@example.com" />
           </div>
-          <div *ngIf="f['email'].invalid && f['email'].touched" class="mt-1.5 text-sm text-red-600 font-medium">
+          <div *ngIf="f['email'].invalid && f['email'].touched" class="mt-1.5 text-sm text-danger font-medium">
             <div *ngIf="f['email'].errors?.['required']">Vui lòng nhập email.</div>
             <div *ngIf="f['email'].errors?.['pattern']">Email không hợp lệ.</div>
           </div>
@@ -64,43 +64,43 @@
 
         <!-- Mật khẩu -->
         <div>
-          <label for="password" class="block text-sm font-bold text-gray-700 mb-1.5">Mật khẩu</label>
+          <label for="password" class="block text-sm font-bold text-ink-soft mb-1.5">Mật khẩu</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <i class="ph ph-lock-key text-gray-400 text-xl"></i>
+              <i class="ph ph-lock-key text-ink-muted text-xl"></i>
             </div>
             <input id="password" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
               autocomplete="new-password"
-              class="appearance-none block w-full pl-11 pr-12 py-3.5 rounded-2xl bg-white border border-gray-300 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-gray-400 shadow-sm"
-              [ngClass]="{'border-red-400': f['password'].invalid && f['password'].touched}"
-              placeholder="Ít nhất 6 ký tự" />
+              class="appearance-none block w-full pl-11 pr-12 py-3.5 rounded-2xl bg-surface border border-line focus:border-primary focus:ring-4 focus:ring-primary/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-line-strong shadow-sm"
+              [ngClass]="{'border-danger': f['password'].invalid && f['password'].touched}"
+              placeholder="Tối thiểu 8 ký tự, có hoa, thường, số" />
             <button type="button" (click)="togglePassword()"
               [attr.aria-label]="showPassword() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
               [attr.aria-pressed]="showPassword()"
-              class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:text-pink-500">
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-ink-muted hover:text-ink-soft focus:outline-none focus-visible:text-primary">
               <i [class]="showPassword() ? 'ph ph-eye-slash text-xl' : 'ph ph-eye text-xl'" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="f['password'].invalid && f['password'].touched" class="mt-1.5 text-sm text-red-600 font-medium">
+          <div *ngIf="f['password'].invalid && f['password'].touched" class="mt-1.5 text-sm text-danger font-medium">
             <div *ngIf="f['password'].errors?.['required']">Vui lòng nhập mật khẩu.</div>
-            <div *ngIf="f['password'].errors?.['minlength']">Mật khẩu phải có ít nhất 6 ký tự.</div>
+            <div *ngIf="f['password'].errors?.['weakPassword']">{{ passwordRuleText }}</div>
           </div>
         </div>
 
         <!-- Xác nhận mật khẩu -->
         <div>
-          <label for="confirmPassword" class="block text-sm font-bold text-gray-700 mb-1.5">Xác nhận mật khẩu</label>
+          <label for="confirmPassword" class="block text-sm font-bold text-ink-soft mb-1.5">Xác nhận mật khẩu</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <i class="ph ph-lock-key text-gray-400 text-xl"></i>
+              <i class="ph ph-lock-key text-ink-muted text-xl"></i>
             </div>
             <input id="confirmPassword" type="password" formControlName="confirmPassword"
-              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-gray-300 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-gray-400 shadow-sm"
-              [ngClass]="{'border-red-400': (f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch']) && f['confirmPassword'].touched}"
+              class="appearance-none block w-full pl-11 pr-4 py-3.5 rounded-2xl bg-surface border border-line focus:border-primary focus:ring-4 focus:ring-primary/10 text-ink placeholder:text-ink-muted transition-all font-semibold text-base hover:border-line-strong shadow-sm"
+              [ngClass]="{'border-danger': (f['confirmPassword'].invalid || registerForm.errors?.['passwordMismatch']) && f['confirmPassword'].touched}"
               placeholder="Nhập lại mật khẩu" />
           </div>
           <div *ngIf="f['confirmPassword'].touched && registerForm.errors?.['passwordMismatch']"
-            class="mt-1.5 text-sm text-red-600 font-medium">
+            class="mt-1.5 text-sm text-danger font-medium">
             Mật khẩu không khớp.
           </div>
         </div>
@@ -108,7 +108,7 @@
         <!-- Nút Đăng ký -->
         <div class="pt-1">
           <button type="submit" [disabled]="isLoading()"
-            class="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
+            class="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-primary-600 to-accent-500 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-focus transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
             <span *ngIf="!isLoading()">Đăng ký ngay</span>
             <svg *ngIf="isLoading()" class="animate-spin size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -119,7 +119,7 @@
         </div>
       </form>
 
-      <div class="mt-6 text-center text-sm text-gray-500">
+      <div class="mt-6 text-center text-sm text-ink-soft">
         Đã có tài khoản?
         <a routerLink="/login" class="font-bold text-primary-500 hover:text-primary-600 transition-colors">Đăng nhập</a>
       </div>

@@ -176,7 +176,7 @@ export class CreateResourceComponent implements OnInit {
     this.categoryService
       .getCategories(1, 100, undefined, false)
       .pipe(
-        map((res) => (res.data ?? []).filter((c) => c.isActive)),
+        map((res) => (res.data ?? []).filter((c) => c.visibility !== 'PRIVATE')),
         catchError(() => of<Category[]>([]))
       )
       .subscribe((cats) => this.categories.set(cats));

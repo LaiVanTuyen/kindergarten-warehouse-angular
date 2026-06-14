@@ -11,12 +11,11 @@ export class BannerService {
   private http = inject(HttpClient);
   private readonly API_URL = '/api/v1/banners';
 
-  getAllBanners(page = 0, size = 10): Observable<ApiResponse<any>> {
+  getAllBanners(page = 1, size = 10): Observable<ApiResponse<any>> {
     const params = new HttpParams()
-      .set('page', (page - 1).toString())
+      .set('page', Math.max(0, page - 1).toString()) // clamp: never send -1
       .set('size', size.toString())
-      .set('sortBy', 'displayOrder')
-      .set('sortDir', 'asc');
+      .set('sort', 'displayOrder,asc'); // Contract v1 §1.2 — sort=field,dir
     return this.http
       .get<ApiResponse<any>>(`${this.API_URL}/all`, { params })
       .pipe(
@@ -56,6 +55,9 @@ export class BannerService {
     return {
       ...b,
       imageUrl: b.imageUrl ? b.imageUrl.split('?')[0] : '',
+      // D1: prefer `visibility`; fall back to legacy isActive, default PUBLIC.
+      visibility:
+        b.visibility ?? (b.isActive === false ? 'PRIVATE' : 'PUBLIC'),
       displayOrder: b.displayOrder ?? b.display_order ?? b.order ?? 0,
       platform: b.platform,
       createdAt: b.createdAt ?? b.created_at,
@@ -81,6 +83,23 @@ export class BannerService {
 
   deleteBanner(id: number): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * Toggle banner visibility (PUBLIC ⇄ PRIVATE).
+   * PATCH /banners/:id/toggle  (Contract v1 §2.4)
+   */
+  toggleBanner(id: number): Observable<ApiResponse<Banner>> {
+    return this.http
+      .patch<ApiResponse<Banner>>(`${this.API_URL}/${id}/toggle`, {})
+      .pipe(
+        map((response) => {
+          if (response.result) {
+            response.result = this.normalizeBanner(response.result);
+          }
+          return response;
+        })
+      );
   }
 
   updateReorderedBanners(banners: Banner[]): Observable<ApiResponse<void>> {

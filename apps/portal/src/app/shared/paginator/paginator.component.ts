@@ -32,7 +32,7 @@ import { CommonModule } from '@angular/common';
     >
       <button
         type="button"
-        class="inline-flex items-center justify-center rounded-xl size-9 text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        class="inline-flex items-center justify-center rounded-xl size-9 text-slate-600 bg-surface ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
         (click)="go(page - 1)"
         [disabled]="page <= 1"
         aria-label="Trang trước"
@@ -73,7 +73,7 @@ import { CommonModule } from '@angular/common';
 
       <button
         type="button"
-        class="inline-flex items-center justify-center rounded-xl size-9 text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        class="inline-flex items-center justify-center rounded-xl size-9 text-slate-600 bg-surface ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
         (click)="go(page + 1)"
         [disabled]="page >= totalPages"
         aria-label="Trang sau"

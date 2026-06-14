@@ -47,3 +47,9 @@ Thumbs.db
 
 # Claude Code local state
 .claude/
+node_modules_old
+
+# E2E test artifacts (puppeteer scripts + screenshots)
+scratch/
+screenshots/
+

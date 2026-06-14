@@ -21,6 +21,8 @@ import {
   AuthService,
   RegisterRequest,
   ToastService,
+  passwordValidator,
+  PASSWORD_RULE_TEXT,
 } from '@kindergarten-warehouse/data-access';
 
 @Component({
@@ -38,6 +40,7 @@ export class RegisterComponent {
 
   readonly isLoading = signal(false);
   readonly showPassword = signal(false);
+  readonly passwordRuleText = PASSWORD_RULE_TEXT;
 
   readonly registerForm: FormGroup = this.fb.group(
     {
@@ -49,7 +52,7 @@ export class RegisterComponent {
           Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
         ],
       ],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, passwordValidator()]],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: RegisterComponent.matchPasswords }

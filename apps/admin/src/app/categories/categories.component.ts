@@ -15,6 +15,7 @@ import {
   Topic,
   TopicService,
   ToastService,
+  AuthService,
 } from '@kindergarten-warehouse/data-access';
 import { PageHeaderComponent } from '../shared/components/page-header/page-header.component';
 import { StatusPillComponent } from '../shared/components/status-pill/status-pill.component';
@@ -56,6 +57,7 @@ export class CategoriesComponent {
   private toast = inject(ToastService);
   private dialogs = inject(DialogService);
   private destroyRef = inject(DestroyRef);
+  private authService = inject(AuthService);
 
   readonly view = signal<ViewMode>('active');
   readonly search = signal<string>('');
@@ -64,6 +66,15 @@ export class CategoriesComponent {
   readonly categories = signal<Category[]>([]);
   readonly topics = signal<Topic[]>([]);
   readonly selectedCategoryId = signal<string | null>(null);
+
+  isIconUrl(icon: string | null | undefined): boolean {
+    if (!icon) return false;
+    return icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('/');
+  }
+
+  formatIconUrl(icon: string | null | undefined): string {
+    return this.authService.formatAssetUrl(icon);
+  }
 
   readonly selectedCategory = computed(
     () => this.categories().find((c) => c.id === this.selectedCategoryId()) ?? null
@@ -137,9 +148,18 @@ export class CategoriesComponent {
       )
       .subscribe((result) => {
         if (!result) return;
+        // BE /categories expects multipart/form-data (supports icon upload),
+        // so send FormData rather than a JSON body (JSON → 500 on the server).
+        const fd = new FormData();
+        fd.append('name', result.name);
+        fd.append('slug', result.slug);
+        fd.append('description', result.description ?? '');
+        fd.append('icon', result.icon ?? '');
+        fd.append('visibility', result.visibility);
+        fd.append('platform', result.platform);
         const req$ = category
-          ? this.categoryService.updateCategory(category.id, result)
-          : this.categoryService.createCategory(result);
+          ? this.categoryService.updateCategory(category.id, fd)
+          : this.categoryService.createCategory(fd);
         req$
           .pipe(
             handleHttpError(
@@ -147,8 +167,7 @@ export class CategoriesComponent {
               category
                 ? 'Không cập nhật được phân loại.'
                 : 'Không tạo được phân loại.'
-            ),
-            takeUntilDestroyed(this.destroyRef)
+            )
           )
           .subscribe(() => {
             this.toast.show(
@@ -187,8 +206,7 @@ export class CategoriesComponent {
         this.categoryService
           .deleteCategory(category.id, isTrash)
           .pipe(
-            handleHttpError(this.toast, 'Không xoá được phân loại.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không xoá được phân loại.')
           )
           .subscribe(() => {
             this.toast.show(
@@ -205,8 +223,7 @@ export class CategoriesComponent {
     this.categoryService
       .restoreCategory(category.id)
       .pipe(
-        handleHttpError(this.toast, 'Không khôi phục được.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không khôi phục được.')
       )
       .subscribe(() => {
         this.toast.show('Đã khôi phục phân loại.', 'success');
@@ -241,8 +258,7 @@ export class CategoriesComponent {
             handleHttpError(
               this.toast,
               topic ? 'Không cập nhật được chủ đề.' : 'Không tạo được chủ đề.'
-            ),
-            takeUntilDestroyed(this.destroyRef)
+            )
           )
           .subscribe(() => {
             this.toast.show(
@@ -282,8 +298,7 @@ export class CategoriesComponent {
         this.topicService
           .deleteTopic(topic.id, isTrash)
           .pipe(
-            handleHttpError(this.toast, 'Không xoá được chủ đề.'),
-            takeUntilDestroyed(this.destroyRef)
+            handleHttpError(this.toast, 'Không xoá được chủ đề.')
           )
           .subscribe(() => {
             this.toast.show(
@@ -301,8 +316,7 @@ export class CategoriesComponent {
     this.topicService
       .restoreTopic(topic.id)
       .pipe(
-        handleHttpError(this.toast, 'Không khôi phục được.'),
-        takeUntilDestroyed(this.destroyRef)
+        handleHttpError(this.toast, 'Không khôi phục được.')
       )
       .subscribe(() => {
         this.toast.show('Đã khôi phục chủ đề.', 'success');

@@ -1,9 +1,8 @@
-<div class="font-sans min-h-screen bg-[#FAFAFA] relative overflow-hidden z-0">
-  <!-- Playful Background Blobs -->
-  <div class="absolute inset-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-    <div class="absolute top-[-5%] left-[-10%] w-[50%] h-[600px] rounded-[100%] bg-pink-200/40 mix-blend-multiply filter blur-[100px] animate-pulse" style="animation-duration: 8s;"></div>
-    <div class="absolute top-[15%] right-[-5%] w-[50%] h-[600px] rounded-[100%] bg-blue-200/40 mix-blend-multiply filter blur-[100px] animate-pulse" style="animation-duration: 10s; animation-delay: 2s;"></div>
-    <div class="absolute top-[60%] left-[10%] w-[50%] h-[600px] rounded-[100%] bg-yellow-200/40 mix-blend-multiply filter blur-[100px] animate-pulse" style="animation-duration: 9s; animation-delay: 4s;"></div>
+<div class="font-sans min-h-screen bg-bg relative overflow-hidden z-0">
+  <!-- Subtle, static brand accents (light on GPU — no pulse/blur animation) -->
+  <div class="absolute inset-0 w-full h-full overflow-hidden -z-10 pointer-events-none" aria-hidden="true">
+    <div class="absolute top-[-8%] left-[-10%] w-[45%] h-[480px] rounded-full bg-primary-300/15 blur-[120px]"></div>
+    <div class="absolute top-[35%] right-[-8%] w-[40%] h-[480px] rounded-full bg-accent-300/12 blur-[120px]"></div>
   </div>
 
   <!-- Hero Section (Slider) -->
@@ -12,32 +11,28 @@
   <!-- Featured Categories -->
   <div class="container mx-auto px-4 mb-16">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-800">Khám phá danh mục</h2>
-      <!-- <a routerLink="/resources" class="text-secondary-600 font-bold hover:text-primary-pink transition-colors">View All</a> -->
+      <h2 class="text-2xl font-bold text-ink font-display">Khám phá danh mục</h2>
     </div>
 
     <!-- Horizontal Scrollable Categories -->
     <div class="relative group">
-      <!-- Scroll Container -->
-      <!-- Scroll Container -->
       <div #categoryScroll
-        class="flex gap-6 overflow-x-auto scroll-smooth px-4 pb-12 pt-4 scrollbar-hide snap-x snap-mandatory w-fit mx-auto max-w-full"
-        style="scrollbar-width: none; -ms-overflow-style: none;">
+        class="flex gap-6 overflow-x-auto scroll-smooth px-4 pb-12 pt-4 scrollbar-hide snap-x snap-mandatory w-fit mx-auto max-w-full">
         <a *ngFor="let cat of categories$ | async; trackBy: trackByCategoryId"
           [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
-          class="flex-shrink-0 w-[240px] group/card flex flex-col items-center justify-start p-6 rounded-[2rem] bg-white/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.15)] border border-white/80 hover:border-pink-200 transition-all duration-500 ease-out cursor-pointer snap-start hover:-translate-y-3 h-[220px] focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400">
+          class="flex-shrink-0 w-[240px] group/card flex flex-col items-center justify-start p-6 rounded-2xl bg-surface/80 backdrop-blur-md shadow-sm hover:shadow-md border border-line hover:border-primary-200 transition-all duration-300 ease-out cursor-pointer snap-start hover:-translate-y-2 h-[220px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
 
           <div
             class="h-24 w-full mb-4 flex items-center justify-center transition-transform group-hover/card:scale-110 duration-500 ease-out">
             <img [src]="cat.icon" [alt]="cat.name" loading="lazy" decoding="async"
-              class="max-w-[96px] max-h-[96px] w-auto h-auto object-contain drop-shadow-sm group-hover/card:drop-shadow-md transition-all duration-300 contrast-[1.05] saturate-[1.05]"
+              class="max-w-[96px] max-h-[96px] w-auto h-auto object-contain drop-shadow-sm group-hover/card:drop-shadow-md transition-all duration-300"
               onerror="this.onerror=null;this.src='https://img.icons8.com/fluency/96/folder-invoices--v1.png'" />
           </div>
 
           <!-- Category Name (Fixed Height for Alignment) -->
           <div class="h-[3.5rem] w-full flex items-center justify-center">
             <span
-              class="font-bold text-gray-900 text-lg group-hover/card:text-primary-pink text-center leading-snug line-clamp-2 transition-colors duration-300 select-none">{{
+              class="font-bold text-ink text-lg group-hover/card:text-primary text-center leading-snug line-clamp-2 transition-colors duration-300 select-none">{{
               cat.name }}</span>
           </div>
         </a>
@@ -45,14 +40,14 @@
 
       <!-- Navigation Arrows (Positioned Outside & Safe) -->
       <button (click)="scrollCategories('left')"
-        class="hidden md:flex absolute top-[40%] -translate-y-1/2 -left-8 bg-white/80 backdrop-blur-sm text-gray-500 hover:text-primary-pink shadow-[0_8px_20px_rgba(0,0,0,0.08)] rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-white hover:border-primary-pink/30 hover:shadow-[0_10px_25px_rgba(236,72,153,0.2)]">
+        class="hidden md:flex absolute top-[40%] -translate-y-1/2 -left-8 bg-surface/90 backdrop-blur-sm text-ink-soft hover:text-primary shadow-md rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-line hover:border-primary-300">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
       <button (click)="scrollCategories('right')"
-        class="hidden md:flex absolute top-[40%] -translate-y-1/2 -right-8 bg-white/80 backdrop-blur-sm text-gray-500 hover:text-primary-pink shadow-[0_8px_20px_rgba(0,0,0,0.08)] rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-white hover:border-primary-pink/30 hover:shadow-[0_10px_25px_rgba(236,72,153,0.2)]">
+        class="hidden md:flex absolute top-[40%] -translate-y-1/2 -right-8 bg-surface/90 backdrop-blur-sm text-ink-soft hover:text-primary shadow-md rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-line hover:border-primary-300">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"></polyline>
@@ -65,11 +60,11 @@
   <div class="container mx-auto px-4 mb-16">
     <div class="flex justify-between items-end mb-8">
       <div>
-        <h2 class="text-2xl font-bold text-gray-800">Tài nguyên Mới nhất</h2>
-        <p class="text-gray-500 mt-1">Các tài liệu giáo dục và hoạt động mới nhất được cập nhật</p>
+        <h2 class="text-2xl font-bold text-ink font-display">Tài nguyên Mới nhất</h2>
+        <p class="text-ink-muted mt-1">Các tài liệu giáo dục và hoạt động mới nhất được cập nhật</p>
       </div>
       <a routerLink="/resources"
-        class="text-primary-pink font-bold hover:text-pink-700 transition-colors flex items-center gap-1 group">
+        class="text-primary font-bold hover:text-primary-700 transition-colors flex items-center gap-1 group">
         Xem tất cả
         <i class="ph ph-arrow-right font-bold group-hover:translate-x-1 transition-transform"></i>
       </a>

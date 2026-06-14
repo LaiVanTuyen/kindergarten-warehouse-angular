@@ -18,7 +18,7 @@
         [innerHTML]="slide.subtitle"></p>
       <div class="pt-4">
         <a [routerLink]="slide.link || '/resources'"
-          class="inline-block px-8 py-4 bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 animate-bounce-slow focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400/40">
+          class="inline-block px-8 py-4 bg-gradient-to-r from-primary-600 to-accent-500 text-ink-onbrand text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 animate-bounce-slow focus:outline-none focus-visible:ring-4 focus-visible:ring-focus">
           Xem tất cả
         </a>
       </div>
@@ -37,17 +37,17 @@
       [attr.aria-label]="'Chuyển đến slide ' + (i + 1)"
       [attr.aria-selected]="i === activeIndex()"
       (click)="goTo(i)"
-      class="rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400"
+      class="rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       [class.w-8]="i === activeIndex()"
       [class.w-4]="i !== activeIndex()"
       [class.h-4]="true"
-      [class.bg-primary-pink]="i === activeIndex()"
-      [class.bg-gray-300]="i !== activeIndex()"
-      [class.hover:bg-gray-400]="i !== activeIndex()"></button>
+      [class.bg-primary]="i === activeIndex()"
+      [class.bg-line-strong]="i !== activeIndex()"
+      [class.hover:bg-ink-muted]="i !== activeIndex()"></button>
   </div>
 </section>
 
-<div *ngIf="!hasSlides() && error()" class="container mx-auto px-4 py-8 text-center text-sm text-gray-400" role="alert">
+<div *ngIf="!hasSlides() && error()" class="container mx-auto px-4 py-8 text-center text-sm text-ink-muted" role="alert">
   Không tải được banner. <button type="button" (click)="loadBanners()"
-    class="text-pink-500 font-semibold hover:underline">Thử lại</button>
+    class="text-primary font-semibold hover:underline">Thử lại</button>
 </div>

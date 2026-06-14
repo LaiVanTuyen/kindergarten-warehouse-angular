@@ -53,7 +53,7 @@ export interface FileRejection {
       />
 
       <div
-        class="flex size-14 items-center justify-center rounded-2xl bg-white shadow-sm text-pink-500"
+        class="flex size-14 items-center justify-center rounded-2xl bg-surface shadow-sm text-primary"
         aria-hidden="true"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none"

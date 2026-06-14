@@ -1,18 +1,100 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap');
+/* Shared design tokens (plain CSS custom properties — safe to @import). */
+@import '../../../libs/theme/tokens.css';
+
+/* Fonts (Inter + Plus Jakarta Sans) are loaded via <link> in index.html. */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+ * Base + component primitives.
+ * NOTE: mirrored in apps/portal/src/styles.css — keep in sync
+ * (canonical reference: libs/theme/base.css.txt).
+ * ============================================================================= */
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Nunito', sans-serif;
-  }
+  html { -webkit-text-size-adjust: 100%; }
+
   body {
-    font-family: 'Quicksand', sans-serif;
+    @apply bg-bg text-ink-soft font-sans antialiased;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display text-ink;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection { background-color: rgb(var(--c-primary-400) / 0.35); }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--c-line-strong)) transparent;
+  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--c-line-strong));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill px-4 py-2
+           text-sm font-semibold transition-colors duration-200
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-focus
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-lg { @apply px-6 py-3 text-base; }
+
+  .btn-primary { @apply btn bg-primary-600 text-ink-onbrand shadow-sm hover:bg-primary-700 active:bg-primary-800; }
+  .btn-accent  { @apply btn bg-accent-500 text-ink-onbrand shadow-sm hover:bg-accent-600 active:bg-accent-700; }
+  .btn-outline { @apply btn border border-primary-500 text-primary-700 bg-transparent hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10; }
+  .btn-ghost   { @apply btn text-ink-soft hover:bg-surface-2; }
+  .btn-danger  { @apply btn bg-danger text-ink-onbrand shadow-sm hover:brightness-95; }
+
+  .card { @apply bg-surface border border-line rounded-card shadow-sm; }
+  .card-pad { @apply p-5; }
+  .card-hover { @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5; }
+
+  .badge { @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-xs font-semibold; }
+  .badge-primary { @apply badge bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300; }
+  .badge-accent  { @apply badge bg-accent-100  text-accent-700  dark:bg-accent-500/15  dark:text-accent-300; }
+  .badge-success { @apply badge bg-success-soft text-success; }
+  .badge-warning { @apply badge bg-warning-soft text-warning; }
+  .badge-danger  { @apply badge bg-danger-soft  text-danger; }
+  .badge-info    { @apply badge bg-info-soft     text-info; }
+  .badge-neutral { @apply badge bg-surface-2 text-ink-soft; }
+
+  .label { @apply block text-sm font-medium text-ink mb-1.5; }
+  .input {
+    @apply w-full rounded-md border border-line bg-surface px-3.5 py-2.5
+           text-sm text-ink placeholder:text-ink-muted transition-colors
+           focus:outline-none focus:border-primary-500
+           focus-visible:ring-2 focus-visible:ring-focus;
+  }
+  .input-error { @apply border-danger focus:border-danger; }
+  .field-hint  { @apply mt-1 text-xs text-ink-muted; }
+  .field-error { @apply mt-1 text-xs text-danger; }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-pill border border-line
+           bg-surface px-3 py-1.5 text-sm font-medium text-ink-soft
+           transition-colors hover:border-primary-300 hover:text-primary-700
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-focus;
+  }
+  .chip-active { @apply border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300; }
+
+  .divider { @apply border-t border-line; }
+  .link { @apply text-primary-700 dark:text-primary-300 font-semibold hover:underline underline-offset-2; }
+}
+
+/* Admin shell occupies the full viewport (sidebar + scrollable content area). */
 html,
 body,
 app-root,

@@ -2,47 +2,45 @@
 
   <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
 
-    <!-- Sidebar: Categories (3 Cols) -->
     <!-- Mobile Filter Trigger -->
     <div class="md:hidden col-span-1">
       <button (click)="toggleMobileFilter()"
-        class="w-full flex items-center justify-between px-6 py-4 bg-white rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-800 hover:bg-gray-50 transition-colors">
+        class="w-full flex items-center justify-between px-6 py-4 bg-surface rounded-2xl shadow-sm border border-line font-bold text-ink hover:bg-surface-2 transition-colors">
         <span class="flex items-center gap-2">
-          <i class="ph ph-faders text-lg text-primary-500"></i>
+          <i class="ph ph-faders text-lg text-primary"></i>
           Bộ lọc & Danh mục
         </span>
         <div class="flex items-center gap-2">
-          <!-- Show count helper if needed -->
           <span *ngIf="(activeTitle$ | async)"
-            class="text-xs bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full font-bold">1 Active</span>
-          <i class="ph ph-caret-right text-gray-400"></i>
+            class="text-xs bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300 px-2 py-0.5 rounded-full font-bold">1 Active</span>
+          <i class="ph ph-caret-right text-ink-muted"></i>
         </div>
       </button>
     </div>
 
-    <!-- Sidebar: Categories (3 Cols) - Responsive Wrapper -->
+    <!-- Sidebar: Categories - Responsive Wrapper -->
     <div class="md:col-span-4 lg:col-span-3" [ngClass]="{
-             'fixed inset-0 z-[60] bg-white p-6 overflow-hidden animate-fade-in-up': isMobileFilterOpen,
+             'fixed inset-0 z-[60] bg-surface p-6 overflow-hidden animate-fade-in-up': isMobileFilterOpen,
              'hidden md:block': !isMobileFilterOpen
          }">
 
       <!-- Mobile Header -->
       <div class="flex justify-between items-center mb-6 md:hidden" *ngIf="isMobileFilterOpen">
-        <h3 class="text-2xl font-black text-gray-800">Filters</h3>
+        <h3 class="text-2xl font-black text-ink">Bộ lọc</h3>
         <button (click)="closeMobileFilter()"
-          class="p-2 bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
+          class="p-2 bg-surface-2 text-ink-soft hover:bg-danger-soft hover:text-danger rounded-full transition-colors">
           <i class="ph ph-x text-xl"></i>
         </button>
       </div>
 
       <!-- Main Sticky Sidebar Container -->
       <div
-        class="bg-white md:rounded-3xl md:p-6 md:shadow-sm md:border md:border-gray-100 sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col transition-all duration-300">
+        class="bg-surface md:rounded-2xl md:p-6 md:shadow-sm md:border md:border-line sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col transition-all duration-300">
 
         <!-- Part 1: Header (Fixed) -->
         <div class="flex-none mb-4">
-          <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-xl">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-500" fill="none" viewBox="0 0 24 24"
+          <h4 class="font-bold text-ink mb-4 flex items-center gap-2 text-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <rect x="3" y="3" width="7" height="7"></rect>
               <rect x="14" y="3" width="7" height="7"></rect>
@@ -56,15 +54,15 @@
           <button (click)="onAllCategoriesClick()"
             class="w-full text-left px-4 py-3.5 transition-all duration-300 flex items-center justify-between group border mb-1"
             [ngClass]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null
-                ? 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm' 
-                : 'bg-white border-gray-100 rounded-2xl border hover:border-pink-200 hover:shadow-sm'">
+                ? 'bg-primary-50 dark:bg-primary-500/15 border-l-4 border-l-primary rounded-r-2xl rounded-l-sm'
+                : 'bg-surface border-line rounded-2xl border hover:border-primary-300 hover:shadow-sm'">
             <span
-              [class]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null ? 'font-bold text-pink-600' : 'text-gray-600 group-hover:text-pink-600'">Tất
+              [class]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null ? 'font-bold text-primary' : 'text-ink-soft group-hover:text-primary'">Tất
               cả</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-opacity"
               [class.opacity-100]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null"
               [class.opacity-0]="!((selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null)"
-              [class.text-pink-600]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null"
+              [class.text-primary]="(selectedCategory$ | async) === '' && (selectedTopicId$ | async) === null"
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
@@ -72,51 +70,50 @@
         </div>
 
         <!-- Part 2: Category List (Scrollable) -->
-        <div class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 custom-scrollbar min-h-0"
+        <div class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 min-h-0"
           *ngIf="categories$ | async as categoriesRes">
           <!-- Dynamic Categories -->
           <div *ngFor="let cat of categoriesRes.data; trackBy: trackByCategoryId" class="flex flex-col">
             <button (click)="toggleCategory(cat)"
               class="w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between group border mb-1"
               [ngClass]="{
-                 'bg-pink-50 border-l-4 border-l-primary-pink rounded-r-2xl rounded-l-sm shadow-sm': (expandedCategory$ | async) === cat.id,
-                 'bg-white border-gray-100 hover:border-pink-200 hover:shadow-sm': (expandedCategory$ | async) !== cat.id
+                 'bg-primary-50 dark:bg-primary-500/15 border-l-4 border-l-primary rounded-r-2xl rounded-l-sm shadow-sm': (expandedCategory$ | async) === cat.id,
+                 'bg-surface border-line hover:border-primary-300 hover:shadow-sm': (expandedCategory$ | async) !== cat.id
               }">
               <div class="flex items-center gap-3">
                 <img [src]="cat.icon" alt="" class="w-6 h-6 object-contain">
-                <span [class.font-bold]="isCategoryActive(cat.id)" [class.text-pink-600]="isCategoryActive(cat.id)"
-                  [class.text-gray-900]="!isCategoryActive(cat.id) && (expandedCategory$ | async) === cat.id"
-                  [class.text-gray-600]="!isCategoryActive(cat.id) && (expandedCategory$ | async) !== cat.id">
+                <span [class.font-bold]="isCategoryActive(cat.id)" [class.text-primary]="isCategoryActive(cat.id)"
+                  [class.text-ink]="!isCategoryActive(cat.id) && (expandedCategory$ | async) === cat.id"
+                  [class.text-ink-soft]="!isCategoryActive(cat.id) && (expandedCategory$ | async) !== cat.id">
                   {{ cat.name }}
                 </span>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200"
                 [class.rotate-180]="(expandedCategory$ | async) === cat.id"
-                [class.text-pink-600]="isCategoryActive(cat.id)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                [class.text-primary]="isCategoryActive(cat.id)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             <!-- Nested Topics (Accordion Body) -->
             <div *ngIf="(expandedCategory$ | async) === cat.id"
-              class="ml-4 mt-2 space-y-1 pl-4 border-l-2 border-pink-100 animate-fade-in-up mb-4">
-              <!-- Loading State for Topics -->
-              <div *ngIf="(currentTopics$ | async)?.length === 0" class="text-xs text-gray-400 py-2 italic px-2">
+              class="ml-4 mt-2 space-y-1 pl-4 border-l-2 border-primary-100 dark:border-primary-500/20 animate-fade-in-up mb-4">
+              <div *ngIf="(currentTopics$ | async)?.length === 0" class="text-xs text-ink-muted py-2 italic px-2">
                 {{ 'list.noTopics' | translate }}
               </div>
 
               <button *ngFor="let topic of currentTopics$ | async; trackBy: trackByTopicId"
                 (click)="$event.stopPropagation(); onTopicClick(topic, cat, $event)"
                 class="w-full text-left px-4 py-3 text-sm transition-all flex items-center justify-between relative group/topic"
-                [ngClass]="isTopicSelected(topic.id) 
-                            ? 'text-pink-600 font-bold bg-pink-50 border-l-4 border-l-pink-500 rounded-r-xl' 
-                            : 'text-gray-500 hover:text-pink-600 hover:bg-pink-50 hover:font-semibold border-l-4 border-l-transparent rounded-r-xl'">
+                [ngClass]="isTopicSelected(topic.id)
+                            ? 'text-primary font-bold bg-primary-50 dark:bg-primary-500/15 border-l-4 border-l-primary rounded-r-xl'
+                            : 'text-ink-soft hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:font-semibold border-l-4 border-l-transparent rounded-r-xl'">
                 <span>{{ topic.name }}</span>
                 <!-- Radio Dot Logic -->
                 <div
-                  class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center bg-white group-hover/topic:border-pink-300"
-                  [class.border-pink-600]="isTopicSelected(topic.id)">
-                  <div class="w-2.5 h-2.5 rounded-full bg-pink-600 transition-transform duration-200"
+                  class="w-4 h-4 rounded-full border border-line flex items-center justify-center bg-surface group-hover/topic:border-primary-300"
+                  [class.border-primary]="isTopicSelected(topic.id)">
+                  <div class="w-2.5 h-2.5 rounded-full bg-primary transition-transform duration-200"
                     [class.scale-100]="isTopicSelected(topic.id)" [class.scale-0]="!isTopicSelected(topic.id)"></div>
                 </div>
               </button>
@@ -125,17 +122,17 @@
         </div>
 
         <!-- Part 3: Age Filters (Fixed Bottom) -->
-        <div class="flex-none pt-4 mt-4 border-t border-dashed border-pink-100 bg-white z-10">
-          <h4 class="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
-            <i class="ph-bold ph-plant text-primary-500 text-xl"></i>
+        <div class="flex-none pt-4 mt-4 border-t border-dashed border-line bg-surface z-10">
+          <h4 class="font-bold text-ink mb-4 text-lg flex items-center gap-2">
+            <i class="ph-bold ph-plant text-primary text-xl"></i>
             Độ tuổi
           </h4>
           <div class="space-y-2">
             <label *ngFor="let age of ageGroups$ | async; trackBy: trackByAgeGroupId"
-              class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-pink-50 group">
+              class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-primary-50 dark:hover:bg-primary-500/10 group">
               <div class="relative flex items-center">
                 <input type="checkbox" [checked]="isChecked(age.id)" (change)="toggleAgeGroup(age)"
-                  class="peer w-5 h-5 border-2 border-gray-300 rounded text-pink-600 focus:ring-pink-500 focus:ring-offset-0 cursor-pointer transition-colors checked:bg-pink-600 checked:border-pink-600 hover:border-pink-400 accent-pink-600">
+                  class="peer w-5 h-5 border-2 border-line rounded focus:ring-focus focus:ring-offset-0 cursor-pointer transition-colors accent-primary-600 hover:border-primary-400">
                 <svg
                   class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity"
                   xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -143,8 +140,8 @@
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </div>
-              <span class="text-gray-600 group-hover:text-pink-600 transition-colors font-medium text-sm"
-                [class.text-pink-700]="isChecked(age.id)" [class.font-bold]="isChecked(age.id)">
+              <span class="text-ink-soft group-hover:text-primary transition-colors font-medium text-sm"
+                [class.text-primary]="isChecked(age.id)" [class.font-bold]="isChecked(age.id)">
                 {{ age.name }}
               </span>
             </label>
@@ -153,22 +150,22 @@
       </div>
     </div>
 
-    <!-- Main Content: Resource List (9 Cols) -->
+    <!-- Main Content: Resource List -->
     <div class="md:col-span-8 lg:col-span-9">
 
       <!-- Breadcrumbs -->
-      <nav class="flex text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+      <nav class="flex text-sm text-ink-muted mb-4" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
           <li *ngFor="let item of breadcrumb$ | async; let last = last" class="inline-flex items-center">
-            <span *ngIf="!last" class="inline-flex items-center hover:text-gray-900 cursor-pointer">
+            <span *ngIf="!last" class="inline-flex items-center hover:text-ink cursor-pointer">
               {{ item }}
-              <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+              <svg class="w-3 h-3 text-ink-muted mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 6 10">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="m1 9 4-4-4-4" />
               </svg>
             </span>
-            <span *ngIf="last" class="text-gray-400 font-medium">{{ item }}</span>
+            <span *ngIf="last" class="text-ink-muted font-medium">{{ item }}</span>
           </li>
         </ol>
       </nav>
@@ -176,10 +173,10 @@
       <!-- Filter Chips (Active Filters) -->
       <div class="mb-6 flex flex-wrap gap-2 animate-fade-in" *ngIf="(selectedAgeGroups$ | async)?.length">
         <div *ngFor="let age of (selectedAgeGroups$ | async); trackBy: trackByAgeGroupId"
-          class="inline-flex items-center bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm border border-pink-200">
+          class="inline-flex items-center bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
           <span>{{ age.name }}</span>
           <button (click)="removeAgeFilter(age)"
-            class="ml-2 p-0.5 rounded-full hover:bg-pink-200 text-pink-500 transition-colors">
+            class="ml-2 p-0.5 rounded-full hover:bg-primary-200 dark:hover:bg-primary-500/25 text-primary transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -188,7 +185,7 @@
           </button>
         </div>
         <button (click)="selectedAgeGroups$.next([])" *ngIf="(selectedAgeGroups$ | async)?.length"
-          class="text-xs text-gray-500 hover:text-red-500 underline ml-2 transition-colors self-center">
+          class="text-xs text-ink-muted hover:text-danger underline ml-2 transition-colors self-center">
           Xóa bộ lọc
         </button>
       </div>
@@ -196,28 +193,28 @@
       <!-- Section Title & Sort -->
       <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-8 gap-4 px-2">
         <div>
-          <h2 class="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+          <h2 class="text-3xl font-black text-ink tracking-tight flex items-center gap-3 font-display">
             <ng-container *ngIf="(activeTitle$ | async) as title; else defaultTitle">
               {{ title }}
             </ng-container>
             <ng-template #defaultTitle>
               Khám phá tài liệu
             </ng-template>
-            <span class="hidden sm:inline-block w-2 h-2 rounded-full bg-secondary-500 mb-1"></span>
+            <span class="hidden sm:inline-block w-2 h-2 rounded-full bg-accent mb-1"></span>
           </h2>
-          <p class="text-gray-400 font-medium mt-1 ml-1 text-sm">Khám phá các tài liệu tốt nhất cho bé</p>
+          <p class="text-ink-muted font-medium mt-1 ml-1 text-sm">Khám phá các tài liệu tốt nhất cho bé</p>
         </div>
 
         <div class="relative min-w-[220px]">
           <select (change)="onSortChange($event)"
-            class="w-full appearance-none bg-white border border-gray-200 text-gray-700 py-3 pl-5 pr-12 rounded-2xl shadow-sm focus:outline-none focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 cursor-pointer font-bold transition-all hover:bg-gray-50 text-sm">
+            class="w-full appearance-none bg-surface border border-line text-ink py-3 pl-5 pr-12 rounded-2xl shadow-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-focus cursor-pointer font-bold transition-all hover:bg-surface-2 text-sm">
             <option value="newest">Mới nhất</option>
             <option value="name-asc">Tên (A-Z)</option>
             <option value="name-desc">Tên (Z-A)</option>
             <option value="rating-desc">Đánh giá cao nhất</option>
             <option value="rating-asc">Đánh giá thấp nhất</option>
           </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-ink-muted">
             <i class="ph-bold ph-caret-down text-lg"></i>
           </div>
         </div>

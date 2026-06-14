@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   inject,
 } from '@angular/core';
 import {
@@ -51,7 +50,7 @@ interface BreadcrumbItem {
         @for (crumb of breadcrumbs(); track crumb.url; let last = $last) {
           <li class="inline-flex items-center">
             <svg
-              class="w-4 h-4 text-gray-400 mx-1"
+              class="w-4 h-4 text-ink-muted mx-1"
               aria-hidden="true"
               fill="currentColor"
               viewBox="0 0 20 20"
