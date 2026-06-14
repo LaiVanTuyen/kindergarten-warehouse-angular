@@ -223,8 +223,8 @@ export class ResourceService {
 
   /**
    * Bulk Delete Resources
-   * POST /resources/bulk-delete?hard={true/false}
-   * Payload: raw id array `[...]` (BE expects the array body, not `{ids}`).
+   * POST /resources/bulk-delete?hard={true/false}  (Contract v1 §2.5)
+   * Payload: { ids: string[] }
    */
   bulkDeleteResources(
     ids: string[],
@@ -233,9 +233,11 @@ export class ResourceService {
     let params = new HttpParams();
     if (hard) params = params.set('hard', 'true');
     return this.http
-      .post<RestResponse<void>>(`${this.apiUrl}/resources/bulk-delete`, ids, {
-        params,
-      })
+      .post<RestResponse<void>>(
+        `${this.apiUrl}/resources/bulk-delete`,
+        { ids },
+        { params }
+      )
       .pipe(catchError(this.handleError));
   }
 
@@ -373,7 +375,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-approve`, {
-        resourceIds: ids,
+        ids,
       })
       .pipe(catchError(this.handleError));
   }
@@ -396,7 +398,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-reject`, {
-        resourceIds: ids,
+        ids,
         reason,
       })
       .pipe(catchError(this.handleError));
@@ -459,6 +461,15 @@ export class ResourceService {
         case 7004:
           errorMsg =
             'Tài nguyên vừa được người khác thay đổi. Vui lòng tải lại và thử lại.';
+          break;
+        case 8002:
+          errorMsg = 'Lỗi lưu trữ tệp. Vui lòng thử lại sau.';
+          break;
+        case 9002:
+          errorMsg = 'Phương thức không được hỗ trợ.';
+          break;
+        case 9003:
+          errorMsg = 'Định dạng dữ liệu gửi lên không hợp lệ.';
           break;
         case 9001:
           errorMsg =
@@ -523,12 +534,14 @@ export class ResourceService {
 
   /**
    * Bulk Restore Resources
-   * PATCH /resources/bulk-restore
-   * Payload: raw id array `[...]` (BE expects the array body, not `{ids}`).
+   * PATCH /resources/bulk-restore  (Contract v1 §2.5)
+   * Payload: { ids: string[] }
    */
   bulkRestoreResources(ids: string[]): Observable<RestResponse<void>> {
     return this.http
-      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, ids)
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, {
+        ids,
+      })
       .pipe(catchError(this.handleError));
   }
 }
