@@ -64,7 +64,7 @@
 
   --c-ink: 28 27 34; /* strong text / headings */
   --c-ink-soft: 87 83 78; /* body text */
-  --c-ink-muted: 145 140 135; /* captions / placeholders */
+  --c-ink-muted: 118 112 104; /* captions / placeholders — WCAG AA (4.9:1 on surface) */
   --c-ink-onbrand: 255 255 255; /* text on primary/accent fills */
 
   /* --- Sidebar (admin shell) -------------------------------------------- */

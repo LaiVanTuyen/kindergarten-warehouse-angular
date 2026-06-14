@@ -1,7 +1,8 @@
 /* Shared design tokens (plain CSS custom properties — safe to @import). */
 @import '../../../libs/theme/tokens.css';
 
-/* Fonts (Inter + Plus Jakarta Sans) are loaded via <link> in index.html. */
+/* Self-hosted fonts (Inter + Plus Jakarta Sans) — no Google CDN dependency. */
+@import '../../../libs/theme/fonts.css';
 
 /* Phosphor icons — only the weights actually used (regular / bold / fill). */
 @import url('https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css');
@@ -59,11 +60,11 @@
   .btn-sm { @apply px-3 py-1.5 text-xs; }
   .btn-lg { @apply px-6 py-3 text-base; }
 
-  .btn-primary { @apply btn bg-primary-600 text-ink-onbrand shadow-sm hover:bg-primary-700 active:bg-primary-800; }
-  .btn-accent  { @apply btn bg-accent-500 text-ink-onbrand shadow-sm hover:bg-accent-600 active:bg-accent-700; }
+  .btn-primary { @apply btn bg-primary-700 text-ink-onbrand shadow-sm hover:bg-primary-800 active:bg-primary-800; }
+  .btn-accent  { @apply btn bg-accent-700 text-ink-onbrand shadow-sm hover:bg-accent-800 active:bg-accent-800; }
   .btn-outline { @apply btn border border-primary-500 text-primary-700 bg-transparent hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10; }
   .btn-ghost   { @apply btn text-ink-soft hover:bg-surface-2; }
-  .btn-danger  { @apply btn bg-danger text-ink-onbrand shadow-sm hover:brightness-95; }
+  .btn-danger  { @apply btn bg-red-600 text-ink-onbrand shadow-sm hover:bg-red-700; }
 
   .card { @apply bg-surface border border-line rounded-card shadow-sm; }
   .card-pad { @apply p-5; }
