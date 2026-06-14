@@ -4,10 +4,8 @@
 /* Self-hosted fonts (Inter + Plus Jakarta Sans) — no Google CDN dependency. */
 @import '../../../libs/theme/fonts.css';
 
-/* Phosphor icons — only the weights actually used (regular / bold / fill). */
-@import url('https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css');
-@import url('https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css');
-@import url('https://unpkg.com/@phosphor-icons/web@2.0.3/src/fill/style.css');
+/* Phosphor icons — self-hosted (regular / bold / fill), no unpkg CDN. */
+@import '../../../libs/theme/phosphor.css';
 
 @tailwind base;
 @tailwind components;
