@@ -238,4 +238,28 @@ export class AuthService {
       { token, newPassword }
     );
   }
+
+  /** Verify email using OTP code sent during registration. */
+  verifyEmail(email: string, otp: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>(
+      `${this.apiUrl}/auth/verify-email`,
+      { email, otp }
+    ).pipe(
+      tap((response) => {
+        // If the backend returns a user and cookie is set, automatically authenticate the user
+        const user = response.result?.user;
+        if (user) {
+          this.applyUser(user);
+        }
+      })
+    );
+  }
+
+  /** Request a new email verification OTP. */
+  resendVerificationOtp(email: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(
+      `${this.apiUrl}/auth/resend-verification`,
+      { email }
+    );
+  }
 }

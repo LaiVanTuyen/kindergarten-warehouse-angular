@@ -24,21 +24,20 @@
       <form class="space-y-6" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
         <!-- Email -->
         <div>
-          <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Địa chỉ Email</label>
+          <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Tên đăng nhập hoặc Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" aria-hidden="true">
-              <i class="ph ph-envelope-simple text-gray-500 text-xl"></i>
+              <i class="ph ph-user text-gray-500 text-xl"></i>
             </div>
-            <input id="email" type="email" formControlName="email" autocomplete="email"
+            <input id="email" type="text" formControlName="email" autocomplete="username"
               class="appearance-none block w-full pl-11 pr-4 py-4 rounded-2xl bg-white border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-semibold text-base hover:border-primary-pink shadow-sm"
               [ngClass]="{'border-red-500 focus:border-red-500 focus:ring-red-500/10': f['email'].invalid && (f['email'].dirty || f['email'].touched)}"
               [attr.aria-invalid]="f['email'].invalid && (f['email'].dirty || f['email'].touched)"
-              placeholder="Email của bạn" />
+              placeholder="Tên đăng nhập hoặc email" />
           </div>
           <p *ngIf="f['email'].invalid && (f['email'].dirty || f['email'].touched)"
             class="mt-2 text-sm text-red-600 font-medium" role="alert">
-            <ng-container *ngIf="f['email'].errors?.['required']">Vui lòng nhập email.</ng-container>
-            <ng-container *ngIf="f['email'].errors?.['pattern']">Email không hợp lệ (vd: ten@example.com).</ng-container>
+            <ng-container *ngIf="f['email'].errors?.['required']">Vui lòng nhập tên đăng nhập hoặc email.</ng-container>
           </p>
         </div>
 

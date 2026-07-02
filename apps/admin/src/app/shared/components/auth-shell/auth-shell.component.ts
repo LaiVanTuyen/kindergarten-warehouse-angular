@@ -10,7 +10,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="min-h-screen bg-gradient-to-br from-kindy-surface-soft via-kindy-cream to-kindy-coral-soft/40 relative overflow-hidden"
+      class="min-h-screen bg-gradient-to-br from-kindy-surface-soft via-kindy-cream to-kindy-coral-soft/40 relative overflow-y-auto"
     >
       <!-- Decorative blobs -->
       <div

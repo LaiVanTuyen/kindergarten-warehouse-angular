@@ -46,7 +46,7 @@ export class LoginComponent implements OnInit {
   readonly showPassword = signal(false);
 
   readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
 

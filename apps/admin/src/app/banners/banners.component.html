@@ -54,7 +54,7 @@
     <svg aria-hidden="true" class="inline w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
     </svg>
-    Kéo & thả để sắp xếp (tắt bộ lọc)
+    Kéo & thả để sắp xếp (chọn Web hoặc Mobile)
   </p>
 </div>
 
@@ -75,7 +75,7 @@
     (cdkDropListDropped)="onDrop($event)"
     class="space-y-3"
   >
-    @for (banner of filtered(); track banner.id) {
+    @for (banner of filtered(); track banner.id; let i = $index) {
       <li
         cdkDrag
         class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -95,7 +95,7 @@
 
           <div
             class="w-28 h-16 rounded-lg overflow-hidden flex-shrink-0 relative"
-            [style.background]="'linear-gradient(135deg, ' + banner.bgFrom + ', ' + banner.bgTo + ')'"
+            [ngStyle]="getGradientStyle(banner)"
           >
             @if (banner.imageUrl) {
               <img [src]="banner.imageUrl" alt="" loading="lazy" class="w-full h-full object-cover" />
@@ -104,7 +104,7 @@
 
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-sm font-semibold text-kindy-ink truncate max-w-md">{{ banner.title }}</h3>
+              <h3 class="text-sm font-semibold text-kindy-ink truncate max-w-md" [innerHTML]="banner.title"></h3>
               <app-status-pill
                 [label]="banner.platform"
                 [tone]="banner.platform === 'WEB' ? 'neutral' : 'teacher'"
@@ -119,7 +119,7 @@
               <p class="text-xs text-kindy-ink-soft mt-0.5 truncate max-w-xl">{{ banner.subtitle }}</p>
             }
             <p class="text-xs text-kindy-ink-soft mt-0.5">
-              Thứ tự: <span class="font-medium">{{ banner.displayOrder }}</span>
+              Thứ tự: <span class="font-medium">{{ i + 1 }}</span>
               @if (banner.link) {
                 · Link:
                 <a

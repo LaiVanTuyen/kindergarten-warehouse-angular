@@ -13,12 +13,21 @@ export interface CreateCommentRequest {
   rating?: number;
 }
 
+interface BackendCommentResponse {
+  id: string | number;
+  content: string;
+  rating: number;
+  username?: string;
+  userAvatar?: string | null;
+  createdAt: string;
+}
+
 /**
  * Comment CRUD for resource threads.
  *
  * Backend contract expected:
- *   GET    /resources/:id/comments?page&size → Page<Comment>
- *   POST   /resources/:id/comments           → Comment (requires auth)
+ *   GET    /comments?resourceId&page&size    → Page<Comment>
+ *   POST   /comments?resourceId&content&rating → Comment (requires auth)
  *   DELETE /comments/:id                     → void    (author or admin)
  */
 @Injectable({ providedIn: 'root' })
@@ -36,20 +45,28 @@ export class CommentService {
       .set('size', size);
     return this.http
       .get<RestResponse<PaginatedResponse<Comment>>>(
-        `${this.apiUrl}/resources/${resourceId}/comments`,
-        { params }
+        `${this.apiUrl}/comments`,
+        { params: params.set('resourceId', resourceId) }
       )
       .pipe(
         map(
-          (res) =>
-            res.result ??
-            res.data ?? {
+          (res) => {
+            const page =
+              res.result ??
+              res.data ?? {
               content: [],
               totalElements: 0,
               totalPages: 0,
               size,
               number: 0,
-            }
+            };
+            return {
+              ...page,
+              content: (page.content ?? []).map((comment) =>
+                this.normalizeComment(comment as unknown as BackendCommentResponse)
+              ),
+            };
+          }
         )
       );
   }
@@ -58,17 +75,47 @@ export class CommentService {
     resourceId: string,
     payload: CreateCommentRequest
   ): Observable<Comment> {
+    const params = new HttpParams()
+      .set('resourceId', resourceId)
+      .set('content', payload.content)
+      .set('rating', payload.rating ?? 5);
+
     return this.http
-      .post<RestResponse<Comment>>(
-        `${this.apiUrl}/resources/${resourceId}/comments`,
-        payload
-      )
-      .pipe(map((res) => res.result ?? (res.data as Comment)));
+      .post<RestResponse<Comment>>(`${this.apiUrl}/comments`, null, { params })
+      .pipe(
+        map((res) =>
+          this.normalizeComment(
+            (res.result ?? res.data) as unknown as BackendCommentResponse
+          )
+        )
+      );
   }
 
   delete(commentId: string): Observable<void> {
     return this.http
       .delete<RestResponse<void>>(`${this.apiUrl}/comments/${commentId}`)
       .pipe(map(() => undefined));
+  }
+
+  private normalizeComment(comment: BackendCommentResponse | Comment): Comment {
+    if ('user' in comment && comment.user) {
+      return comment as Comment;
+    }
+
+    const backendComment = comment as BackendCommentResponse;
+
+    return {
+      id: String(backendComment.id),
+      content: backendComment.content,
+      rating: backendComment.rating,
+      userId: 0,
+      user: {
+        username: backendComment.username ?? 'user',
+        fullName: backendComment.username ?? 'Người dùng',
+        avatarUrl: backendComment.userAvatar ?? undefined,
+      },
+      resourceId: '',
+      createdAt: backendComment.createdAt,
+    };
   }
 }

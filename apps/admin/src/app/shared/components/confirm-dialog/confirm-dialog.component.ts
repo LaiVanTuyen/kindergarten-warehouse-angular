@@ -34,7 +34,11 @@ const BTN_BASE =
       [title]="data.title"
       size="sm"
       [scrollable]="false"
+      [noBorder]="true"
     >
+      <p class="text-base text-gray-700" id="dialog-subtitle">
+        {{ data.message }}
+      </p>
       <div class="flex items-start gap-4 py-1">
         @if (data.tone === 'danger') {
           <div class="w-10 h-10 rounded-full bg-rose-50 text-kindy-coral-strong flex items-center justify-center flex-shrink-0" aria-hidden="true">

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   OnInit,
@@ -35,6 +36,7 @@ export class HeaderComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly favorites = inject(FavoritesService);
   private readonly eRef = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
   readonly translationService = inject(TranslationService);
 
   // Reactive user state ----------------------------------------------------
@@ -67,7 +69,7 @@ export class HeaderComponent implements OnInit {
       .pipe(
         debounceTime(400),
         distinctUntilChanged(),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((term) => this.runSearch(term));
   }

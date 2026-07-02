@@ -11,6 +11,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { NgStyle } from '@angular/common';
 import { Banner } from '@kindergarten-warehouse/data-access';
 import { FormFieldComponent } from '../../shared/components/form-field/form-field.component';
 import { DialogShellComponent } from '../../shared/components/dialog-shell/dialog-shell.component';
@@ -34,8 +35,34 @@ export interface BannerFormDialogResult {
   imageFile: File | null;
 }
 
+export const BANNER_THEMES = [
+  { id: 'purple-amber', name: 'Tím nhạt - Cam nhạt', from: 'from-purple-50', to: 'to-amber-50', hexFrom: '#FAF5FF', hexTo: '#FFFBEB' },
+  { id: 'blue-cyan', name: 'Xanh nhạt - Cyan nhạt', from: 'from-blue-50', to: 'to-cyan-50', hexFrom: '#EFF6FF', hexTo: '#ECFEFF' },
+  { id: 'orange-rose', name: 'Cam nhạt - Hồng nhạt', from: 'from-orange-50', to: 'to-rose-50', hexFrom: '#FFF7ED', hexTo: '#FFF1F2' },
+  { id: 'green-emerald', name: 'Xanh lá nhạt - Ngọc lục bảo nhạt', from: 'from-green-50', to: 'to-emerald-50', hexFrom: '#F0FDF4', hexTo: '#ECFDF5' },
+  { id: 'pink-fuchsia', name: 'Hồng đậm - Fuchsia đậm', from: 'from-pink-500', to: 'to-fuchsia-500', hexFrom: '#EC4899', hexTo: '#D946EF' },
+];
+
+export function getThemeByTailwind(from?: string, to?: string) {
+  return BANNER_THEMES.find(t => t.from === from && t.to === to) || BANNER_THEMES[0];
+}
+
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+function extractDateStr(val: any): string {
+  if (!val) return '';
+  if (Array.isArray(val)) {
+    const y = val[0];
+    const m = String(val[1]).padStart(2, '0');
+    const d = String(val[2]).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof val === 'string') {
+    return val.split('T')[0];
+  }
+  return '';
+}
 
 function dateRangeValidator(group: AbstractControl) {
   const start = group.get('startDate')?.value;
@@ -46,7 +73,7 @@ function dateRangeValidator(group: AbstractControl) {
 @Component({
   selector: 'app-banner-form-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, FormFieldComponent, DialogShellComponent],
+  imports: [ReactiveFormsModule, FormFieldComponent, DialogShellComponent, NgStyle],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-dialog-shell
@@ -103,12 +130,13 @@ function dateRangeValidator(group: AbstractControl) {
           <input type="text" formControlName="link" placeholder="/resources hoặc https://..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent" />
         </app-form-field>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <app-form-field label="Nền từ" [control]="form.controls.bgFrom">
-            <input type="color" formControlName="bgFrom" class="w-full h-10 px-1 py-1 border border-gray-200 rounded-lg cursor-pointer" />
-          </app-form-field>
-          <app-form-field label="Nền đến" [control]="form.controls.bgTo">
-            <input type="color" formControlName="bgTo" class="w-full h-10 px-1 py-1 border border-gray-200 rounded-lg cursor-pointer" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-form-field label="Phối màu nền" [required]="true" [control]="form.controls.theme">
+            <select formControlName="theme" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent">
+              @for (t of bannerThemes; track t.id) {
+                <option [value]="t.id">{{ t.name }}</option>
+              }
+            </select>
           </app-form-field>
           <app-form-field label="Nền tảng" [required]="true" [control]="form.controls.platform">
             <select formControlName="platform" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kindy-sidebar focus:border-transparent">
@@ -120,7 +148,7 @@ function dateRangeValidator(group: AbstractControl) {
 
         <div
           class="h-16 rounded-lg border border-gray-200"
-          [style.background]="'linear-gradient(135deg, ' + form.controls.bgFrom.value + ', ' + form.controls.bgTo.value + ')'"
+          [ngStyle]="getGradientStyle()"
           aria-hidden="true"
         ></div>
 
@@ -175,15 +203,22 @@ export class BannerFormDialogComponent {
       title: [this.data.banner?.title ?? '', [Validators.required, Validators.maxLength(120)]],
       subtitle: [this.data.banner?.subtitle ?? '', [Validators.maxLength(200)]],
       link: [this.data.banner?.link ?? ''],
-      bgFrom: [this.data.banner?.bgFrom ?? '#FB7185'],
-      bgTo: [this.data.banner?.bgTo ?? '#F472B6'],
+      theme: [getThemeByTailwind(this.data.banner?.bgFrom, this.data.banner?.bgTo).id],
       platform: [(this.data.banner?.platform as 'WEB' | 'MOBILE') ?? 'WEB'],
       isActive: [this.data.banner?.isActive ?? true],
-      startDate: [this.data.banner?.startDate ?? ''],
-      endDate: [this.data.banner?.endDate ?? ''],
+      startDate: [extractDateStr(this.data.banner?.startDate)],
+      endDate: [extractDateStr(this.data.banner?.endDate)],
     },
     { validators: dateRangeValidator }
   );
+
+  readonly bannerThemes = BANNER_THEMES;
+
+  getGradientStyle() {
+    const themeId = this.form.controls.theme.value;
+    const theme = BANNER_THEMES.find(t => t.id === themeId) || BANNER_THEMES[0];
+    return { 'background-image': `linear-gradient(135deg, ${theme.hexFrom}, ${theme.hexTo})` };
+  }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -214,8 +249,24 @@ export class BannerFormDialogComponent {
       this.form.markAllAsTouched();
       return;
     }
+    const raw = this.form.getRawValue();
+    const theme = BANNER_THEMES.find(t => t.id === raw.theme) || BANNER_THEMES[0];
+    
+    // Construct values object without theme, but with bgFrom/bgTo
+    const values = {
+      title: raw.title,
+      subtitle: raw.subtitle,
+      link: raw.link,
+      bgFrom: theme.from,
+      bgTo: theme.to,
+      platform: raw.platform,
+      isActive: raw.isActive,
+      startDate: raw.startDate,
+      endDate: raw.endDate
+    };
+
     this.ref.close({
-      values: this.form.getRawValue(),
+      values,
       imageFile: this.imageFile(),
     });
   }

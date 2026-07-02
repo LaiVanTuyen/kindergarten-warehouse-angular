@@ -13,7 +13,7 @@ import {
   RejectReasonDialogData,
 } from '../components/reject-reason-dialog/reject-reason-dialog.component';
 
-const BACKDROP_CLASS = 'bg-kindy-ink/40 backdrop-blur-sm';
+const BACKDROP_CLASS = ['bg-kindy-ink/40', 'backdrop-blur-sm'];
 const DEFAULT_TITLE_ID = 'dialog-title';
 
 /**

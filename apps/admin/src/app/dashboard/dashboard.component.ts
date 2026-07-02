@@ -114,7 +114,7 @@ export class DashboardComponent {
 
   // --- Current user (for welcome greeting) --------------------------------
   readonly userName = computed(
-    () => this.authService.currentUserValue?.fullName?.split(' ').pop() || 'bạn'
+    () => this.authService.currentUser()?.fullName?.split(' ').pop() || 'bạn'
   );
 
   // --- Stat cards config --------------------------------------------------

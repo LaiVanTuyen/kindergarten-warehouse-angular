@@ -44,7 +44,6 @@ export class LoginComponent implements OnInit {
       '',
       [
         Validators.required,
-        Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
       ],
     ],
     password: ['', [Validators.required]],
@@ -89,6 +88,25 @@ export class LoginComponent implements OnInit {
           this.router.navigateByUrl(returnUrl);
         },
         error: (err: HttpErrorResponse | Error) => {
+          if (err instanceof HttpErrorResponse) {
+            const msg = (err.error as { message?: string } | null)?.message || '';
+            const lowerMsg = msg.toLowerCase();
+            if (
+              lowerMsg.includes('xác thực') ||
+              lowerMsg.includes('verify') ||
+              lowerMsg.includes('otp') ||
+              lowerMsg.includes('kích hoạt') ||
+              lowerMsg.includes('chưa kích hoạt') ||
+              lowerMsg.includes('pending')
+            ) {
+              const email = this.loginForm.get('email')?.value;
+              this.toast.show('Tài khoản chưa được kích hoạt. Vui lòng nhập OTP để xác thực.', 'info');
+              this.router.navigate(['/verify-email'], {
+                queryParams: { email },
+              });
+              return;
+            }
+          }
           this.toast.show(this.resolveErrorMessage(err), 'error');
         },
       });

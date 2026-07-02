@@ -6,7 +6,7 @@
   Bỏ qua tới nội dung chính
 </a>
 
-<div class="flex h-screen bg-kindy-cream">
+<div class="flex h-screen bg-kindy-cream overflow-hidden">
 
   <!-- Mobile Sidebar Overlay -->
   @if (isSidebarOpen()) {
@@ -19,7 +19,7 @@
 
   <!-- Sidebar -->
   <aside
-    class="fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none flex-shrink-0"
+    class="fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full lg:inset-0 shadow-xl lg:shadow-none flex-shrink-0"
     [class.translate-x-0]="isSidebarOpen()"
     [class.-translate-x-full]="!isSidebarOpen()"
   >

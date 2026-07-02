@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -35,6 +36,12 @@ import { DialogService } from '../shared/services/dialog.service';
 import { setupUrlSync } from '../shared/utils/url-sync';
 
 type ResourceStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
+type PreviewKind = 'youtube' | 'image' | 'video' | 'audio' | 'pdf' | 'office' | 'link' | 'empty';
+
+const IMAGE_EXTENSIONS = new Set(['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'SVG']);
+const VIDEO_EXTENSIONS = new Set(['MP4', 'WEBM', 'OGV', 'MOV']);
+const AUDIO_EXTENSIONS = new Set(['MP3', 'WAV', 'OGG', 'M4A']);
+const OFFICE_EXTENSIONS = new Set(['DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX']);
 
 const STATUS_TONES: Record<string, StatusPillTone> = {
   PENDING: 'pending',
@@ -80,6 +87,7 @@ export class ResourcesComponent {
   private destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private sanitizer = inject(DomSanitizer);
 
   readonly isLoading = signal(true);
   readonly resources = signal<Resource[]>([]);
@@ -268,6 +276,105 @@ export class ResourcesComponent {
   }
   closePreview() {
     this.selectedResource.set(null);
+  }
+
+  previewKind(resource: Resource): PreviewKind {
+    if (!resource.fileUrl) return 'empty';
+    if (this.isYoutubeResource(resource)) return 'youtube';
+
+    const type = this.resourceFormat(resource);
+    const extension = this.resourceExtension(resource);
+
+    if (type === 'IMAGE' || IMAGE_EXTENSIONS.has(extension)) return 'image';
+    if (type === 'VIDEO' || VIDEO_EXTENSIONS.has(extension)) return 'video';
+    if (type === 'AUDIO' || AUDIO_EXTENSIONS.has(extension)) return 'audio';
+    if (type === 'PDF' || extension === 'PDF') return 'pdf';
+    if (
+      ['DOCUMENT', 'EXCEL', 'POWERPOINT', 'WORD', 'DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX'].includes(type) ||
+      OFFICE_EXTENSIONS.has(extension)
+    ) {
+      return 'office';
+    }
+
+    return 'link';
+  }
+
+  resourceFormat(resource: Resource): string {
+    if (resource.resourceType === 'YOUTUBE') return 'YOUTUBE';
+    return (resource.type || resource.fileType || resource.fileExtension || 'OTHER').replace('.', '').toUpperCase();
+  }
+
+  previewSourceUrl(resource: Resource): string {
+    return this.toAbsoluteResourceUrl(resource.fileUrl);
+  }
+
+  safeInlineUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.toAbsoluteResourceUrl(url));
+  }
+
+  safeYoutubeUrl(resource: Resource): SafeResourceUrl | null {
+    if (!resource.fileUrl) return null;
+    const videoId = this.extractYoutubeId(resource.fileUrl);
+    const embedUrl = videoId
+      ? `https://www.youtube.com/embed/${videoId}`
+      : this.toAbsoluteResourceUrl(resource.fileUrl);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+  }
+
+  safeOfficeViewerUrl(resource: Resource): SafeResourceUrl | null {
+    if (!resource.fileUrl || !this.canUseExternalDocViewer(resource)) return null;
+    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+      this.toAbsoluteResourceUrl(resource.fileUrl)
+    )}&embedded=true`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(viewerUrl);
+  }
+
+  canUseExternalDocViewer(resource: Resource): boolean {
+    const url = this.toAbsoluteResourceUrl(resource.fileUrl);
+    if (!/^https?:\/\//i.test(url)) return false;
+    try {
+      const hostname = new URL(url).hostname.toLowerCase();
+      return !['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  private isYoutubeResource(resource: Resource): boolean {
+    const url = resource.fileUrl || '';
+    return resource.resourceType === 'YOUTUBE' || /(?:youtube\.com|youtu\.be)/i.test(url);
+  }
+
+  private resourceExtension(resource: Resource): string {
+    const explicit = (resource.fileExtension || '').replace('.', '').toUpperCase();
+    if (explicit) return explicit;
+
+    const cleanUrl = (resource.fileUrl || '').split(/[?#]/)[0];
+    const candidate = cleanUrl.split('.').pop()?.toUpperCase() || '';
+    return candidate.length <= 5 ? candidate : '';
+  }
+
+  private extractYoutubeId(url: string): string {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+      if (host === 'youtu.be') return parsed.pathname.split('/').filter(Boolean)[0] || '';
+      if (!host.endsWith('youtube.com')) return '';
+      if (parsed.pathname.startsWith('/embed/')) return parsed.pathname.split('/')[2] || '';
+      if (parsed.pathname.startsWith('/shorts/')) return parsed.pathname.split('/')[2] || '';
+      return parsed.searchParams.get('v') || '';
+    } catch {
+      return '';
+    }
+  }
+
+  private toAbsoluteResourceUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('//')) return `${window.location.protocol}${url}`;
+    if (url.startsWith('/')) return `${window.location.origin}${url}`;
+    return url;
   }
 
   // --- Single actions -----------------------------------------------------

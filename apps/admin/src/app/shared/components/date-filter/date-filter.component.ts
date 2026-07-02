@@ -116,7 +116,7 @@ const OPTIONS: PeriodOption[] = [
         <div
           role="menu"
           aria-label="Chọn khoảng thời gian"
-          class="absolute right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px] focus:outline-none"
+          class="absolute right-0 top-full mt-2 z-50 bg-white text-kindy-ink rounded-xl shadow-xl border border-gray-100 py-1 min-w-[180px] focus:outline-none"
         >
           @for (opt of options; track opt.value) {
             <button
@@ -124,7 +124,7 @@ const OPTIONS: PeriodOption[] = [
               type="button"
               (click)="select(opt.value)"
               [attr.aria-current]="value() === opt.value ? 'true' : null"
-              class="w-full text-left px-4 py-2.5 text-sm hover:bg-kindy-surface-soft flex items-center gap-2 focus:outline-none focus:bg-kindy-surface-soft"
+              class="w-full text-left px-4 py-2.5 text-sm text-kindy-ink hover:bg-kindy-surface-soft flex items-center gap-2 focus:outline-none focus:bg-kindy-surface-soft"
               [class.bg-kindy-surface-soft]="value() === opt.value"
               [class.text-kindy-sidebar]="value() === opt.value"
               [class.font-semibold]="value() === opt.value"
