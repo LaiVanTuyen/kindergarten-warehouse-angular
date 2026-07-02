@@ -21,6 +21,7 @@ import {
   Comment,
   CommentService,
   CreateCommentRequest,
+  FavoritesService,
   Resource,
   ResourceDownloadService,
   ResourceService,
@@ -64,6 +65,7 @@ export class ResourceDetailComponent implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly topicService = inject(TopicService);
   private readonly commentService = inject(CommentService);
+  private readonly favorites = inject(FavoritesService);
   private readonly downloadService = inject(ResourceDownloadService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly toast = inject(ToastService);
@@ -161,7 +163,7 @@ export class ResourceDetailComponent implements OnInit {
   readonly relatedResources$ = this.resource$.pipe(
     switchMap((current) =>
       this.resourceService
-        .getResources({
+        .getPortalResources({
           page: 1,
           size: 4,
           topicId: current?.topicId,
@@ -294,6 +296,34 @@ export class ResourceDetailComponent implements OnInit {
         },
         error: () => void 0,
       });
+  }
+
+  isFavorited(resource: Resource): boolean {
+    return this.favorites.isFavorited(resource.id) || !!resource.isFavorited;
+  }
+
+  toggleFavorite(resource: Resource): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để lưu tài liệu yêu thích.', 'info');
+      return;
+    }
+
+    const willFavorite = !this.favorites.isFavorited(resource.id);
+    this.favorites.toggle(resource.id).subscribe({
+      next: (favorited) => {
+        resource.isFavorited = favorited;
+        this.toast.show(
+          favorited
+            ? 'Đã thêm vào danh sách yêu thích.'
+            : 'Đã bỏ khỏi danh sách yêu thích.',
+          'success'
+        );
+      },
+      error: () => {
+        this.toast.show('Không thể cập nhật yêu thích. Vui lòng thử lại.', 'error');
+        resource.isFavorited = !willFavorite;
+      },
+    });
   }
 
   setCommentRating(value: number): void {

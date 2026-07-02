@@ -5,7 +5,7 @@
   (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
   (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)">
   <div *ngFor="let slide of slides(); let i = index; trackBy: trackBySlideId"
-    [hidden]="i !== activeIndex()"
+    [style.display]="i === activeIndex() ? 'flex' : 'none'"
     [attr.aria-hidden]="i !== activeIndex()"
     [attr.aria-roledescription]="'slide'"
     [attr.aria-label]="'Slide ' + (i + 1) + ' trên ' + slides().length"

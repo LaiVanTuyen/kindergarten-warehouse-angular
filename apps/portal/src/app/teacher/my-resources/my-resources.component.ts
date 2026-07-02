@@ -29,6 +29,7 @@ const STATUS_FILTERS = [
   { value: 'APPROVED', label: 'Đã duyệt',     icon: 'ph-check-circle' },
   { value: 'REJECTED', label: 'Bị từ chối',   icon: 'ph-x-circle' },
   { value: 'HIDDEN',   label: 'Đã ẩn',        icon: 'ph-eye-slash' },
+  { value: 'DELETED',  label: 'Thùng rác',    icon: 'ph-trash' },
 ] as const;
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]['value'];
@@ -127,13 +128,17 @@ export class MyResourcesComponent implements OnInit {
     const target = this.pendingDelete();
     if (!target || this.isDeleting()) return;
     this.isDeleting.set(true);
+    const isHard = this.status() === 'DELETED';
     this.resourceService
-      .deleteResource(target.id, false)
+      .deleteResource(target.id, isHard)
       .pipe(finalize(() => this.isDeleting.set(false)))
       .subscribe({
         next: () => {
           this.pendingDelete.set(null);
-          this.toast.show('Đã xoá tài liệu.', 'success');
+          this.toast.show(
+            isHard ? 'Đã xoá vĩnh viễn tài liệu.' : 'Đã chuyển vào thùng rác.',
+            'success'
+          );
           // Step back a page if we just emptied the current one.
           const shouldStepBack =
             this.resources().length === 1 && this.page() > 1;
@@ -144,10 +149,22 @@ export class MyResourcesComponent implements OnInit {
           const msg =
             err?.status === 403
               ? 'Bạn không có quyền xoá tài liệu này.'
-              : 'Không xoá được tài liệu. Vui lòng thử lại.';
+              : 'Không thực hiện được. Vui lòng thử lại.';
           this.toast.show(msg, 'error');
         },
       });
+  }
+
+  restoreResource(resource: Resource): void {
+    this.resourceService.restoreResource(resource.id).subscribe({
+      next: () => {
+        this.toast.show('Đã khôi phục tài liệu.', 'success');
+        this.load();
+      },
+      error: () => {
+        this.toast.show('Không thể khôi phục tài liệu. Vui lòng thử lại.', 'error');
+      },
+    });
   }
 
   private load(): void {

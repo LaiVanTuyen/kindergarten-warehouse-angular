@@ -7,16 +7,16 @@
         <li aria-hidden="true">/</li>
         <li><a routerLink="/teacher/my-resources" class="hover:text-pink-500 font-medium">Tài liệu của tôi</a></li>
         <li aria-hidden="true">/</li>
-        <li class="text-gray-800 font-semibold" aria-current="page">Đăng mới</li>
+        <li class="text-gray-800 font-semibold" aria-current="page">{{ isEditMode() ? 'Chỉnh sửa' : 'Đăng mới' }}</li>
       </ol>
     </nav>
 
     <header class="mb-8">
       <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
-        Đăng tài liệu mới
+        {{ isEditMode() ? 'Chỉnh sửa tài liệu' : 'Đăng tài liệu mới' }}
       </h1>
       <p class="mt-2 text-gray-600">
-        Tài liệu sẽ được gửi đi chờ duyệt và xuất hiện trong kho học liệu sau khi được chấp thuận.
+        {{ isEditMode() ? 'Cập nhật thông tin chi tiết tài liệu học liệu của bạn. Lưu ý: Tài liệu sẽ cần duyệt lại sau khi chỉnh sửa.' : 'Tài liệu sẽ được gửi đi chờ duyệt và xuất hiện trong kho học liệu sau khi được chấp thuận.' }}
       </p>
     </header>
 
@@ -25,12 +25,22 @@
       <section class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
         <h2 class="text-lg font-bold text-gray-900 mb-1">Tệp tài liệu</h2>
         <p class="text-sm text-gray-500 mb-5">
-          Hỗ trợ PDF, Word, PowerPoint, Excel, hình ảnh, âm thanh hoặc video — tối đa 100MB.
+          {{ isEditMode() ? 'Tải lên tệp mới nếu bạn muốn thay đổi tài liệu. Nếu không, tệp hiện tại sẽ được giữ nguyên.' : 'Hỗ trợ PDF, Word, PowerPoint, Excel, hình ảnh, âm thanh hoặc video — tối đa 100MB.' }}
         </p>
+        <div *ngIf="isEditMode() && existingFileName()" class="mb-4 p-4 rounded-2xl bg-pink-50/50 border border-pink-100/50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <i class="ph ph-file-text text-pink-500 text-3xl animate-pulse"></i>
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Tệp hiện tại</p>
+              <a [href]="existingFileUrl()" target="_blank" class="text-sm font-bold text-pink-600 hover:text-pink-700 hover:underline truncate block max-w-md sm:max-w-xl">{{ existingFileName() }}</a>
+            </div>
+          </div>
+          <span class="text-xs text-gray-400 font-medium bg-white px-2.5 py-1 rounded-full border border-gray-100 shadow-sm shrink-0">Có sẵn</span>
+        </div>
         <app-file-drop-zone
           [accept]="ACCEPTED_TYPES"
           [maxSizeMb]="100"
-          title="Kéo & thả tệp vào đây"
+          [title]="isEditMode() ? 'Kéo & thả tệp mới để thay thế' : 'Kéo & thả tệp vào đây'"
           hint="hoặc bấm để chọn từ máy"
           (fileChange)="onFileSelected($event)">
         </app-file-drop-zone>
@@ -152,8 +162,8 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
           </svg>
-          <i *ngIf="!isSubmitting()" class="ph-fill ph-upload-simple" aria-hidden="true"></i>
-          {{ isSubmitting() ? 'Đang tải lên…' : 'Gửi để chờ duyệt' }}
+          <i *ngIf="!isSubmitting()" [class]="isEditMode() ? 'ph-fill ph-floppy-disk' : 'ph-fill ph-upload-simple'" aria-hidden="true"></i>
+          {{ isSubmitting() ? (isEditMode() ? 'Đang lưu…' : 'Đang tải lên…') : (isEditMode() ? 'Lưu thay đổi' : 'Gửi để chờ duyệt') }}
         </button>
       </div>
     </form>

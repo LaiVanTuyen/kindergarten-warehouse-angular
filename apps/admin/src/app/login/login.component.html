@@ -18,7 +18,7 @@
         for="login-email"
         class="block text-sm font-medium text-kindy-ink mb-2"
       >
-        Địa chỉ email
+        Tên đăng nhập hoặc Email
       </label>
       <div class="relative">
         <span
@@ -41,12 +41,12 @@
         </span>
         <input
           id="login-email"
-          type="email"
-          autocomplete="email"
+          type="text"
+          autocomplete="username"
           autocapitalize="off"
           spellcheck="false"
           formControlName="email"
-          placeholder="your.name@example.com"
+          placeholder="Nhập tên đăng nhập hoặc email"
           aria-describedby="login-email-error"
           [attr.aria-invalid]="
             form.controls.email.invalid && form.controls.email.touched

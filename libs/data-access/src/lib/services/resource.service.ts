@@ -84,6 +84,62 @@ export class ResourceService {
   }
 
   /**
+   * Get public portal resources with filters and pagination.
+   * GET /resources
+   */
+  getPortalResources(
+    params: ResourceFilterParams
+  ): Observable<RestResponse<PaginatedResponse<Resource>>> {
+    let httpParams = new HttpParams();
+
+    if (params.page !== undefined)
+      httpParams = httpParams.set('page', params.page - 1);
+    if (params.size !== undefined)
+      httpParams = httpParams.set('size', params.size);
+
+    const appendParam = (key: string, value: string | string[] | undefined) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => (httpParams = httpParams.append(key, v)));
+      } else {
+        httpParams = httpParams.set(key, value as string);
+      }
+    };
+
+    appendParam('topicId', params.topicId);
+    appendParam('categoryId', params.categoryId);
+    appendParam('ageGroupId', params.ageGroupId);
+    appendParam('topicSlugs', params.topicSlugs);
+    appendParam('categorySlugs', params.categorySlugs);
+    appendParam('ageSlugs', params.ageSlugs);
+    appendParam('types', params.types);
+
+    if (!params.topicSlugs && params.topic)
+      appendParam('topic', params.topic as any);
+    if (!params.categorySlugs && params.category)
+      appendParam('category', params.category as any);
+    if (!params.ageSlugs && params.ages)
+      appendParam('ages', params.ages as any);
+    if (!params.types && params.type) appendParam('type', params.type);
+
+    if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
+    appendParam('status', params.status);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<RestResponse<PaginatedResponse<Resource>>>(`${this.apiUrl}/resources`, {
+        params: httpParams,
+      })
+      .pipe(
+        map((res) => {
+          if (res.result && !res.data) res.data = res.result;
+          return res;
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
    * List the resources owned by the currently authenticated user
    * (teacher "My Uploads" page). Unlike `getResources` — which hits
    * `/admin/resources` — this uses `/me/resources` so it respects the
@@ -111,7 +167,7 @@ export class ResourceService {
     }
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/me/resources`,
+        `${this.apiUrl}/resources/me`,
         { params: httpParams }
       )
       .pipe(

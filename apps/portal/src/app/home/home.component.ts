@@ -47,7 +47,7 @@ export class HomeComponent {
     );
 
   readonly latestResources$ = this.resourceService
-    .getResources({ page: 1, size: 4 })
+    .getPortalResources({ page: 1, size: 4, status: 'APPROVED' })
     .pipe(
       map((res) => res.data?.content ?? []),
       catchError(() => of<Resource[]>([])),
