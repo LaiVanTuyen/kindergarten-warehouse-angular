@@ -54,7 +54,7 @@ export class FavoritesService {
     if (this.hydrated && !force) return;
     this.hydrated = true;
     this.http
-      .get<RestResponse<string[]>>(`${this.apiUrl}/me/favorites/ids`)
+      .get<RestResponse<string[]>>(`${this.apiUrl}/resources/me/favorites/ids`)
       .subscribe({
         next: (res) => this._ids.set(new Set(res.result ?? res.data ?? [])),
         error: () => {
@@ -73,7 +73,7 @@ export class FavoritesService {
       .set('size', size);
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/me/favorites`,
+        `${this.apiUrl}/resources/me/favorites`,
         { params }
       )
       .pipe(
@@ -98,12 +98,15 @@ export class FavoritesService {
     this._ids.set(optimistic);
 
     return this.http
-      .post<RestResponse<{ favorited: boolean } | null>>(
+      .post<RestResponse<{ isFavorited?: boolean; favorited?: boolean } | null>>(
         `${this.apiUrl}/resources/${resourceId}/favorite`,
         {}
       )
       .pipe(
-        map((res) => (res.result ?? res.data)?.favorited ?? !wasFavorited),
+        map((res) => {
+          const result = res.result ?? res.data;
+          return result?.isFavorited ?? result?.favorited ?? !wasFavorited;
+        }),
         tap((favorited) => {
           const reconciled = new Set(this._ids());
           favorited ? reconciled.add(resourceId) : reconciled.delete(resourceId);

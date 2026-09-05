@@ -14,7 +14,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, map, of } from 'rxjs';
 
@@ -62,6 +62,7 @@ interface CreateResourceForm {
 export class CreateResourceComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly resourceService = inject(ResourceService);
@@ -80,6 +81,12 @@ export class CreateResourceComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly isLoadingTopics = signal(false);
 
+  readonly isEditMode = signal(false);
+  readonly resourceId = signal<string | null>(null);
+  readonly existingFileUrl = signal<string | null>(null);
+  readonly existingFileName = signal<string | null>(null);
+  private isInitializing = false;
+
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(180)]],
     description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
@@ -90,18 +97,26 @@ export class CreateResourceComponent implements OnInit {
   }) as FormGroup<CreateResourceForm>;
 
   readonly canSubmit = computed(
-    () => !!this.selectedFile() && !this.isSubmitting()
+    () => (this.isEditMode() || !!this.selectedFile()) && !this.isSubmitting()
   );
 
   ngOnInit(): void {
     this.loadInitialData();
 
     this.form.controls.categoryId.valueChanges.subscribe((categoryId) => {
+      if (this.isInitializing) return;
       // Reset topic whenever parent category switches.
       this.form.controls.topicId.setValue('');
       if (categoryId) this.loadTopics(categoryId);
       else this.topics.set([]);
     });
+
+    // Check for edit mode
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (slug) {
+      this.isEditMode.set(true);
+      this.loadResourceForEdit(slug);
+    }
   }
 
   onFileSelected(file: File | null): void {
@@ -124,7 +139,7 @@ export class CreateResourceComponent implements OnInit {
       return;
     }
     const file = this.selectedFile();
-    if (!file) {
+    if (!file && !this.isEditMode()) {
       this.toast.show('Vui lòng chọn tệp tài liệu để tải lên.', 'error');
       return;
     }
@@ -138,38 +153,122 @@ export class CreateResourceComponent implements OnInit {
     const { title, description, topicId, ageGroupIds, duration } =
       this.form.getRawValue();
 
+    const isEdit = this.isEditMode();
+    const resourceId = this.resourceId();
+    this.isSubmitting.set(true);
+
     const payload = new FormData();
-    payload.append('file', file);
+    if (file) {
+      payload.append('file', file);
+    }
     payload.append('title', title.trim());
     payload.append('description', description.trim());
     payload.append('topicId', topicId);
-    payload.append('username', user.username);
-    // Backend accepts comma-separated OR repeated — use repeated for safety.
+    if (user.username) {
+      payload.append('username', user.username);
+    }
     ageGroupIds.forEach((id) => payload.append('ageGroupIds', id));
     if (duration?.trim()) payload.append('duration', duration.trim());
 
-    this.isSubmitting.set(true);
-    this.resourceService
-      .uploadResource(payload)
-      .pipe(finalize(() => this.isSubmitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.toast.show(
-            'Đã gửi tài liệu để chờ duyệt. Chúng tôi sẽ sớm phản hồi!',
-            'success'
-          );
-          this.router.navigate(['/teacher/my-resources'], {
-            queryParams: { status: 'PENDING' },
+    if (isEdit && resourceId) {
+      this.resourceService
+        .updateResourceWithFormData(resourceId, payload)
+        .pipe(finalize(() => this.isSubmitting.set(false)))
+        .subscribe({
+          next: () => {
+            this.toast.show(
+              'Cập nhật tài liệu thành công. Tài liệu đang chờ duyệt lại!',
+              'success'
+            );
+            this.router.navigate(['/teacher/my-resources'], {
+              queryParams: { status: 'PENDING' },
+            });
+          },
+          error: (err: HttpErrorResponse | Error) => {
+            const msg =
+              err instanceof HttpErrorResponse && err.status === 413
+                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 100MB.'
+                : err.message || 'Không thể cập nhật tài liệu. Vui lòng thử lại.';
+            this.toast.show(msg, 'error');
+          },
+        });
+    } else {
+      this.resourceService
+        .uploadResource(payload)
+        .pipe(finalize(() => this.isSubmitting.set(false)))
+        .subscribe({
+          next: () => {
+            this.toast.show(
+              'Đã gửi tài liệu để chờ duyệt. Chúng tôi sẽ sớm phản hồi!',
+              'success'
+            );
+            this.router.navigate(['/teacher/my-resources'], {
+              queryParams: { status: 'PENDING' },
+            });
+          },
+          error: (err: HttpErrorResponse | Error) => {
+            const msg =
+              err instanceof HttpErrorResponse && err.status === 413
+                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 100MB.'
+                : err.message || 'Không thể đăng tài liệu. Vui lòng thử lại.';
+            this.toast.show(msg, 'error');
+          },
+        });
+    }
+  }
+
+  private loadResourceForEdit(slug: string): void {
+    this.isInitializing = true;
+    this.resourceService.getResource(slug).subscribe({
+      next: (res) => {
+        const resource = res.result ?? res.data;
+        if (!resource) {
+          this.toast.show('Không tìm thấy tài liệu.', 'error');
+          this.router.navigate(['/teacher/my-resources']);
+          return;
+        }
+
+        this.resourceId.set(resource.id);
+        this.existingFileUrl.set(this.auth.formatAssetUrl(resource.fileUrl));
+        
+        // Extract filename from URL path
+        if (resource.fileUrl) {
+          const parts = resource.fileUrl.split('/');
+          this.existingFileName.set(decodeURIComponent(parts[parts.length - 1]));
+        }
+
+        const catId = resource.topic?.categoryId ? String(resource.topic.categoryId) : '';
+        const topicId = resource.topicId ? String(resource.topicId) : (resource.topic ? String(resource.topic.id) : '');
+
+        if (catId) {
+          this.topicService.getTopics(catId, 1, 100).subscribe((topicsRes) => {
+            this.topics.set(topicsRes.data ?? []);
+            this.form.patchValue({
+              title: resource.title,
+              description: resource.description,
+              categoryId: catId,
+              topicId: topicId,
+              ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
+              duration: resource.duration || '',
+            });
+            this.isInitializing = false;
           });
-        },
-        error: (err: HttpErrorResponse | Error) => {
-          const msg =
-            err instanceof HttpErrorResponse && err.status === 413
-              ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 100MB.'
-              : err.message || 'Không thể đăng tài liệu. Vui lòng thử lại.';
-          this.toast.show(msg, 'error');
-        },
-      });
+        } else {
+          this.form.patchValue({
+            title: resource.title,
+            description: resource.description,
+            ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
+            duration: resource.duration || '',
+          });
+          this.isInitializing = false;
+        }
+      },
+      error: () => {
+        this.toast.show('Không tải được thông tin tài liệu.', 'error');
+        this.router.navigate(['/teacher/my-resources']);
+        this.isInitializing = false;
+      },
+    });
   }
 
   private loadInitialData(): void {

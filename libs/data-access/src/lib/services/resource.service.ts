@@ -84,18 +84,23 @@ export class ResourceService {
   }
 
   /**
-   * Public resource listing for the portal (guests + logged-in users).
-   * GET /resources  — visibility/status filtering enforced server-side.
-   * Unlike `getResources` (which hits the admin-only `/admin/resources` and
-   * 401s for guests), this is the permitAll endpoint the public site must use.
+   * Danh sách tài nguyên công khai cho Portal (khách và người đã đăng nhập).
+   *
+   * `GET /resources` — backend tự lọc visibility và status, và đây là
+   * endpoint `permitAll` mà mọi màn công khai PHẢI dùng.
+   *
+   * KHÔNG dùng {@link getResources} cho các màn công khai: method đó gọi
+   * `/admin/resources` và trả 401 cho khách. Lỗi này từng khiến khối
+   * "Tài liệu liên quan" ở trang chi tiết luôn trống với mọi người trừ
+   * admin, vì `catchError` nuốt mất 401.
    */
-  getPublicResources(
+  getPortalResources(
     params: ResourceFilterParams
   ): Observable<RestResponse<PaginatedResponse<Resource>>> {
     let httpParams = new HttpParams();
 
     if (params.page !== undefined)
-      httpParams = httpParams.set('page', params.page - 1); // Backend is 0-indexed
+      httpParams = httpParams.set('page', params.page - 1);
     if (params.size !== undefined)
       httpParams = httpParams.set('size', params.size);
 
@@ -115,14 +120,23 @@ export class ResourceService {
     appendParam('categorySlugs', params.categorySlugs);
     appendParam('ageSlugs', params.ageSlugs);
     appendParam('types', params.types);
+
+    if (!params.topicSlugs && params.topic)
+      appendParam('topic', params.topic as any);
+    if (!params.categorySlugs && params.category)
+      appendParam('category', params.category as any);
+    if (!params.ageSlugs && params.ages)
+      appendParam('ages', params.ages as any);
+    if (!params.types && params.type) appendParam('type', params.type);
+
     if (params.keyword) httpParams = httpParams.set('keyword', params.keyword);
+    appendParam('status', params.status);
     if (params.sort) httpParams = httpParams.set('sort', params.sort);
 
     return this.http
-      .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/resources`,
-        { params: httpParams }
-      )
+      .get<RestResponse<PaginatedResponse<Resource>>>(`${this.apiUrl}/resources`, {
+        params: httpParams,
+      })
       .pipe(
         map((res) => {
           if (res.result && !res.data) res.data = res.result;

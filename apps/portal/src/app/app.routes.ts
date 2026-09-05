@@ -36,6 +36,20 @@ export const appRoutes: Route[] = [
     title: 'Đăng ký tài khoản',
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./forgot-password/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent
+      ),
+    title: 'Quên mật khẩu',
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
+    title: 'Xác thực Email',
+  },
+  {
     path: 'about',
     loadComponent: () =>
       import('./about/about.component').then((m) => m.AboutComponent),
@@ -76,6 +90,15 @@ export const appRoutes: Route[] = [
         (m) => m.CreateResourceComponent
       ),
     title: 'Đăng tài liệu mới',
+  },
+  {
+    path: 'teacher/edit/:slug',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () =>
+      import('./teacher/create-resource/create-resource.component').then(
+        (m) => m.CreateResourceComponent
+      ),
+    title: 'Chỉnh sửa tài liệu',
   },
   {
     path: 'teacher/my-resources',

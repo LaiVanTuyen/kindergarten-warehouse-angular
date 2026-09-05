@@ -48,12 +48,17 @@
           <p class="text-danger font-medium mb-3">
             <strong>Lý do:</strong> {{ resource.rejectionReason || 'Không có lý do cụ thể.' }}
           </p>
-          <p class="text-sm text-danger opacity-90 flex items-center gap-1.5">
+          <p class="text-sm text-danger opacity-90 flex items-center gap-1.5 mb-3">
             <i class="ph-bold ph-info"></i>
-            Vui lòng nhấn nút <span
-              class="font-bold border border-line bg-surface px-1.5 py-0.5 rounded text-xs mx-1">Chỉnh sửa</span> (nếu
-            có) để cập nhật lại file hoặc nội dung.
+            Vui lòng nhấn nút Chỉnh sửa bên dưới để cập nhật lại tệp tin hoặc nội dung mô tả của học liệu.
           </p>
+          <div *ngIf="authService.currentUser()?.username === resource.uploader" class="mt-2">
+            <a [routerLink]="['/teacher/edit', resource.slug || resource.id]"
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-full text-xs shadow-sm transition focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-1">
+              <i class="ph ph-pencil-simple" aria-hidden="true"></i>
+              Chỉnh sửa ngay
+            </a>
+          </div>
         </div>
       </div>
 
@@ -271,9 +276,14 @@
               </button>
 
               <!-- Favorite Button -->
-              <button
+              <button type="button"
+                (click)="toggleFavorite(resource)"
+                [attr.aria-pressed]="isFavorited(resource)"
+                [attr.aria-label]="isFavorited(resource) ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
                 class="w-12 h-12 rounded-full bg-surface border border-line text-ink-soft shadow-sm hover:shadow-md hover:text-accent hover:border-accent-200 hover:bg-accent-100 dark:hover:bg-accent-500/15 transition-all flex items-center justify-center group relative tooltip-container">
-                <i class="ph-bold ph-heart text-2xl group-hover:scale-110 transition-transform"></i>
+                <i class="text-2xl group-hover:scale-110 transition-transform"
+                  [ngClass]="isFavorited(resource) ? 'ph-fill ph-heart text-danger' : 'ph-bold ph-heart'"></i>
+                <!-- Tooltip -->
                 <span
                   class="absolute -top-10 left-1/2 -translate-x-1/2 bg-ink text-surface text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Lưu tài liệu

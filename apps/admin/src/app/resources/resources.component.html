@@ -32,7 +32,7 @@
   >
     <option value="">Tất cả phân loại</option>
     @for (cat of categories(); track cat.id) {
-      <option [value]="cat.id">{{ cat.icon || '' }} {{ cat.name }}</option>
+      <option [value]="cat.id">{{ (cat.icon && !cat.icon.startsWith('http') && !cat.icon.startsWith('/')) ? cat.icon : '📚' }} {{ cat.name }}</option>
     }
   </select>
 
@@ -317,19 +317,115 @@
   [open]="!!selectedResource()"
   [title]="selectedResource()?.title || 'Chi tiết tài nguyên'"
   titleId="resource-preview-title"
-  size="lg"
+  size="xl"
   (closeDrawer)="closePreview()"
 >
   @if (selectedResource(); as res) {
     <div class="space-y-5">
+      <section
+        data-testid="resource-preview-panel"
+        class="overflow-hidden rounded-xl border border-gray-100 bg-slate-950"
+      >
+        @switch (previewKind(res)) {
+          @case ('youtube') {
+            @if (safeYoutubeUrl(res); as youtubeUrl) {
+              <iframe
+                [src]="youtubeUrl"
+                [title]="'Xem trước ' + res.title"
+                class="block w-full aspect-video bg-black"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            }
+          }
+          @case ('video') {
+            <video
+              [src]="previewSourceUrl(res)"
+              controls
+              preload="metadata"
+              class="block w-full max-h-[70vh] bg-black"
+            ></video>
+          }
+          @case ('audio') {
+            <div class="min-h-[260px] flex flex-col items-center justify-center gap-5 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-8 text-white text-center">
+              <div aria-hidden="true" class="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 text-4xl">♪</div>
+              <div class="max-w-md">
+                <p class="text-base font-semibold">{{ res.title }}</p>
+                <p class="mt-1 text-sm text-white/70">{{ resourceFormat(res) }}</p>
+              </div>
+              <audio [src]="previewSourceUrl(res)" controls class="w-full max-w-lg"></audio>
+            </div>
+          }
+          @case ('image') {
+            <div class="flex min-h-[360px] items-center justify-center bg-slate-950 p-4">
+              <img
+                [src]="previewSourceUrl(res)"
+                [alt]="res.title"
+                loading="lazy"
+                class="max-h-[70vh] w-full object-contain"
+              />
+            </div>
+          }
+          @case ('pdf') {
+            @if (safeInlineUrl(res.fileUrl); as pdfUrl) {
+              <iframe
+                [src]="pdfUrl"
+                [title]="'Xem trước PDF ' + res.title"
+                class="block h-[70vh] min-h-[520px] w-full bg-white"
+              ></iframe>
+            }
+          }
+          @case ('office') {
+            @if (safeOfficeViewerUrl(res); as officeUrl) {
+              <iframe
+                [src]="officeUrl"
+                [title]="'Xem trước tài liệu ' + res.title"
+                class="block h-[70vh] min-h-[520px] w-full bg-white"
+              ></iframe>
+            } @else {
+              <div data-testid="resource-preview-fallback" class="min-h-[360px] bg-white p-8 text-center flex flex-col items-center justify-center">
+                @if (res.thumbnailUrl) {
+                  <img [src]="res.thumbnailUrl" [alt]="res.title" loading="lazy" class="mb-5 max-h-56 rounded-lg object-contain shadow-sm" />
+                } @else {
+                  <div aria-hidden="true" class="mb-5 flex h-20 w-20 items-center justify-center rounded-xl bg-kindy-sun-soft text-4xl text-kindy-sun">📄</div>
+                }
+                <p class="text-base font-semibold text-kindy-ink">Không thể xem trực tiếp tài liệu Office trong môi trường nội bộ.</p>
+                <p class="mt-2 max-w-md text-sm text-kindy-ink-soft">
+                  Trình xem Office cần một URL công khai. Admin vẫn có thể mở tệp gốc để kiểm tra nội dung.
+                </p>
+              </div>
+            }
+          }
+          @case ('empty') {
+            <div data-testid="resource-preview-fallback" class="min-h-[300px] bg-white p-8 text-center flex flex-col items-center justify-center">
+              <div aria-hidden="true" class="mb-5 flex h-20 w-20 items-center justify-center rounded-xl bg-kindy-sun-soft text-4xl text-kindy-sun">📄</div>
+              <p class="text-base font-semibold text-kindy-ink">Tài nguyên chưa có tệp đính kèm.</p>
+              <p class="mt-2 text-sm text-kindy-ink-soft">Kiểm tra lại nguồn tải lên hoặc yêu cầu giáo viên gửi lại tài liệu.</p>
+            </div>
+          }
+          @default {
+            <div data-testid="resource-preview-fallback" class="min-h-[340px] bg-white p-8 text-center flex flex-col items-center justify-center">
+              @if (res.thumbnailUrl) {
+                <img [src]="res.thumbnailUrl" [alt]="res.title" loading="lazy" class="mb-5 max-h-56 rounded-lg object-contain shadow-sm" />
+              } @else {
+                <div aria-hidden="true" class="mb-5 flex h-20 w-20 items-center justify-center rounded-xl bg-kindy-sun-soft text-4xl text-kindy-sun">📄</div>
+              }
+              <p class="text-base font-semibold text-kindy-ink">Định dạng này cần mở bằng ứng dụng bên ngoài.</p>
+              <p class="mt-2 max-w-md text-sm text-kindy-ink-soft">Dùng liên kết gốc bên dưới để kiểm tra nội dung trước khi duyệt.</p>
+            </div>
+          }
+        }
+      </section>
+
       @if (res.thumbnailUrl) {
-        <img [src]="res.thumbnailUrl" alt="" loading="lazy" class="w-full rounded-xl aspect-video object-cover" />
+        <img [src]="res.thumbnailUrl" alt="" loading="lazy" class="hidden w-full rounded-xl aspect-video object-cover" />
       } @else {
-        <div aria-hidden="true" class="w-full aspect-video rounded-xl bg-kindy-sun-soft text-kindy-sun flex items-center justify-center text-5xl">📄</div>
+        <div aria-hidden="true" class="hidden w-full aspect-video rounded-xl bg-kindy-sun-soft text-kindy-sun items-center justify-center text-5xl">📄</div>
       }
 
       <div class="flex flex-wrap gap-2">
         <app-status-pill [label]="statusLabel(res.status)" [tone]="statusTone(res.status)" [dot]="true" />
+        <app-status-pill [label]="resourceFormat(res)" tone="neutral" />
         @if (res.fileType) { <app-status-pill [label]="res.fileType" tone="neutral" /> }
         @if (res.resourceType) { <app-status-pill [label]="res.resourceType" tone="neutral" /> }
       </div>
@@ -358,10 +454,10 @@
 
       @if (res.fileUrl) {
         <a
-          [href]="res.fileUrl"
+          [href]="previewSourceUrl(res)"
           target="_blank"
           rel="noopener"
-          class="inline-flex items-center gap-2 text-sm font-semibold text-kindy-sidebar hover:text-kindy-sidebar-hover hover:underline"
+          class="inline-flex items-center gap-2 rounded-lg bg-kindy-sidebar px-3 py-2 text-sm font-semibold text-white hover:bg-kindy-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-kindy-sidebar"
         >
           <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
           Mở tệp / liên kết gốc

@@ -8,6 +8,7 @@ import {
   AuthService,
   CategoryService,
   CommentService,
+  FavoritesService,
   ResourceDownloadService,
   ResourceService,
   ToastService,
@@ -37,7 +38,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
 
   let resourceService: {
     getResource: jest.Mock;
-    getPublicResources: jest.Mock;
+    getPortalResources: jest.Mock;
     getResources: jest.Mock;
     incrementViewCount: jest.Mock;
   };
@@ -72,7 +73,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
 
     resourceService = {
       getResource: jest.fn().mockReturnValue(of({ result: currentResource })),
-      getPublicResources: jest.fn().mockReturnValue(relatedPage(7)),
+      getPortalResources: jest.fn().mockReturnValue(relatedPage(7)),
       getResources: jest.fn().mockReturnValue(relatedPage(7)),
       incrementViewCount: jest.fn().mockReturnValue(of(void 0)),
     };
@@ -87,6 +88,12 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
         { provide: CategoryService, useValue: { getCategories: jest.fn(() => of({ data: [] })) } },
         { provide: TopicService, useValue: { getTopic: jest.fn(() => of({ result: null })) } },
         { provide: CommentService, useValue: { list: jest.fn(() => of({ content: [] })) } },
+        // Merge tu 063bc2b them FavoritesService vao component; mock de test
+        // van tap trung vao khoi "tai lieu lien quan".
+        {
+          provide: FavoritesService,
+          useValue: { ids: () => new Set<string>(), isFavorited: () => false, toggle: jest.fn(() => of(false)) },
+        },
         { provide: ResourceDownloadService, useValue: { download: jest.fn() } },
         { provide: DomSanitizer, useValue: { bypassSecurityTrustResourceUrl: (u: string) => u } },
         { provide: ToastService, useValue: { error: jest.fn(), success: jest.fn() } },
@@ -108,7 +115,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
     const component = createComponent();
 
     component.relatedResources$.subscribe(() => {
-      expect(resourceService.getPublicResources).toHaveBeenCalledTimes(1);
+      expect(resourceService.getPortalResources).toHaveBeenCalledTimes(1);
       expect(resourceService.getResources).not.toHaveBeenCalled();
       done();
     });
@@ -120,7 +127,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
     const component = createComponent();
 
     component.relatedResources$.subscribe(() => {
-      expect(resourceService.getPublicResources).toHaveBeenCalledWith(
+      expect(resourceService.getPortalResources).toHaveBeenCalledWith(
         expect.objectContaining({ topicId: TOPIC_ID, size: 7 })
       );
       done();
@@ -130,7 +137,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
   });
 
   it('loại tài liệu đang xem khỏi kết quả', (done) => {
-    resourceService.getPublicResources.mockReturnValue(relatedPage(7, true));
+    resourceService.getPortalResources.mockReturnValue(relatedPage(7, true));
     const component = createComponent();
 
     component.relatedResources$.subscribe((list) => {
@@ -142,7 +149,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
   });
 
   it('sau khi loại vẫn hiển thị tối đa 6 — xin 7 nên không bị tụt xuống 5', (done) => {
-    resourceService.getPublicResources.mockReturnValue(relatedPage(7, true));
+    resourceService.getPortalResources.mockReturnValue(relatedPage(7, true));
     const component = createComponent();
 
     component.relatedResources$.subscribe((list) => {
@@ -155,7 +162,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
   });
 
   it('cắt còn 6 khi API trả nhiều hơn', (done) => {
-    resourceService.getPublicResources.mockReturnValue(relatedPage(7));
+    resourceService.getPortalResources.mockReturnValue(relatedPage(7));
     const component = createComponent();
 
     component.relatedResources$.subscribe((list) => {
@@ -167,7 +174,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
   });
 
   it('API lỗi thì trả mảng rỗng, không làm hỏng luồng', (done) => {
-    resourceService.getPublicResources.mockReturnValue(
+    resourceService.getPortalResources.mockReturnValue(
       throwError(() => ({ status: 500 }))
     );
     const component = createComponent();
@@ -188,7 +195,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
     const original = environment.production;
     (environment as { production: boolean }).production = false;
 
-    resourceService.getPublicResources.mockReturnValue(
+    resourceService.getPortalResources.mockReturnValue(
       throwError(() => ({ status: 401 }))
     );
     const component = createComponent();
@@ -207,7 +214,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
     const original = environment.production;
     (environment as { production: boolean }).production = true;
 
-    resourceService.getPublicResources.mockReturnValue(
+    resourceService.getPortalResources.mockReturnValue(
       throwError(() => ({ status: 401 }))
     );
     const component = createComponent();
@@ -229,7 +236,7 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
       seen.push(list);
       if (seen.length === 2) {
         // switchMap huy request cu; lan phat thu hai la cua route moi
-        expect(resourceService.getPublicResources).toHaveBeenCalledTimes(2);
+        expect(resourceService.getPortalResources).toHaveBeenCalledTimes(2);
         sub.unsubscribe();
         done();
       }

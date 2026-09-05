@@ -47,7 +47,12 @@ export class HomeComponent {
     );
 
   readonly latestResources$ = this.resourceService
-    .getPublicResources({ page: 1, size: 4, sort: 'createdAt,desc' })
+    // Ten method theo remote; giu sort cua ban local vi khoi nay la
+    // "Tai lieu moi" — bo sort thi thu tu khong con dung nghia.
+    // Bo `status: 'APPROVED'`: endpoint Portal da ep APPROVED trong
+    // portalVisibleTo va BO QUA tham so status (da do truc tiep), nen
+    // truyen len chi gay hieu nham la co the loc duoc trang thai khac.
+    .getPortalResources({ page: 1, size: 4, sort: 'createdAt,desc' })
     .pipe(
       map((res) => res.data?.content ?? []),
       catchError(() => of<Resource[]>([])),

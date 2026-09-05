@@ -102,7 +102,7 @@ export class DrawerComponent {
   readonly title = input.required<string>();
   readonly subtitle = input<string>('');
   readonly titleId = input<string>('drawer-title');
-  readonly size = input<'sm' | 'md' | 'lg'>('md');
+  readonly size = input<'sm' | 'md' | 'lg' | 'xl'>('md');
 
   readonly closeDrawer = output<void>();
 
@@ -111,6 +111,7 @@ export class DrawerComponent {
       sm: 'w-full max-w-sm',
       md: 'w-full max-w-md',
       lg: 'w-full max-w-lg',
+      xl: 'w-full max-w-4xl',
     };
     return sizes[this.size()];
   }

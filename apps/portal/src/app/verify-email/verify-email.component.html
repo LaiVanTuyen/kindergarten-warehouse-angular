@@ -1,0 +1,85 @@
+<div class="min-h-screen flex bg-white font-sans overflow-hidden">
+  <!-- Left Side: OTP Verification Form -->
+  <div class="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12 md:p-16 lg:p-24 xl:p-32 z-10 relative">
+    <a routerLink="/login"
+      class="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-primary-500 transition-colors font-bold text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 rounded">
+      <i class="ph ph-arrow-left text-lg" aria-hidden="true"></i>
+      Quay lại đăng nhập
+    </a>
+
+    <div class="w-full max-w-md mx-auto mt-12 lg:mt-0">
+      <div class="inline-flex mb-12 transform hover:scale-105 transition-transform" aria-label="KinderWorld">
+        <span class="text-4xl font-black text-primary-500 tracking-tight">Kinder</span>
+        <span class="text-4xl font-black text-secondary-600 tracking-tight">World</span>
+      </div>
+
+      <h1 class="text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+        Xác thực tài khoản
+      </h1>
+      <p class="text-lg text-gray-500 mb-8">
+        Chúng tôi đã gửi mã OTP 6 chữ số đến email <span class="font-bold text-gray-800">{{ email() }}</span>. Vui lòng kiểm tra và nhập vào ô dưới đây.
+      </p>
+
+      <form class="space-y-6" [formGroup]="verifyForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- OTP Input -->
+        <div>
+          <label for="otp" class="block text-sm font-bold text-gray-700 mb-2">Mã OTP (6 chữ số)</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" aria-hidden="true">
+              <i class="ph ph-key text-gray-500 text-xl"></i>
+            </div>
+            <input id="otp" type="text" formControlName="otp" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+              class="appearance-none block w-full pl-11 pr-4 py-4 rounded-2xl bg-white border border-gray-400 focus:border-primary-pink focus:ring-4 focus:ring-primary-pink/10 text-gray-900 placeholder-gray-400 transition-all font-black text-2xl tracking-[0.5em] text-center shadow-sm"
+              [ngClass]="{'border-red-500 focus:border-red-500 focus:ring-red-500/10': f['otp'].invalid && (f['otp'].dirty || f['otp'].touched)}"
+              [attr.aria-invalid]="f['otp'].invalid && (f['otp'].dirty || f['otp'].touched)"
+              placeholder="000000" />
+          </div>
+          <p *ngIf="f['otp'].invalid && (f['otp'].dirty || f['otp'].touched)"
+            class="mt-2 text-sm text-red-600 font-medium" role="alert">
+            <ng-container *ngIf="f['otp'].errors?.['required']">Vui lòng nhập mã xác thực OTP.</ng-container>
+            <ng-container *ngIf="f['otp'].errors?.['pattern']">Mã xác thực phải gồm đúng 6 chữ số.</ng-container>
+          </p>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <button type="submit" [disabled]="isLoading() || verifyForm.invalid"
+            class="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-full shadow-lg text-lg font-bold text-white bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isLoading()">Xác nhận kích hoạt</span>
+            <svg *ngIf="isLoading()" class="animate-spin size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span *ngIf="isLoading()" class="sr-only">Đang xử lý…</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Resend Area -->
+      <div class="mt-8 text-center text-sm text-gray-500">
+        Không nhận được mã?
+        <button type="button" (click)="resendOtp()" [disabled]="countdown() > 0 || isResending()"
+          class="font-bold text-secondary-600 hover:text-secondary-700 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-default">
+          {{ countdown() > 0 ? 'Gửi lại sau (' + countdown() + 's)' : (isResending() ? 'Đang gửi…' : 'Gửi lại mã') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Illustration -->
+  <div class="hidden lg:block w-1/2 relative overflow-hidden" aria-hidden="true">
+    <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?q=80&w=1600&auto=format&fit=crop"
+      alt="" loading="lazy" decoding="async"
+      class="absolute inset-0 w-full h-full object-cover"
+      onerror="this.onerror=null;this.src='https://img.freepik.com/free-vector/kids-studying-from-home_23-2148506567.jpg'" />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end justify-center pb-20">
+      <div class="text-center text-white p-8 max-w-lg">
+        <h3 class="text-3xl font-black mb-4 drop-shadow-lg">
+          "Giáo dục không phải là việc đổ đầy một chiếc bình, mà là thắp sáng một ngọn lửa."
+        </h3>
+        <p class="text-lg font-medium opacity-90 drop-shadow-md">— William Butler Yeats</p>
+      </div>
+    </div>
+  </div>
+</div>

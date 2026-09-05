@@ -21,6 +21,7 @@ import {
   Comment,
   CommentService,
   CreateCommentRequest,
+  FavoritesService,
   Resource,
   ResourceDownloadService,
   ResourceService,
@@ -72,6 +73,7 @@ export class ResourceDetailComponent implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly topicService = inject(TopicService);
   private readonly commentService = inject(CommentService);
+  private readonly favorites = inject(FavoritesService);
   private readonly downloadService = inject(ResourceDownloadService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly toast = inject(ToastService);
@@ -174,7 +176,7 @@ export class ResourceDetailComponent implements OnInit {
    * `catchError` nuốt, nên khối này **luôn trống với mọi người trừ admin** mà
    * không ai phát hiện.
    *
-   * Nay dùng `getPublicResources()` → `/api/v1/resources`, đi qua đúng
+   * Nay dùng `getPortalResources()` → `/api/v1/resources`, đi qua đúng
    * visibility policy của Portal: khách chỉ thấy PUBLIC đã duyệt, người đăng
    * nhập thấy thêm INTERNAL. Cookie phiên được gửi kèm nên USER nhận đúng phần
    * của mình.
@@ -187,7 +189,7 @@ export class ResourceDetailComponent implements OnInit {
   readonly relatedResources$ = this.resource$.pipe(
     switchMap((current) =>
       this.resourceService
-        .getPublicResources({
+        .getPortalResources({
           page: 1,
           size: RELATED_FETCH_SIZE,
           topicId: current?.topicId,
@@ -328,6 +330,34 @@ export class ResourceDetailComponent implements OnInit {
         },
         error: () => void 0,
       });
+  }
+
+  isFavorited(resource: Resource): boolean {
+    return this.favorites.isFavorited(resource.id) || !!resource.isFavorited;
+  }
+
+  toggleFavorite(resource: Resource): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để lưu tài liệu yêu thích.', 'info');
+      return;
+    }
+
+    const willFavorite = !this.favorites.isFavorited(resource.id);
+    this.favorites.toggle(resource.id).subscribe({
+      next: (favorited) => {
+        resource.isFavorited = favorited;
+        this.toast.show(
+          favorited
+            ? 'Đã thêm vào danh sách yêu thích.'
+            : 'Đã bỏ khỏi danh sách yêu thích.',
+          'success'
+        );
+      },
+      error: () => {
+        this.toast.show('Không thể cập nhật yêu thích. Vui lòng thử lại.', 'error');
+        resource.isFavorited = !willFavorite;
+      },
+    });
   }
 
   setCommentRating(value: number): void {

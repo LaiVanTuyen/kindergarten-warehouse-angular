@@ -114,16 +114,35 @@
 
         <!-- Actions -->
         <div class="flex sm:flex-col gap-2 sm:justify-center shrink-0">
-          <a [routerLink]="['/resources', resource.slug || resource.id]"
-            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-surface ring-1 ring-line text-ink-soft text-sm font-semibold hover:bg-surface-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-            <i class="ph ph-eye" aria-hidden="true"></i>
-            Xem
-          </a>
-          <button type="button" (click)="askDelete(resource)"
-            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-rose-50 text-rose-600 text-sm font-semibold hover:bg-rose-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
-            <i class="ph ph-trash" aria-hidden="true"></i>
-            Xoá
-          </button>
+          <ng-container *ngIf="resource.status === 'DELETED'; else normalActions">
+            <button type="button" (click)="restoreResource(resource)"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-sm font-semibold hover:bg-emerald-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
+              <i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>
+              Khôi phục
+            </button>
+            <button type="button" (click)="askDelete(resource)"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-rose-50 text-rose-600 text-sm font-semibold hover:bg-rose-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
+              <i class="ph ph-trash" aria-hidden="true"></i>
+              Xoá vĩnh viễn
+            </button>
+          </ng-container>
+          <ng-template #normalActions>
+            <a [routerLink]="['/resources', resource.slug || resource.id]"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-surface ring-1 ring-line text-ink-soft text-sm font-semibold hover:bg-surface-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+              <i class="ph ph-eye" aria-hidden="true"></i>
+              Xem
+            </a>
+            <a [routerLink]="['/teacher/edit', resource.slug || resource.id]"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-surface ring-1 ring-accent-200 text-accent text-sm font-semibold hover:bg-accent-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+              <i class="ph ph-pencil" aria-hidden="true"></i>
+              Sửa
+            </a>
+            <button type="button" (click)="askDelete(resource)"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-rose-50 text-rose-600 text-sm font-semibold hover:bg-rose-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
+              <i class="ph ph-trash" aria-hidden="true"></i>
+              Xoá
+            </button>
+          </ng-template>
         </div>
       </article>
     </div>
@@ -136,9 +155,9 @@
 </div>
 
 <app-confirm-dialog *ngIf="pendingDelete() as pending"
-  title="Xoá tài liệu?"
-  [message]="'Bạn có chắc muốn xoá “' + pending.title + '”? Thao tác này không thể hoàn tác.'"
-  confirmLabel="Xoá"
+  [title]="status() === 'DELETED' ? 'Xoá vĩnh viễn tài liệu?' : 'Xoá tài liệu?'"
+  [message]="status() === 'DELETED' ? 'Bạn có chắc muốn xoá vĩnh viễn “' + pending.title + '”? Thao tác này không thể hoàn tác.' : 'Bạn có chắc muốn chuyển “' + pending.title + '” vào thùng rác?'"
+  [confirmLabel]="status() === 'DELETED' ? 'Xoá vĩnh viễn' : 'Xoá'"
   cancelLabel="Huỷ"
   tone="danger"
   [busy]="isDeleting()"

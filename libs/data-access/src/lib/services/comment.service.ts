@@ -13,6 +13,15 @@ export interface CreateCommentRequest {
   rating?: number;
 }
 
+interface BackendCommentResponse {
+  id: string | number;
+  content: string;
+  rating: number;
+  username?: string;
+  userAvatar?: string | null;
+  createdAt: string;
+}
+
 /**
  * Comment CRUD for resource threads.
  *
@@ -39,18 +48,27 @@ export class CommentService {
     return this.http
       .get<RestResponse<PaginatedResponse<Comment>>>(
         `${this.apiUrl}/comments`,
-        { params }
+        { params: params.set('resourceId', resourceId) }
       )
       .pipe(
         map(
-          (res) =>
-            res.result ?? {
+          (res) => {
+            const page =
+              res.result ??
+              res.data ?? {
               content: [],
               totalElements: 0,
               totalPages: 0,
               size,
               number: 0,
-            }
+            };
+            return {
+              ...page,
+              content: (page.content ?? []).map((comment) =>
+                this.normalizeComment(comment as unknown as BackendCommentResponse)
+              ),
+            };
+          }
         )
       );
   }
@@ -59,6 +77,11 @@ export class CommentService {
     resourceId: string,
     payload: CreateCommentRequest
   ): Observable<Comment> {
+    const params = new HttpParams()
+      .set('resourceId', resourceId)
+      .set('content', payload.content)
+      .set('rating', payload.rating ?? 5);
+
     return this.http
       .post<RestResponse<Comment>>(`${this.apiUrl}/comments`, {
         resourceId,
@@ -71,5 +94,27 @@ export class CommentService {
     return this.http
       .delete<RestResponse<void>>(`${this.apiUrl}/comments/${commentId}`)
       .pipe(map(() => undefined));
+  }
+
+  private normalizeComment(comment: BackendCommentResponse | Comment): Comment {
+    if ('user' in comment && comment.user) {
+      return comment as Comment;
+    }
+
+    const backendComment = comment as BackendCommentResponse;
+
+    return {
+      id: String(backendComment.id),
+      content: backendComment.content,
+      rating: backendComment.rating,
+      userId: 0,
+      user: {
+        username: backendComment.username ?? 'user',
+        fullName: backendComment.username ?? 'Người dùng',
+        avatarUrl: backendComment.userAvatar ?? undefined,
+      },
+      resourceId: '',
+      createdAt: backendComment.createdAt,
+    };
   }
 }

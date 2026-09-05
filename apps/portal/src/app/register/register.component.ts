@@ -77,6 +77,7 @@ export class RegisterComponent {
       fullName: (fullName ?? '').trim(),
       email: (email ?? '').trim().toLowerCase(),
       password,
+      username: this.buildUsername(email ?? ''),
     };
 
     this.isLoading.set(true);
@@ -85,23 +86,13 @@ export class RegisterComponent {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (response) => {
-          // Backend may either auto-login (returns user) or require email
-          // verification first. Both paths land on a useful screen.
-          if (response.result?.user) {
-            this.toast.show(
-              `Chào mừng bạn đến với KinderWorld, ${payload.fullName}!`,
-              'success'
-            );
-            this.router.navigate(['/']);
-          } else {
-            this.toast.show(
-              'Tạo tài khoản thành công. Vui lòng đăng nhập.',
-              'success'
-            );
-            this.router.navigate(['/login'], {
-              queryParams: { email: payload.email },
-            });
-          }
+          this.toast.show(
+            'Đăng ký tài khoản thành công! Vui lòng kiểm tra email và nhập mã OTP để xác thực tài khoản.',
+            'success'
+          );
+          this.router.navigate(['/verify-email'], {
+            queryParams: { email: payload.email },
+          });
         },
         error: (err: HttpErrorResponse) => {
           this.toast.show(this.resolveErrorMessage(err), 'error');
@@ -126,5 +117,18 @@ export class RegisterComponent {
     }
     const backendMessage = (err.error as { message?: string } | null)?.message;
     return backendMessage || 'Đăng ký thất bại. Vui lòng thử lại sau.';
+  }
+
+  private buildUsername(email: string): string {
+    const localPart = email.split('@')[0] || 'user';
+    return (
+      localPart
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^[-._]+|[-._]+$/g, '')
+        .slice(0, 50) || `user-${Date.now()}`
+    );
   }
 }
