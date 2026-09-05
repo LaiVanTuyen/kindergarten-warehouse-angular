@@ -135,10 +135,10 @@ export class ResourceService {
   /**
    * List the resources owned by the currently authenticated user
    * (teacher "My Uploads" page). Unlike `getResources` — which hits
-   * `/admin/resources` — this uses `/me/resources` so it respects the
+   * `/admin/resources` — this uses `/resources/me` so it respects the
    * caller's identity on the backend without requiring admin scope.
    *
-   * GET /me/resources?page&size&status&keyword
+   * GET /resources/me?page&size&status&keyword
    */
   listMyResources(params: {
     page?: number;
@@ -160,7 +160,7 @@ export class ResourceService {
     }
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/me/resources`,
+        `${this.apiUrl}/resources/me`,
         { params: httpParams }
       )
       .pipe(
