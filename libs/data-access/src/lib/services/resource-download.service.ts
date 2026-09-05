@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
+import { Observable, finalize, tap, throwError } from 'rxjs';
 import type { Subscriber } from 'rxjs';
 import { Resource } from '../models/resource.model';
 import { ResourceService } from './resource.service';
@@ -13,7 +13,8 @@ import { ToastService } from './toast.service';
  * Responsibilities:
  *  - Hit `/resources/:id/file`, honour `Content-Disposition` for filename.
  *  - Trigger the browser save dialog by creating/revoking an object URL.
- *  - Fire `/resources/:id/download` so stats stay accurate.
+ *  - Bộ đếm lượt tải do backend tự tăng trong `/resources/:id/file`; frontend
+ *    KHÔNG gọi thêm endpoint đếm nào nữa (xem ghi chú trong `download()`).
  *  - Fall back to opening `fileUrl` in a new tab if the blob request fails
  *    (e.g. CORS, external link, YouTube).
  *  - Toast a user-friendly error rather than console.error.
@@ -53,16 +54,9 @@ export class ResourceDownloadService {
         },
       });
 
-      // Fire-and-forget counter update — doesn't block UX.
-      this.resourceService
-        .incrementDownloadCount(resource.id)
-        .pipe(
-          catchError(() => {
-            // Counter failing is not user-facing.
-            return [];
-          })
-        )
-        .subscribe();
+      // Không bắn thêm lời gọi đếm nào ở đây. `GET /resources/:id/file` đã tăng
+      // bộ đếm ở backend, nên gọi thêm `PUT /:id/download` (endpoint nay đã bị
+      // bỏ) sẽ đếm hai lần cho mỗi lượt tải.
 
       return () => sub.unsubscribe();
     }).pipe(

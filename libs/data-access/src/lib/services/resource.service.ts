@@ -265,15 +265,10 @@ export class ResourceService {
       .pipe(catchError(this.handleError));
   }
 
-  /**
-   * Increment Download Count
-   * PUT /resources/:id/download
-   */
-  incrementDownloadCount(id: string): Observable<void> {
-    return this.http
-      .put<void>(`${this.apiUrl}/resources/${id}/download`, {})
-      .pipe(catchError(this.handleError));
-  }
+  // `incrementDownloadCount` đã bị bỏ. Backend không còn
+  // `PUT /resources/:id/download` — API_CONTRACT_V2 §3 không liệt kê endpoint
+  // đó, và `GET /resources/:id/file` đã tự tăng bộ đếm. Giữ lại lời gọi này
+  // nghĩa là mỗi lượt tải được đếm HAI lần.
 
   /**
    * Download a resource file
