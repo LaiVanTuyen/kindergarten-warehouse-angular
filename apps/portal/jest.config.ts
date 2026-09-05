@@ -12,7 +12,13 @@ export default {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  // `@angular/common/locales/*` là file .js dùng cú pháp ESM (`export default`).
+  // Mặc định Jest bỏ qua node_modules nên nó lọt vào runtime CommonJS và vỡ với
+  // "SyntaxError: Unexpected token 'export'". Component resource-detail import
+  // localeVi nên phải cho phép transform thư mục này.
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@angular/common/locales))',
+  ],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',
