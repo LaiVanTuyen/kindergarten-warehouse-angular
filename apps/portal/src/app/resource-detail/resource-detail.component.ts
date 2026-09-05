@@ -27,6 +27,7 @@ import {
   ToastService,
   TopicService,
   TranslationService,
+  environment,
 } from '@kindergarten-warehouse/data-access';
 import { FileHelper } from '../shared/utils/file-helper';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
@@ -36,6 +37,13 @@ import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { TranslatePipe } from '../pipes/translate.pipe';
 
 registerLocaleData(localeVi);
+
+/**
+ * Xin dư một bản ghi rồi cắt: tài liệu đang xem có thể nằm trong kết quả cùng
+ * chủ đề. Lọc bỏ nó mà chỉ xin đúng 6 thì có lúc chỉ hiển thị được 5.
+ */
+const RELATED_FETCH_SIZE = 7;
+const RELATED_DISPLAY_SIZE = 6;
 
 interface BreadcrumbInfo {
   category: { id: string; name: string; slug: string } | null;
@@ -158,21 +166,47 @@ export class ResourceDetailComponent implements OnInit {
     })
   );
 
+  /**
+   * Tài liệu liên quan.
+   *
+   * Trước đây gọi `getResources()`, mà method đó hit `/api/v1/admin/resources`
+   * — endpoint chỉ dành cho ADMIN. Khách và người dùng thường nhận 401, lỗi bị
+   * `catchError` nuốt, nên khối này **luôn trống với mọi người trừ admin** mà
+   * không ai phát hiện.
+   *
+   * Nay dùng `getPublicResources()` → `/api/v1/resources`, đi qua đúng
+   * visibility policy của Portal: khách chỉ thấy PUBLIC đã duyệt, người đăng
+   * nhập thấy thêm INTERNAL. Cookie phiên được gửi kèm nên USER nhận đúng phần
+   * của mình.
+   *
+   * Xin `size: RELATED_FETCH_SIZE` (7) rồi cắt còn 6: tài liệu đang xem có thể
+   * nằm trong kết quả, lọc bỏ nó mà chỉ xin 6 thì có lúc chỉ còn 5.
+   * Về lâu dài nên có `GET /resources/{id}/related?size=6` để backend loại
+   * chính nó TRƯỚC khi phân trang.
+   */
   readonly relatedResources$ = this.resource$.pipe(
     switchMap((current) =>
       this.resourceService
-        .getResources({
+        .getPublicResources({
           page: 1,
-          size: 4,
+          size: RELATED_FETCH_SIZE,
           topicId: current?.topicId,
         })
         .pipe(
           map((res) =>
-            (res.data?.content ?? [])
+            (res.result?.content ?? res.data?.content ?? [])
               .filter((r) => r.id !== current?.id)
-              .slice(0, 4)
+              .slice(0, RELATED_DISPLAY_SIZE)
           ),
-          catchError(() => of<Resource[]>([]))
+          catchError((err) => {
+            // Không im lặng hoàn toàn: khối bị ẩn nhưng lỗi phải thấy được
+            // khi phát triển, nếu không một endpoint hỏng sẽ lại đi qua mà
+            // không ai biết — đúng cách bug này đã tồn tại.
+            if (!environment.production) {
+              console.error('[resource-detail] Không tải được tài liệu liên quan', err);
+            }
+            return of<Resource[]>([]);
+          })
         )
     )
   );
