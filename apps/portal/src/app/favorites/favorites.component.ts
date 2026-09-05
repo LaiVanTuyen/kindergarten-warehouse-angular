@@ -106,10 +106,22 @@ export class FavoritesComponent implements OnInit {
           this.totalElements.set(page?.totalElements ?? 0);
         },
         error: (err: HttpErrorResponse) => {
+          // Backend CHUA co endpoint doc danh sach yeu thich
+          // (API_CONTRACT_V2 §4: GET /favorites va /favorites/ids van la ❌).
+          // Chi co POST /resources/{id}/favorite de toggle.
+          //
+          // 404/405 o day nghia la "chua trien khai", khong phai loi tam
+          // thoi. Bao dung nhu vay, va TUYET DOI khong hien danh sach rong
+          // nhu the nguoi dung chua yeu thich gi — do la noi doi voi nguoi
+          // dung ve trang thai du lieu cua ho.
+          const notImplemented = err.status === 404 || err.status === 405;
+
           this.error.set(
             err.status === 0
               ? 'Không thể kết nối đến máy chủ.'
-              : 'Không tải được danh sách yêu thích.'
+              : notImplemented
+                ? 'Chức năng đang hoàn thiện. Bạn vẫn có thể lưu tài liệu ở trang chi tiết.'
+                : 'Không tải được danh sách yêu thích.'
           );
           this.resources.set([]);
           this.totalPages.set(0);
