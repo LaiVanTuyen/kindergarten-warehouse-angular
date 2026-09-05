@@ -179,6 +179,20 @@ export class AuthService {
    */
   formatAssetUrl(url: string | undefined | null): string {
     if (!url) return '';
+
+    // During local/demo runs, serve MinIO objects through the Angular proxy so
+    // the same URL also works when the app is exposed by Cloudflare Tunnel.
+    if (
+      !environment.production &&
+      (url.includes('localhost:9000') || url.includes('minio:9000'))
+    ) {
+      try {
+        return new URL(url).pathname;
+      } catch {
+        return url;
+      }
+    }
+
     const { minioInternalHost, minioPublicHost } = environment;
     if (
       minioInternalHost &&
