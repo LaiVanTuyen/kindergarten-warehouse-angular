@@ -18,8 +18,8 @@ import { AuthService } from './auth.service';
  * - Hydrates once when the user becomes authenticated; clears on logout.
  *
  * Backend contract expected:
- *   GET  /me/favorites?page&size → ApiResponse<Page<Resource>>
- *   GET  /me/favorites/ids       → ApiResponse<string[]>
+ *   GET  /favorites?page&size    → ApiResponse<Page<Resource>>
+ *   GET  /favorites/ids          → ApiResponse<string[]>
  *   POST /resources/:id/favorite → ApiResponse<{ favorited: boolean }>  (toggles)
  */
 @Injectable({ providedIn: 'root' })
@@ -54,7 +54,7 @@ export class FavoritesService {
     if (this.hydrated && !force) return;
     this.hydrated = true;
     this.http
-      .get<RestResponse<string[]>>(`${this.apiUrl}/resources/me/favorites/ids`)
+      .get<RestResponse<string[]>>(`${this.apiUrl}/favorites/ids`)
       .subscribe({
         next: (res) => this._ids.set(new Set(res.result ?? res.data ?? [])),
         error: () => {
@@ -73,7 +73,7 @@ export class FavoritesService {
       .set('size', size);
     return this.http
       .get<RestResponse<PaginatedResponse<Resource>>>(
-        `${this.apiUrl}/resources/me/favorites`,
+        `${this.apiUrl}/favorites`,
         { params }
       )
       .pipe(
