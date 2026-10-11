@@ -16,7 +16,7 @@ export interface Resource {
   createdById?: number; // User Id assumed number based on Users table
   createdBy?: string; // Username from API
   isDeleted: boolean;
-  visibility: 'PUBLIC' | 'PRIVATE'; // New field from spec
+  visibility: 'PUBLIC' | 'INTERNAL' | 'PRIVATE';
   isFavorited?: boolean; // New field from spec
   createdAt: string;
   updatedAt?: string;
@@ -27,7 +27,7 @@ export interface Resource {
 
   // Enums or Union types
   // Enums or Union types
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED' | 'HIDDEN' | 'DELETED';
   rejectionReason?: string | null;
   // Mapped from backend resourceType
   resourceType?: 'FILE' | 'YOUTUBE' | 'EXTERNAL_LINK';

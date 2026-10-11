@@ -1,0 +1,167 @@
+<section #reader class="reader" aria-label="Xem trước tài liệu">
+  <header class="reader-header">
+    <div class="reader-label">
+      <i class="ph ph-book-open" aria-hidden="true"></i>
+      <div>
+        <strong>Đọc học liệu</strong
+        ><span>Bản xem trước · Không cần tải tệp gốc</span>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="reader-button"
+      (click)="fullscreen()"
+      aria-label="Bật hoặc tắt toàn màn hình"
+      title="Toàn màn hình"
+    >
+      <i class="ph ph-arrows-out" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <ng-container *ngIf="manifest() as preview">
+    <div
+      *ngIf="preview.status === 'READY'"
+      class="reader-toolbar"
+      aria-label="Điều khiển trang đọc"
+    >
+      <div class="reader-controls">
+        <button
+          type="button"
+          class="reader-button"
+          (click)="goTo(page() - 1)"
+          [disabled]="page() <= 1"
+          aria-label="Trang trước"
+        >
+          <i class="ph ph-caret-left" aria-hidden="true"></i>
+        </button>
+        <label class="page-picker"
+          >Trang
+          <input
+            type="number"
+            aria-label="Số trang"
+            [ngModel]="page()"
+            (ngModelChange)="goTo($event)"
+            min="1"
+            [max]="preview.pageCount"
+          />
+          / {{ preview.pageCount }}</label
+        >
+        <button
+          type="button"
+          class="reader-button"
+          (click)="goTo(page() + 1)"
+          [disabled]="page() >= preview.pageCount"
+          aria-label="Trang tiếp"
+        >
+          <i class="ph ph-caret-right" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="reader-controls">
+        <button
+          type="button"
+          class="reader-button"
+          (click)="changeZoom(-20)"
+          [disabled]="zoom() <= 60"
+          aria-label="Thu nhỏ"
+        >
+          <i class="ph ph-minus" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="zoom-label"
+          (click)="zoom.set(100)"
+          title="Vừa chiều rộng"
+        >
+          {{ zoom() }}%
+        </button>
+        <button
+          type="button"
+          class="reader-button"
+          (click)="changeZoom(20)"
+          [disabled]="zoom() >= 300"
+          aria-label="Phóng to"
+        >
+          <i class="ph ph-plus" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div *ngIf="preview.status === 'READY'" class="reader-canvas">
+      <p
+        *ngIf="imageLoading() && !imageFailed()"
+        class="image-status"
+        role="status"
+      >
+        Đang tải trang {{ page() }}…
+      </p>
+      <div *ngIf="imageFailed()" class="reader-state" role="alert">
+        <i class="ph ph-warning-circle" aria-hidden="true"></i>
+        <h3>Không tải được trang đọc</h3>
+        <p>Quyền truy cập có thể đã thay đổi hoặc kết nối bị gián đoạn.</p>
+        <button type="button" (click)="retry()" class="retry-button">
+          Kiểm tra lại
+        </button>
+      </div>
+      <img
+        *ngIf="!imageFailed()"
+        class="document-page"
+        [style.width.%]="zoom()"
+        [src]="imageUrl"
+        [alt]="title + ' — trang ' + page()"
+        (load)="imageLoading.set(false)"
+        (error)="imageFailed.set(true); imageLoading.set(false)"
+      />
+    </div>
+    <footer *ngIf="preview.status === 'READY'" class="reader-footer">
+      <span>Trang {{ page() }} / {{ preview.totalPages }}</span
+      ><span>{{
+        preview.truncated
+          ? preview.message
+          : 'Tải tệp gốc để sử dụng trong lớp học'
+      }}</span>
+    </footer>
+  </ng-container>
+
+  <div
+    *ngIf="!error() && (!manifest() || manifest()?.status === 'PROCESSING')"
+    class="reader-state"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="processing-icon">
+      <i class="ph ph-files" aria-hidden="true"></i>
+    </div>
+    <h3>Đang chuẩn bị học liệu</h3>
+    <p>Tài liệu đang được chuyển thành từng trang để đọc ngay tại đây.</p>
+    <span class="processing-note"
+      >Tự động cập nhật · Không cần tải lại trang</span
+    >
+  </div>
+  <div
+    *ngIf="
+      error() ||
+      (manifest() && !['READY', 'PROCESSING'].includes(manifest()!.status))
+    "
+    class="reader-state"
+    role="status"
+  >
+    <i class="ph ph-file-search" aria-hidden="true"></i>
+    <h3>
+      {{
+        manifest()?.status === 'UNSUPPORTED'
+          ? 'Chưa có bản xem trước'
+          : 'Chưa mở được bản xem trước'
+      }}
+    </h3>
+    <p>{{ error() || manifest()?.message }}</p>
+    <button
+      *ngIf="manifest()?.status !== 'UNSUPPORTED'"
+      type="button"
+      class="retry-button"
+      (click)="retry()"
+    >
+      Thử lại</button
+    ><span class="processing-note"
+      >Tệp gốc vẫn được lưu an toàn trong kho học liệu.</span
+    >
+  </div>
+</section>

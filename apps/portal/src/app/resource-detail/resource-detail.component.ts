@@ -36,6 +36,7 @@ import { EmptyStateComponent } from '../shared/empty-state/empty-state.component
 import { RatingStarsComponent } from '../shared/rating-stars/rating-stars.component';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { TranslatePipe } from '../pipes/translate.pipe';
+import { DocumentReaderComponent } from './document-reader.component';
 
 registerLocaleData(localeVi);
 
@@ -63,6 +64,7 @@ interface BreadcrumbInfo {
     EmptyStateComponent,
     RatingStarsComponent,
     SpinnerComponent,
+    DocumentReaderComponent,
   ],
   templateUrl: './resource-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,13 +87,25 @@ export class ResourceDetailComponent implements OnInit {
   readonly newCommentRating = signal(5);
   readonly isSubmittingComment = signal(false);
   readonly isDownloading = signal(false);
+  readonly isLoadingResource = signal(true);
+  readonly resourceError = signal('');
 
   readonly resource$: Observable<Resource | null> = this.route.paramMap.pipe(
     switchMap((params) => {
+      this.isLoadingResource.set(true);
+      this.resourceError.set('');
       const slug = params.get('slug');
-      if (!slug) return of(null);
+      if (!slug) {
+        this.isLoadingResource.set(false);
+        this.resourceError.set('Không tìm thấy tài liệu.');
+        return of(null);
+      }
       return this.resourceService.getResource(slug).pipe(
-        map((res) => res.data ?? res.result ?? null),
+        map((res) => {
+          const value = res.data ?? res.result;
+          return value ? { ...value, type: value.type ?? value.fileType,
+            topicId: value.topicId ?? String(value.topic?.id ?? '') } : null;
+        }),
         tap((resource) => {
           if (resource?.id) {
             // Fire and forget — a failed view-count should never block the page.
@@ -101,7 +115,13 @@ export class ResourceDetailComponent implements OnInit {
             this.loadComments(resource);
           }
         }),
-        catchError(() => of(null))
+        catchError((error: HttpErrorResponse) => {
+          this.resourceError.set(error.status === 410 ? 'Tài liệu này đã được gỡ khỏi kho học liệu.'
+            : error.status === 404 ? 'Không tìm thấy tài liệu hoặc bạn không có quyền xem.'
+            : 'Không tải được tài liệu. Vui lòng kiểm tra kết nối và thử lại.');
+          return of(null);
+        }),
+        finalize(() => this.isLoadingResource.set(false))
       );
     }),
     shareReplay({ bufferSize: 1, refCount: true })
@@ -246,32 +266,14 @@ export class ResourceDetailComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
-  getSafeDocUrl(url: string | undefined): SafeResourceUrl {
-    if (!url) return '';
-    const viewer = `https://docs.google.com/gview?url=${encodeURIComponent(
-      url
-    )}&embedded=true`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(viewer);
-  }
-
-  canPreviewDoc(resource: Resource): boolean {
-    if (!resource.fileUrl) return false;
-    const type = (resource.type || resource.fileType || '').toUpperCase();
-    return [
-      'PDF',
-      'WORD',
-      'DOC',
-      'DOCX',
-      'DOCUMENT',
-      'EXCEL',
-      'PPT',
-      'PPTX',
-      'POWERPOINT',
-    ].includes(type);
-  }
-
   getFileIcon(type: string | undefined): string {
     return FileHelper.getFileIcon(type);
+  }
+
+  formatBytes(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '—';
+    return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} KB`
+      : `${(bytes / (1024 * 1024)).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB`;
   }
 
   // -----------------------------------------------------------------------
@@ -308,6 +310,16 @@ export class ResourceDetailComponent implements OnInit {
   // -----------------------------------------------------------------------
   // Actions
   // -----------------------------------------------------------------------
+  async shareResource(resource: Resource): Promise<void> {
+    const url = new URL(`/resources/${encodeURIComponent(resource.slug)}`, window.location.origin).href;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.toast.show('Đã sao chép liên kết. Người nhận vẫn cần quyền truy cập tài liệu.', 'success');
+    } catch {
+      this.toast.show('Không thể sao chép tự động. Bạn có thể sao chép địa chỉ trên trình duyệt.', 'info');
+    }
+  }
+
   followAuthor(authorName: string): void {
     if (!this.authService.isLoggedIn()) {
       this.toast.show('Vui lòng đăng nhập để theo dõi tác giả.', 'info');
