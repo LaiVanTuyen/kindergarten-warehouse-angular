@@ -48,6 +48,7 @@ export class HeaderComponent implements OnInit {
   readonly currentUser = this.authService.currentUser;
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
   readonly isTeacher = this.authService.isTeacher;
+  readonly isAdmin = this.authService.isAdmin;
   readonly favoriteCount = this.favorites.count;
   readonly unreadCount = this.notifications.unread;
 

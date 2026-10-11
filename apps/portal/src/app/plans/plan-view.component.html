@@ -125,5 +125,7 @@
 
       <ng-template #none><p class="text-ink-muted italic">Chưa có nội dung.</p></ng-template>
     </article>
+
+    <app-plan-collaboration *ngIf="detail() && !printMode" [detail]="detail()!" (changed)="load()"></app-plan-collaboration>
   </div>
 </div>

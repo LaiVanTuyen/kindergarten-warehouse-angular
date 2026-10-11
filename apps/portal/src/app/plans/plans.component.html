@@ -21,7 +21,7 @@
 
     <div class="flex flex-wrap items-center gap-3 mb-6">
       <div class="flex gap-1 bg-surface border border-line rounded-xl p-1" role="tablist" aria-label="Loại kế hoạch">
-        <button *ngFor="let t of [{k: 'me', l: 'Của tôi'}, {k: 'shared', l: 'Đồng nghiệp chia sẻ'}, {k: 'templates', l: 'Mẫu'}]"
+        <button *ngFor="let t of [{k: 'me', l: 'Của tôi'}, {k: 'shared', l: 'Thư viện trường'}, {k: 'templates', l: 'Mẫu'}]"
           type="button" role="tab" [attr.aria-selected]="scope() === t.k" (click)="setScope($any(t.k))"
           class="px-4 py-2 rounded-lg text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           [ngClass]="scope() === t.k ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">{{ t.l }}</button>
@@ -32,6 +32,10 @@
           class="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
         <button type="submit" class="px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary">Tìm</button>
       </form>
+      <label *ngIf="scope() === 'shared'" class="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
+        <input type="checkbox" name="approvedOnly" [(ngModel)]="approvedOnly" (ngModelChange)="search()">
+        Chỉ kế hoạch đã duyệt chuyên môn
+      </label>
     </div>
 
     <app-spinner *ngIf="loading() && items().length === 0" size="lg" label="Đang tải…" [showLabel]="true"></app-spinner>
@@ -51,6 +55,9 @@
           <span class="shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
             [ngClass]="p.template ? 'bg-accent-100 text-accent dark:bg-accent-500/15' : p.status === 'SHARED' ? 'bg-primary-50 text-primary dark:bg-primary-500/15' : 'bg-surface-2 text-ink-muted'">
             {{ p.template ? 'Mẫu' : p.status === 'SHARED' ? 'Chia sẻ' : 'Bản nháp' }}
+          </span>
+          <span *ngIf="p.reviewStatus === 'APPROVED'" class="shrink-0 text-xs font-semibold px-2 py-1 rounded-full bg-success-soft text-success" title="Đã duyệt chuyên môn">
+            <i class="ph-fill ph-seal-check" aria-hidden="true"></i> Đã duyệt
           </span>
         </div>
         <p *ngIf="p.objectives" class="mt-2 text-sm text-ink-soft line-clamp-2">{{ p.objectives }}</p>

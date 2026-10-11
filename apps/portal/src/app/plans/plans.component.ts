@@ -40,6 +40,8 @@ export class PlansComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly busy = signal(false);
   keyword = '';
+  /** Library filter: only plans approved by a reviewer ("duyệt chuyên môn"). */
+  approvedOnly = false;
 
   ngOnInit(): void {
     this.load();
@@ -102,8 +104,11 @@ export class PlansComponent implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api
-      .list(this.scope(), this.page(), this.pageSize, this.keyword)
+    // "Đồng nghiệp chia sẻ" is the school library: same shared plans, with an approved-only filter.
+    const request = this.scope() === 'shared'
+      ? this.api.library(this.keyword, this.approvedOnly, this.page(), this.pageSize)
+      : this.api.list(this.scope(), this.page(), this.pageSize, this.keyword);
+    request
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (page) => {

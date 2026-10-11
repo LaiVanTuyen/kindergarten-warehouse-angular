@@ -162,6 +162,11 @@
                 <i class="ph ph-clock-counter-clockwise text-lg" aria-hidden="true"></i>
                 Lịch sử tải về
               </a>
+              <a *ngIf="isAdmin()" routerLink="/reviews" (click)="closeUserMenu()" role="menuitem"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-2 hover:text-primary transition-colors focus:outline-none focus-visible:bg-surface-2">
+                <i class="ph ph-seal-check text-lg" aria-hidden="true"></i>
+                Duyệt chuyên môn
+              </a>
               <a *ngIf="isTeacher()" routerLink="/assistant" (click)="closeUserMenu()" role="menuitem"
                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-2 hover:text-primary transition-colors focus:outline-none focus-visible:bg-surface-2">
                 <i class="ph ph-sparkle text-lg" aria-hidden="true"></i>

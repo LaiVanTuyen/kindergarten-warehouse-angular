@@ -1,0 +1,70 @@
+<section class="no-print bg-surface rounded-3xl border border-line shadow-sm p-6 mt-6 space-y-5" aria-labelledby="collab-title">
+  <h2 id="collab-title" class="text-lg font-bold text-ink">Phối hợp</h2>
+
+  <!-- Duyệt chuyên môn -->
+  <div class="space-y-2">
+    <p class="text-sm">
+      <span class="font-semibold text-ink">Duyệt chuyên môn:</span>
+      <ng-container [ngSwitch]="plan.reviewStatus ?? 'NONE'">
+        <span *ngSwitchCase="'APPROVED'" class="ml-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success">Đã duyệt</span>
+        <span *ngSwitchCase="'PENDING'" class="ml-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-ink">Đang chờ duyệt</span>
+        <span *ngSwitchCase="'CHANGES_REQUESTED'" class="ml-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-danger-soft text-danger">Cần chỉnh sửa</span>
+        <span *ngSwitchDefault class="ml-1 text-ink-muted">Chưa gửi duyệt</span>
+      </ng-container>
+    </p>
+    <p *ngIf="detail.reviewNote" class="text-sm text-ink-soft bg-surface-2 rounded-xl px-3 py-2"><strong>Nhận xét:</strong> {{ detail.reviewNote }}</p>
+    <p *ngIf="plan.isOwner && plan.status !== 'SHARED'" class="text-xs text-ink-muted">Chia sẻ kế hoạch với đồng nghiệp để gửi duyệt.</p>
+    <p *ngIf="plan.isOwner && plan.reviewStatus === 'APPROVED'" class="text-xs text-ink-muted">Nếu bạn sửa nội dung (không tính phần ghi nhận), kế hoạch sẽ cần duyệt lại.</p>
+    <button *ngIf="canRequestReview" type="button" (click)="requestReview()" [disabled]="busy()"
+      class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary">
+      <i class="ph ph-seal-check" aria-hidden="true"></i> Gửi duyệt chuyên môn
+    </button>
+
+    <div *ngIf="canDecide" class="rounded-2xl border border-accent p-4 space-y-2">
+      <label for="review-note" class="block text-sm font-semibold text-ink">Nhận xét của người duyệt</label>
+      <textarea id="review-note" name="reviewNote" [(ngModel)]="reviewNote" maxlength="1000" rows="2"
+        placeholder="Bắt buộc khi yêu cầu chỉnh sửa"
+        class="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink"></textarea>
+      <p class="text-xs text-ink-muted">Bạn đang duyệt đúng phiên bản đang hiển thị. Nếu giáo viên vừa sửa, hệ thống sẽ yêu cầu bạn xem lại.</p>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" (click)="decide('APPROVE')" [disabled]="busy()" class="px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-semibold">Duyệt</button>
+        <button type="button" (click)="decide('REQUEST_CHANGES')" [disabled]="busy()" class="px-4 py-2 rounded-xl border border-line text-danger font-semibold">Yêu cầu chỉnh sửa</button>
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="isOpenToColleagues || plan.isOwner">
+    <!-- Đã sử dụng -->
+    <div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
+      <p class="text-sm text-ink-soft" *ngIf="collab() as c">
+        <strong class="text-ink">{{ c.teachersUsed }}</strong> giáo viên đã dùng kế hoạch này<span *ngIf="c.usedByMe"> · bạn dùng gần nhất {{ c.myLastUsedOn | date:'dd/MM/yyyy' }}</span>
+      </p>
+      <button type="button" (click)="markUsed()" [disabled]="busy()"
+        class="px-3 py-1.5 rounded-lg border border-line text-sm font-semibold text-ink-soft hover:text-primary">
+        <i class="ph ph-check-square" aria-hidden="true"></i> Tôi đã dùng hôm nay
+      </button>
+    </div>
+
+    <!-- Góp ý -->
+    <div *ngIf="isOpenToColleagues" class="border-t border-line pt-4">
+      <h3 class="font-bold text-ink mb-2">Góp ý của đồng nghiệp</h3>
+      <ul *ngIf="collab()?.comments?.length; else noComments" class="space-y-3 mb-3">
+        <li *ngFor="let c of collab()!.comments" class="rounded-xl bg-surface-2 px-3 py-2">
+          <p class="text-sm"><strong class="text-ink">{{ c.authorName }}</strong>
+            <span class="text-xs text-ink-muted"> · {{ c.createdAt | date:'HH:mm dd/MM/yyyy' }}</span>
+            <button *ngIf="c.canDelete" type="button" (click)="deleteComment(c)" class="ml-2 text-xs text-ink-muted hover:text-danger">Xoá</button>
+          </p>
+          <p class="text-sm text-ink-soft whitespace-pre-line break-words">{{ c.content }}</p>
+        </li>
+      </ul>
+      <ng-template #noComments><p class="text-sm text-ink-muted mb-3">Chưa có góp ý.</p></ng-template>
+      <form (ngSubmit)="addComment()" class="flex gap-2">
+        <label for="plan-comment" class="sr-only">Góp ý</label>
+        <textarea id="plan-comment" name="comment" [(ngModel)]="commentText" maxlength="2000" rows="2"
+          placeholder="Chia sẻ kinh nghiệm khi dùng kế hoạch này…"
+          class="flex-1 min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink"></textarea>
+        <button type="submit" [disabled]="busy() || !commentText.trim()" class="self-end px-4 py-2 rounded-xl bg-primary text-ink-onbrand text-sm font-semibold disabled:opacity-60">Gửi</button>
+      </form>
+    </div>
+  </ng-container>
+</section>

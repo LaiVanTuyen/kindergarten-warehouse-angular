@@ -13,6 +13,7 @@ import {
 } from '@kindergarten-warehouse/data-access';
 import { ErrorStateComponent } from '../shared/error-state/error-state.component';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { PlanCollaborationComponent } from './plan-collaboration.component';
 
 /**
  * Read view of a lesson plan. With route data `{ print: true }` it renders as a
@@ -21,7 +22,7 @@ import { SpinnerComponent } from '../shared/spinner/spinner.component';
 @Component({
   selector: 'app-plan-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, ErrorStateComponent, SpinnerComponent],
+  imports: [CommonModule, RouterModule, ErrorStateComponent, SpinnerComponent, PlanCollaborationComponent],
   templateUrl: './plan-view.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
