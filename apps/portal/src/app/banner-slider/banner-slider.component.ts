@@ -37,6 +37,7 @@ export class BannerSliderComponent implements OnInit {
   readonly slides = signal<Banner[]>([]);
   readonly activeIndex = signal(0);
   readonly error = signal(false);
+  readonly autoplayPaused = signal(false);
 
   private readonly isPaused = signal(false);
   readonly hasSlides = computed(() => this.slides().length > 0);
@@ -50,7 +51,9 @@ export class BannerSliderComponent implements OnInit {
     interval(BannerSliderComponent.AUTOPLAY_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (this.isPaused() || !this.hasSlides()) return;
+        if (this.isPaused() || this.autoplayPaused() || !this.hasSlides()
+            || document.visibilityState !== 'visible'
+            || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         this.activeIndex.update(
           (i) => (i + 1) % Math.max(this.slides().length, 1)
         );

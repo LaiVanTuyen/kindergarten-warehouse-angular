@@ -187,8 +187,9 @@ export class ResourceDetailComponent implements OnInit {
    * chính nó TRƯỚC khi phân trang.
    */
   readonly relatedResources$ = this.resource$.pipe(
-    switchMap((current) =>
-      this.resourceService
+    switchMap((current) => {
+      if (!current?.id || !current.topicId) return of<Resource[]>([]);
+      return this.resourceService
         .getPortalResources({
           page: 1,
           size: RELATED_FETCH_SIZE,
@@ -209,8 +210,8 @@ export class ResourceDetailComponent implements OnInit {
             }
             return of<Resource[]>([]);
           })
-        )
-    )
+        );
+    })
   );
 
   ngOnInit(): void {

@@ -36,6 +36,7 @@ export class ResourceCardComponent {
 
   @Input({ required: true })
   set resource(value: Resource) {
+    this.imageError.set(false);
     this.resourceSignal.set(value);
   }
   get resource(): Resource {

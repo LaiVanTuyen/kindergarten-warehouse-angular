@@ -50,7 +50,7 @@
     <button type="button" (click)="toggleFavorite($event)"
       [attr.aria-label]="isFavorited() ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
       [attr.aria-pressed]="isFavorited()"
-      class="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-surface/90 backdrop-blur-sm shadow-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+      class="absolute top-3 left-3 z-10 pointer-events-auto w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm shadow-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
       <i class="text-xl transition-colors"
         [ngClass]="isFavorited() ? 'ph-fill ph-heart text-accent' : 'ph ph-heart text-ink-muted'"
         aria-hidden="true"></i>
@@ -121,7 +121,7 @@
         </button>
         <button type="button" (click)="onDownload($event)"
           aria-label="Tải tài liệu về máy"
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-100 text-primary hover:bg-primary-200 dark:bg-primary-500/15 dark:hover:bg-primary-500/25 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          class="w-11 h-11 flex items-center justify-center rounded-full bg-primary-100 text-primary hover:bg-primary-200 dark:bg-primary-500/15 dark:hover:bg-primary-500/25 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <i class="ph-bold ph-download-simple text-sm" aria-hidden="true"></i>
         </button>
       </div>

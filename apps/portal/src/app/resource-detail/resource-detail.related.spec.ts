@@ -111,6 +111,17 @@ describe('ResourceDetailComponent — tài liệu liên quan', () => {
     paramMap$.next(convertToParamMap({ slug: currentResource.slug }));
   }
 
+  it('không gọi danh sách liên quan khi tài liệu không tồn tại', (done) => {
+    resourceService.getResource.mockReturnValue(of({ result: null }));
+    const component = createComponent();
+    component.relatedResources$.subscribe((list) => {
+      expect(list).toEqual([]);
+      expect(resourceService.getPortalResources).not.toHaveBeenCalled();
+      done();
+    });
+    emitRoute();
+  });
+
   it('gọi service công khai, KHÔNG gọi service admin', (done) => {
     const component = createComponent();
 

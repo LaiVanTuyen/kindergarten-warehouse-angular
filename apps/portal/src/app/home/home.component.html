@@ -1,15 +1,32 @@
 <div class="font-sans min-h-screen bg-bg relative overflow-hidden z-0">
   <!-- Subtle, static brand accents (light on GPU — no pulse/blur animation) -->
-  <div class="absolute inset-0 w-full h-full overflow-hidden -z-10 pointer-events-none" aria-hidden="true">
-    <div class="absolute top-[-8%] left-[-10%] w-[45%] h-[480px] rounded-full bg-primary-300/15 blur-[120px]"></div>
-    <div class="absolute top-[35%] right-[-8%] w-[40%] h-[480px] rounded-full bg-accent-300/12 blur-[120px]"></div>
-  </div>
 
   <!-- Hero Section (Slider) -->
   <app-banner-slider></app-banner-slider>
 
+  <section class="container mx-auto px-4 pt-6 mb-10" aria-label="Tìm tài liệu">
+    <div class="rounded-2xl border border-line bg-surface p-5 sm:p-8 shadow-sm flex flex-col lg:flex-row lg:items-center gap-6">
+      <div class="flex-1">
+        <p class="text-primary text-sm font-semibold mb-2">KHO HỌC LIỆU MẦM NON</p>
+        <h1 class="text-2xl sm:text-3xl font-display font-bold text-ink leading-tight">Ý tưởng hay cho mỗi ngày đến lớp</h1>
+        <p class="text-ink-muted mt-2 leading-relaxed">Tìm giáo án, hoạt động và tài liệu phù hợp với lớp học của bạn.</p>
+        <div class="flex flex-wrap gap-2 mt-4" aria-label="Gợi ý tìm kiếm">
+          <a routerLink="/resources" [queryParams]="{ search: 'giáo án' }" class="rounded-full border border-line px-3 py-2 text-sm text-ink-soft hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-focus">Giáo án</a>
+          <a routerLink="/resources" [queryParams]="{ search: 'hoạt động' }" class="rounded-full border border-line px-3 py-2 text-sm text-ink-soft hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-focus">Hoạt động lớp học</a>
+          <a routerLink="/resources" [queryParams]="{ search: 'trò chơi' }" class="rounded-full border border-line px-3 py-2 text-sm text-ink-soft hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-focus">Trò chơi cho bé</a>
+        </div>
+      </div>
+      <form (ngSubmit)="search()" class="flex flex-col sm:flex-row gap-3 w-full lg:max-w-lg">
+        <label for="home-search" class="sr-only">Từ khóa tìm tài liệu</label>
+        <input id="home-search" name="keyword" [(ngModel)]="searchQuery" type="search" placeholder="Ví dụ: hoạt động ngoài trời…"
+          class="min-w-0 flex-1 rounded-xl border border-line bg-bg px-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-focus" />
+        <button type="submit" class="rounded-xl bg-primary px-5 py-3 font-semibold text-ink-onbrand focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">Tìm tài liệu</button>
+      </form>
+    </div>
+  </section>
+
   <!-- Featured Categories -->
-  <div class="container mx-auto px-4 mb-16">
+  <div *ngIf="(categories$ | async)?.length" class="container mx-auto px-4 mb-16">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-ink font-display">Khám phá danh mục</h2>
     </div>
@@ -39,14 +56,14 @@
       </div>
 
       <!-- Navigation Arrows (Positioned Outside & Safe) -->
-      <button (click)="scrollCategories('left')"
+      <button type="button" aria-label="Cuộn danh mục sang trái" (click)="scrollCategories('left')"
         class="hidden md:flex absolute top-[40%] -translate-y-1/2 -left-8 bg-surface/90 backdrop-blur-sm text-ink-soft hover:text-primary shadow-md rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-line hover:border-primary-300">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
-      <button (click)="scrollCategories('right')"
+      <button type="button" aria-label="Cuộn danh mục sang phải" (click)="scrollCategories('right')"
         class="hidden md:flex absolute top-[40%] -translate-y-1/2 -right-8 bg-surface/90 backdrop-blur-sm text-ink-soft hover:text-primary shadow-md rounded-full w-14 h-14 items-center justify-center transition-all duration-300 hover:scale-110 z-30 border border-line hover:border-primary-300">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -58,9 +75,9 @@
 
   <!-- Latest Resources Section -->
   <div class="container mx-auto px-4 mb-16">
-    <div class="flex justify-between items-end mb-8">
+    <div class="flex flex-wrap gap-4 justify-between items-end mb-8">
       <div>
-        <h2 class="text-2xl font-bold text-ink font-display">Tài nguyên Mới nhất</h2>
+        <h2 class="text-2xl font-bold text-ink font-display">Tài liệu mới nhất</h2>
         <p class="text-ink-muted mt-1">Các tài liệu giáo dục và hoạt động mới nhất được cập nhật</p>
       </div>
       <a routerLink="/resources"
@@ -68,6 +85,11 @@
         Xem tất cả
         <i class="ph ph-arrow-right font-bold group-hover:translate-x-1 transition-transform"></i>
       </a>
+    </div>
+    <div *ngIf="(latestResources$ | async)?.length === 0" class="rounded-2xl border border-dashed border-line bg-surface p-8 text-center">
+      <p class="font-semibold text-ink">{{ resourcesFailed() ? 'Chưa tải được tài liệu' : 'Chưa có tài liệu để hiển thị' }}</p>
+      <p class="text-ink-muted mt-2">{{ resourcesFailed() ? 'Vui lòng kiểm tra kết nối và thử lại sau.' : 'Bạn có thể khám phá toàn bộ kho tài liệu hoặc thử lại sau.' }}</p>
+      <a routerLink="/resources" class="inline-block mt-4 font-semibold text-primary">Khám phá kho tài liệu →</a>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

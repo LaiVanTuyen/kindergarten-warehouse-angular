@@ -11,6 +11,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* =============================================================================
  * Base + component primitives.
  * NOTE: Angular's esbuild compiles each @import'd CSS file in isolation, so

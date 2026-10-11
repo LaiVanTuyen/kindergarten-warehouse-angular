@@ -4,9 +4,11 @@ import {
   ElementRef,
   ViewChild,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { catchError, map, of, shareReplay } from 'rxjs';
 
 import {
@@ -25,6 +27,7 @@ import { BannerSliderComponent } from '../banner-slider/banner-slider.component'
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ResourceCardComponent,
     BannerSliderComponent,
   ],
@@ -35,6 +38,14 @@ export class HomeComponent {
   private readonly resourceService = inject(ResourceService);
   private readonly categoryService = inject(CategoryService);
   private readonly downloadService = inject(ResourceDownloadService);
+  private readonly router = inject(Router);
+  searchQuery = '';
+  readonly resourcesFailed = signal(false);
+
+  search(): void {
+    const keyword = this.searchQuery.trim();
+    this.router.navigate(['/resources'], { queryParams: keyword ? { search: keyword } : {} });
+  }
 
   @ViewChild('categoryScroll') categoryScroll?: ElementRef<HTMLElement>;
 
@@ -54,8 +65,11 @@ export class HomeComponent {
     // truyen len chi gay hieu nham la co the loc duoc trang thai khac.
     .getPortalResources({ page: 1, size: 4, sort: 'createdAt,desc' })
     .pipe(
-      map((res) => res.data?.content ?? []),
-      catchError(() => of<Resource[]>([])),
+      map((res) => res.data?.content ?? res.result?.content ?? []),
+      catchError(() => {
+        this.resourcesFailed.set(true);
+        return of<Resource[]>([]);
+      }),
       shareReplay({ bufferSize: 1, refCount: true })
     );
 

@@ -1,88 +1,26 @@
-<footer class="bg-surface-2 pt-16 pb-8 border-t border-line font-sans mt-auto">
-    <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <!-- Brand -->
-            <div class="space-y-4">
-                <a routerLink="/" class="inline-flex items-center gap-2 group">
-                    <span class="text-xl font-black text-primary tracking-tight font-display">Kinder</span>
-                    <span class="text-xl font-black text-accent tracking-tight font-display">World</span>
-                </a>
-                <p class="text-ink-soft text-sm leading-relaxed max-w-xs">
-                    Nền tảng tài liệu giáo dục mầm non hàng đầu. Giúp bé vừa học vừa chơi, phát triển toàn diện.
-                </p>
-                <div class="flex gap-4 pt-2">
-                    <a href="#"
-                        class="w-10 h-10 rounded-full bg-surface shadow-sm flex items-center justify-center text-ink-muted hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-500/15 transition-all">
-                        <i class="ph-fill ph-facebook-logo text-xl"></i>
-                    </a>
-                    <a href="#"
-                        class="w-10 h-10 rounded-full bg-surface shadow-sm flex items-center justify-center text-ink-muted hover:text-accent hover:bg-accent-100 dark:hover:bg-accent-500/15 transition-all">
-                        <i class="ph-fill ph-instagram-logo text-xl"></i>
-                    </a>
-                    <a href="#"
-                        class="w-10 h-10 rounded-full bg-surface shadow-sm flex items-center justify-center text-ink-muted hover:text-danger hover:bg-danger-soft transition-all">
-                        <i class="ph-fill ph-youtube-logo text-xl"></i>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Quick Links -->
-            <div>
-                <h4 class="font-bold text-ink mb-6 text-lg">Liên kết nhanh</h4>
-                <ul class="space-y-3 text-sm">
-                    <li><a routerLink="/" class="text-ink-soft hover:text-primary transition-colors">Trang chủ</a>
-                    </li>
-                    <li><a routerLink="/resources" class="text-ink-soft hover:text-primary transition-colors">Tài
-                            liệu</a></li>
-                    <li><a routerLink="/about" class="text-ink-soft hover:text-primary transition-colors">Về chúng
-                            tôi</a></li>
-                    <li><a href="#" class="text-ink-soft hover:text-primary transition-colors">Liên hệ</a></li>
-                </ul>
-            </div>
-
-            <!-- Categories -->
-            <div>
-                <h4 class="font-bold text-ink mb-6 text-lg">Danh mục</h4>
-                <ul class="space-y-3 text-sm">
-                    <li *ngFor="let cat of categories$ | async; trackBy: trackByCategoryId">
-                        <a [routerLink]="['/resources']" [queryParams]="{ category: cat.slug }"
-                            class="text-ink-soft hover:text-primary transition-colors">
-                            {{ cat.name }}
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Contact -->
-            <div>
-                <h4 class="font-bold text-ink mb-6 text-lg">Liên hệ</h4>
-                <ul class="space-y-4 text-sm">
-                    <li class="flex items-start gap-3">
-                        <i class="ph-fill ph-map-pin text-primary text-lg mt-0.5"></i>
-                        <span class="text-ink-soft">123 Đường ABC, Quận XYZ,<br>TP. Hồ Chí Minh</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i class="ph-fill ph-envelope-simple text-primary text-lg"></i>
-                        <a href="mailto:contact@kinderworld.com"
-                            class="text-ink-soft hover:text-primary">contact@kinderworld.com</a>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i class="ph-fill ph-phone text-primary text-lg"></i>
-                        <a href="tel:+84123456789" class="text-ink-soft hover:text-primary">+84 123 456 789</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Copyright -->
-        <div class="border-t border-line pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-ink-muted text-sm font-medium">
-                © {{ year }} KinderWorld. Bảo lưu mọi quyền.
-            </p>
-            <div class="flex gap-6 text-sm text-ink-muted">
-                <a href="#" class="hover:text-primary transition-colors">Chính sách bảo mật</a>
-                <a href="#" class="hover:text-primary transition-colors">Điều khoản dịch vụ</a>
-            </div>
-        </div>
+<footer class="bg-surface-2 pt-10 pb-6 border-t border-line font-sans mt-auto">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <div class="space-y-3">
+        <a routerLink="/" class="inline-flex font-display text-xl font-bold" aria-label="KinderWorld — Trang chủ"><span class="text-primary">Kinder</span><span class="text-accent">World</span></a>
+        <p class="text-ink-soft text-sm leading-relaxed max-w-sm">Kho học liệu mầm non dành cho giáo viên. Cùng chia sẻ ý tưởng, chuẩn bị bài học và tạo thêm niềm vui cho trẻ mỗi ngày.</p>
+      </div>
+      <nav aria-label="Liên kết cuối trang">
+        <h2 class="font-semibold text-ink mb-4 text-base">Khám phá</h2>
+        <ul class="space-y-3 text-sm">
+          <li><a routerLink="/resources" class="text-ink-soft hover:text-primary focus-visible:ring-2 focus-visible:ring-focus">Kho tài liệu</a></li>
+          <li><a routerLink="/about" class="text-ink-soft hover:text-primary focus-visible:ring-2 focus-visible:ring-focus">Về kho học liệu</a></li>
+          <li><a routerLink="/login" class="text-ink-soft hover:text-primary focus-visible:ring-2 focus-visible:ring-focus">Đăng nhập để lưu và tải tài liệu</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h2 class="font-semibold text-ink mb-4 text-base">Hỗ trợ sử dụng</h2>
+        <p class="text-ink-soft text-sm leading-relaxed">Nếu cần hỗ trợ tài khoản hoặc quyền truy cập, vui lòng liên hệ người quản trị kho học liệu của trường.</p>
+        <a routerLink="/resources" class="inline-flex mt-4 text-sm font-semibold text-primary">Bắt đầu tìm tài liệu <span aria-hidden="true" class="ml-2">→</span></a>
+      </div>
     </div>
+    <div class="border-t border-line pt-5 text-sm text-ink-muted flex flex-wrap justify-between gap-3">
+      <p>© {{ year }} KinderWorld.</p><p>Học liệu được chia sẻ cho mục đích giáo dục.</p>
+    </div>
+  </div>
 </footer>
