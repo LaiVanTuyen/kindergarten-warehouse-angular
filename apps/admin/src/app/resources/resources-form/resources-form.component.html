@@ -250,7 +250,7 @@
                 </div>
 
                 <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,video/*,image/*">
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.mp4,.mov,.avi,.mp3,.m4a,.wav,.ogg,.png,.jpg,.jpeg,.webp">
 
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -359,6 +359,7 @@
                                 <option value="PDF">PDF (.pdf)</option>
                                 <option value="POWERPOINT">PowerPoint (.ppt, .pptx)</option>
                                 <option value="IMAGE">Hình ảnh (.jpg, .png...)</option>
+                                <option value="AUDIO">Âm thanh (.mp3, .m4a, .wav, .ogg)</option>
                                 <option value="OTHER">Khác (.zip, .rar...)</option>
                             </select>
                             <div

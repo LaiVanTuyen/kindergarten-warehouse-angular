@@ -78,7 +78,7 @@ export class CreateResourceComponent implements OnInit {
   /** File types approved for teacher uploads. Kept conservative — the backend
    *  enforces its own allowlist, this is just the friendly UX gate. */
   readonly ACCEPTED_TYPES =
-    '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp3,.mp4,.m4a,.wav,.png,.jpg,.jpeg,.webp';
+    '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp3,.mp4,.m4a,.wav,.ogg,.png,.jpg,.jpeg,.webp';
 
   readonly categories = signal<Category[]>([]);
   readonly topics = signal<Topic[]>([]);

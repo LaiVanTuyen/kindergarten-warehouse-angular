@@ -438,6 +438,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
     const excelExts = ['xls', 'xlsx', 'csv'];
     const pptExts = ['ppt', 'pptx'];
     const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+    const audioExts = ['mp3', 'm4a', 'wav', 'ogg'];
 
     if (videoExts.includes(ext)) return 'VIDEO';
     if (docExts.includes(ext)) return 'DOCUMENT';
@@ -445,6 +446,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
     if (excelExts.includes(ext)) return 'EXCEL';
     if (pptExts.includes(ext)) return 'POWERPOINT';
     if (imgExts.includes(ext)) return 'IMAGE';
+    if (audioExts.includes(ext)) return 'AUDIO';
     return 'OTHER';
   }
 

@@ -143,7 +143,11 @@ export class PlanPresenterComponent {
     else return;
     event.preventDefault();
   }
-  fileUrl(r: Resource): string { return `${environment.apiUrl}/resources/${encodeURIComponent(r.id)}/file`; }
+  /**
+   * In-class playback goes through `/stream`, not `/file`: same access check, supports
+   * Range (seeking), and does not count a download — a <video> issues many range requests.
+   */
+  fileUrl(r: Resource): string { return `${environment.apiUrl}/resources/${encodeURIComponent(r.id)}/stream`; }
   watchUrl(r: Resource): string { const id = youtubeVideoId(r.fileUrl); return id ? `https://www.youtube.com/watch?v=${id}` : ''; }
   private embed(r: Resource | null) {
     const id = r?.resourceType === 'YOUTUBE' ? youtubeVideoId(r.fileUrl) : null;
