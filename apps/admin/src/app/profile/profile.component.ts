@@ -225,7 +225,7 @@ export class ProfileComponent {
         next: () => {
           this.isChangingPassword.set(false);
           this.passwordForm.reset();
-          this.toast.show('Đổi mật khẩu thành công.', 'success');
+            this.authService.logout('Đã đổi mật khẩu. Vui lòng đăng nhập lại.');
         },
         error: (err: HttpErrorResponse) => {
           this.isChangingPassword.set(false);

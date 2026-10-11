@@ -40,6 +40,17 @@ import { LoadingSkeletonComponent } from '../shared/loading-skeleton/loading-ske
 import { PaginatorComponent } from '../shared/paginator/paginator.component';
 import { TranslatePipe } from '../pipes/translate.pipe';
 
+/** UI sort option -> Spring `sort` param (whitelisted by the backend). */
+const SORT_PARAMS: Record<string, string> = {
+  newest: 'createdAt,desc',
+  'views-desc': 'viewsCount,desc',
+  'downloads-desc': 'downloadCount,desc',
+  'name-asc': 'title,asc',
+  'name-desc': 'title,desc',
+  'rating-desc': 'averageRating,desc',
+  'rating-asc': 'averageRating,asc',
+};
+
 @Component({
   selector: 'app-resource-list',
   standalone: true,
@@ -100,6 +111,10 @@ export class ResourceListComponent implements OnInit {
 
   searchQuery$ = this.route.queryParams.pipe(
     map((params) => params['search'] || '')
+  );
+  /** `?tags=` from tag chips on the detail page (one tag at a time in the UI). */
+  tagFilter$ = this.route.queryParams.pipe(
+    map((params) => (params['tags'] as string | undefined) || '')
   );
   sortOption$ = new BehaviorSubject<string>('newest');
 
@@ -316,14 +331,16 @@ export class ResourceListComponent implements OnInit {
     this.selectedTopicId$,
     this.selectedAgeGroups$,
     this.searchQuery$.pipe(startWith('')),
+    this.tagFilter$.pipe(startWith('')),
     this.sortOption$,
     this.currentPage$,
   ]).pipe(
-    map(([category, topicId, ageGroups, search, sort, page]) => ({
+    map(([category, topicId, ageGroups, search, tag, sort, page]) => ({
       category,
       topicId,
       ageGroups,
       search,
+      tag,
       sort,
       page,
     }))
@@ -332,7 +349,7 @@ export class ResourceListComponent implements OnInit {
   resources$ = this.filters$.pipe(
     debounceTime(100), // Prevent rapid double-firing
     tap(() => this.isLoading$.next(true)),
-    switchMap(({ category, topicId, ageGroups, search, sort, page }) => {
+    switchMap(({ category, topicId, ageGroups, search, tag, sort, page }) => {
       let targetTopicIds: string[] | undefined = undefined;
 
       if (topicId) {
@@ -357,6 +374,10 @@ export class ResourceListComponent implements OnInit {
           ageGroupId:
             ageGroupIds.length > 0 ? ageGroupIds.join(',') : undefined,
           keyword: search,
+          tags: tag ? [tag] : undefined,
+          // Trước đây sortOption$ nằm trong filters$ nhưng không được gửi đi,
+          // nên dropdown "Sắp xếp" không có tác dụng.
+          sort: SORT_PARAMS[sort] ?? SORT_PARAMS['newest'],
           page,
           size: 9,
         })
@@ -373,6 +394,14 @@ export class ResourceListComponent implements OnInit {
 
   // Removed client-side pagination wrapping
   // resources$ = combineLatest...
+
+  clearTag(): void {
+    this.currentPage$.next(1);
+    this.router.navigate(['/resources'], {
+      queryParams: { tags: null },
+      queryParamsHandling: 'merge',
+    });
+  }
 
   goToPage(page: number): void {
     if (page === this.currentPage$.value) return;

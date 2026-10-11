@@ -108,3 +108,12 @@
   .divider { @apply border-t border-line; }
   .link { @apply text-primary-700 dark:text-primary-300 font-semibold hover:underline underline-offset-2; }
 }
+
+/* Printing (lesson plans → "In / Lưu PDF"): only the page content, on white paper. */
+@media print {
+  app-header, app-footer, app-toast, app-route-progress, .no-print { display: none !important; }
+  html, body { background: #fff !important; color: #000 !important; }
+  a { color: inherit !important; text-decoration: none !important; }
+  .print-avoid-break { break-inside: avoid; }
+  @page { size: A4; margin: 15mm; }
+}

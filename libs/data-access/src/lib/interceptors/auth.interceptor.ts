@@ -22,7 +22,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       // CASE A: Login failed (401 on /auth/login)
       if (error.status === 401 && req.url.includes('/auth/login')) {
-        return throwError(() => apiError);
+        return throwError(() => error);
       }
 
       // CASE B: Logout failed (401 on /auth/logout) -> Stop the loop!
@@ -36,22 +36,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // CASE C: Token expired while using app (401 elsewhere)
-      if (error.status === 401) {
-        toastService.show('Session expired. Please login again.', 'error');
+      if (error.status === 401 && authService.isLoggedIn()) {
+        toastService.show('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
         // Clear user info and redirect
         authService.logout(undefined, false); // See updated AuthService
       }
 
-      // Handle other errors (500 etc)
-      // Don't show toast here - let components handle it via their error handlers
-      // This prevents duplicate toasts
-      if (error.status !== 401 && error.status !== 500) {
-        const msg =
-          error.error?.message ||
-          error.message ||
-          'An unexpected error occurred';
-        toastService.show(msg, 'error');
-      }
+      // Feature components display operation errors once. The interceptor only
+      // coordinates an expired session, preventing duplicate error notifications.
 
       return throwError(() => error);
     })

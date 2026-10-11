@@ -1,0 +1,129 @@
+<div [ngClass]="printMode ? 'min-h-screen bg-white py-8' : 'min-h-screen bg-surface-2 pt-24 pb-16'">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+
+    <!-- Toolbar (never printed) -->
+    <div class="no-print flex flex-wrap items-center justify-between gap-3 mb-4">
+      <a [routerLink]="printMode && id() ? ['/plans', id()] : ['/plans']"
+        class="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary">
+        <i class="ph ph-arrow-left" aria-hidden="true"></i> {{ printMode ? 'Quay lại kế hoạch' : 'Kế hoạch hoạt động' }}
+      </a>
+      <div *ngIf="detail() as d" class="flex flex-wrap gap-2">
+        <ng-container *ngIf="printMode; else viewActions">
+          <button type="button" (click)="print()" class="min-h-11 px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-bold">
+            <i class="ph-bold ph-printer" aria-hidden="true"></i> In / Lưu PDF
+          </button>
+        </ng-container>
+        <ng-template #viewActions>
+          <a [routerLink]="['/plans', d.plan.id, 'present']" class="min-h-11 px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-bold inline-flex items-center gap-1">
+            <i class="ph-bold ph-play" aria-hidden="true"></i> Bắt đầu hoạt động
+          </a>
+          <a *ngIf="d.plan.isOwner" [routerLink]="['/plans', d.plan.id, 'edit']"
+            class="min-h-11 px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-bold inline-flex items-center gap-1">
+            <i class="ph-bold ph-pencil-simple" aria-hidden="true"></i> Sửa
+          </a>
+          <a [routerLink]="['/plans', d.plan.id, 'print']"
+            class="min-h-11 px-4 py-2 rounded-xl border border-line bg-surface text-ink-soft font-semibold hover:text-primary inline-flex items-center gap-1">
+            <i class="ph ph-printer" aria-hidden="true"></i> In / PDF
+          </a>
+          <button type="button" (click)="copy()" [disabled]="busy()"
+            class="min-h-11 px-4 py-2 rounded-xl border border-line bg-surface text-ink-soft font-semibold hover:text-primary">
+            <i class="ph ph-copy" aria-hidden="true"></i> {{ d.plan.template ? 'Dùng mẫu này' : 'Sao chép' }}
+          </button>
+          <button *ngIf="d.plan.isOwner" type="button" (click)="remove()" [disabled]="busy()"
+            class="min-h-11 px-4 py-2 rounded-xl border border-line bg-surface text-danger font-semibold hover:bg-danger-soft">
+            <i class="ph ph-trash" aria-hidden="true"></i> Xoá
+          </button>
+        </ng-template>
+      </div>
+    </div>
+
+    <app-error-state *ngIf="error()" [message]="error()!" (retry)="load()"></app-error-state>
+    <app-spinner *ngIf="!detail() && !error()" size="lg" label="Đang tải kế hoạch…" [showLabel]="true"></app-spinner>
+
+    <article *ngIf="detail() as d" class="bg-surface rounded-3xl border border-line shadow-sm p-6 md:p-8 text-ink"
+      [ngClass]="printMode ? 'print:border-0 print:shadow-none print:p-0' : ''">
+      <header class="border-b border-line pb-4 mb-5">
+        <p class="text-xs font-bold uppercase tracking-wide text-ink-muted">
+          Kế hoạch hoạt động
+          <span *ngIf="d.plan.template"> · Mẫu</span>
+          <span *ngIf="!d.plan.template && d.plan.status === 'DRAFT'"> · Bản nháp</span>
+        </p>
+        <h1 class="text-2xl md:text-3xl font-extrabold font-display break-words mt-1">{{ d.plan.title }}</h1>
+        <dl class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div><dt class="text-ink-muted">Độ tuổi</dt><dd class="font-semibold">{{ d.plan.ageGroup?.name || '—' }}</dd></div>
+          <div><dt class="text-ink-muted">Chủ đề</dt><dd class="font-semibold">{{ d.plan.topic?.name || '—' }}</dd></div>
+          <div><dt class="text-ink-muted">Thời lượng</dt><dd class="font-semibold">{{ d.plan.durationMinutes ? d.plan.durationMinutes + ' phút' : '—' }}</dd></div>
+          <div><dt class="text-ink-muted">Sĩ số</dt><dd class="font-semibold">{{ d.classSize ? d.classSize + ' trẻ' : '—' }}</dd></div>
+        </dl>
+        <p class="mt-2 text-sm text-ink-muted">Người soạn: {{ d.plan.ownerName }}<span *ngIf="d.plan.taughtOn"> · Ngày dạy: {{ d.plan.taughtOn | date:'dd/MM/yyyy' }}</span></p>
+      </header>
+
+      <section class="mb-5 print-avoid-break">
+        <h2 class="text-lg font-bold mb-2">Mục tiêu</h2>
+        <ul *ngIf="lines(d.plan.objectives).length; else none" class="list-disc pl-5 space-y-1">
+          <li *ngFor="let l of lines(d.plan.objectives)">{{ l }}</li>
+        </ul>
+      </section>
+
+      <section class="mb-5 print-avoid-break">
+        <h2 class="text-lg font-bold mb-2">Chuẩn bị</h2>
+        <ul *ngIf="lines(d.preparation).length; else none" class="list-disc pl-5 space-y-1">
+          <li *ngFor="let l of lines(d.preparation)">{{ l }}</li>
+        </ul>
+      </section>
+
+      <section class="mb-5">
+        <h2 class="text-lg font-bold mb-2">
+          Tiến trình
+          <span *ngIf="d.stepMinutesTotal" class="text-sm font-normal text-ink-muted">
+            (tổng {{ d.stepMinutesTotal }} phút<span *ngIf="d.plan.durationMinutes && d.stepMinutesTotal !== d.plan.durationMinutes"> — khác thời lượng {{ d.plan.durationMinutes }} phút</span>)
+          </span>
+        </h2>
+        <ol class="space-y-4">
+          <li *ngFor="let s of d.steps; let i = index" class="border border-line rounded-2xl p-4 print-avoid-break">
+            <h3 class="font-bold flex flex-wrap items-center gap-2">
+              <span>{{ i + 1 }}. {{ s.title }}</span>
+              <span *ngIf="s.durationMinutes" class="text-sm font-normal text-ink-muted">· {{ s.durationMinutes }} phút</span>
+              <span *ngIf="s.source === 'AI_SUGGESTED'" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-100 text-accent">AI đề xuất</span>
+            </h3>
+            <p *ngIf="s.description" class="mt-2 whitespace-pre-line text-ink-soft">{{ s.description }}</p>
+            <div *ngIf="s.resources.length" class="mt-3">
+              <p class="text-sm font-semibold text-ink-muted">Học liệu (từ kho):</p>
+              <ul class="mt-1 space-y-1 text-sm">
+                <li *ngFor="let r of s.resources">
+                  <ng-container *ngIf="r.available && r.resource as res; else gone">
+                    <a [routerLink]="['/resources', res.slug]" class="text-primary hover:underline">{{ res.title }}</a>
+                    <span class="text-ink-muted"> · {{ res.fileType || res.resourceType }}</span>
+                  </ng-container>
+                  <ng-template #gone><span class="text-ink-muted italic">Tài liệu không còn khả dụng</span></ng-template>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="mb-5 print-avoid-break">
+        <h2 class="text-lg font-bold mb-2">Điều chỉnh / hỗ trợ trẻ</h2>
+        <ul *ngIf="lines(d.adaptations).length; else none" class="list-disc pl-5 space-y-1">
+          <li *ngFor="let l of lines(d.adaptations)">{{ l }}</li>
+        </ul>
+      </section>
+
+      <section class="print-avoid-break">
+        <h2 class="text-lg font-bold mb-2">Ghi nhận sau buổi học</h2>
+        <p *ngIf="d.reflection; else blankReflection" class="whitespace-pre-line text-ink-soft">{{ d.reflection }}</p>
+        <ng-template #blankReflection>
+          <!-- On paper, leave lines to write by hand. -->
+          <div *ngIf="printMode; else none" class="space-y-6 pt-2">
+            <div class="border-b border-dotted border-gray-400"></div>
+            <div class="border-b border-dotted border-gray-400"></div>
+            <div class="border-b border-dotted border-gray-400"></div>
+          </div>
+        </ng-template>
+      </section>
+
+      <ng-template #none><p class="text-ink-muted italic">Chưa có nội dung.</p></ng-template>
+    </article>
+  </div>
+</div>

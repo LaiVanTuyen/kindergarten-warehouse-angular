@@ -15,9 +15,9 @@ export interface DashboardStats {
   totalUsers: number;
   pendingApprovals: number;
   trendPct: {
-    resources: number;
-    views: number;
-    users: number;
+    resources: number | null;
+    views: number | null;
+    users: number | null;
   };
 }
 
@@ -29,7 +29,7 @@ export interface TrendSeries {
 }
 
 export interface PendingResource {
-  id: number;
+  id: string;
   title: string;
   uploader: string;
   uploaderAvatarUrl?: string;
@@ -39,7 +39,7 @@ export interface PendingResource {
 }
 
 export interface TopResource {
-  id: number;
+  id: string;
   title: string;
   topic: string;
   views: number;

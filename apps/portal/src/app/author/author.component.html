@@ -1,0 +1,44 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+    <app-error-state *ngIf="authorError()" [message]="authorError()!" (retry)="retry()"></app-error-state>
+
+    <app-spinner *ngIf="!author() && !authorError()" size="lg" label="Đang tải thông tin tác giả…" [showLabel]="true"></app-spinner>
+
+    <ng-container *ngIf="author() as a">
+      <section class="bg-surface rounded-3xl border border-line shadow-sm p-6 md:p-8 mb-10 flex flex-col md:flex-row gap-6 md:items-center">
+        <div class="w-24 h-24 rounded-full overflow-hidden border border-line bg-primary-100 text-primary flex items-center justify-center shrink-0">
+          <img *ngIf="a.avatarUrl; else initialTpl" [src]="authService.formatAssetUrl(a.avatarUrl)" [alt]="a.fullName" class="w-full h-full object-cover">
+          <ng-template #initialTpl><span class="text-4xl font-bold">{{ initial() }}</span></ng-template>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-bold uppercase tracking-wide text-ink-muted mb-1">Tác giả</p>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-ink font-display break-words">{{ a.fullName }}</h1>
+          <p *ngIf="a.bio" class="mt-2 text-ink-soft whitespace-pre-line">{{ a.bio }}</p>
+          <p *ngIf="a.joinedAt" class="mt-2 text-sm text-ink-muted">Tham gia từ {{ a.joinedAt | date:'MM/yyyy' }}</p>
+        </div>
+        <dl class="grid grid-cols-3 gap-3 text-center md:w-96">
+          <div class="rounded-2xl bg-surface-2 p-3"><dt class="text-xs text-ink-muted">Tài liệu</dt><dd class="text-xl font-extrabold text-ink">{{ a.resourceCount | number }}</dd></div>
+          <div class="rounded-2xl bg-surface-2 p-3"><dt class="text-xs text-ink-muted">Lượt xem</dt><dd class="text-xl font-extrabold text-ink">{{ a.totalViews | number }}</dd></div>
+          <div class="rounded-2xl bg-surface-2 p-3"><dt class="text-xs text-ink-muted">Lượt tải</dt><dd class="text-xl font-extrabold text-ink">{{ a.totalDownloads | number }}</dd></div>
+        </dl>
+      </section>
+
+      <h2 class="text-2xl font-bold text-ink mb-6 font-display">Tài liệu đã đăng</h2>
+
+      <div *ngIf="!loading() && resources().length === 0" class="bg-surface rounded-3xl shadow-sm border border-line">
+        <app-empty-state icon="ph ph-books" tone="sky" title="Chưa có tài liệu công khai"
+          message="Tác giả này chưa có tài liệu nào bạn có thể xem."></app-empty-state>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" [class.opacity-60]="loading()">
+        <app-resource-card *ngFor="let resource of resources(); trackBy: trackById" [resource]="resource"
+          (view)="onView(resource)" (download)="onDownload(resource)"></app-resource-card>
+      </div>
+
+      <div *ngIf="totalPages() > 1" class="mt-10 flex justify-center">
+        <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)"></app-paginator>
+      </div>
+    </ng-container>
+  </div>
+</div>

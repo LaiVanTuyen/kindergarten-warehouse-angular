@@ -24,6 +24,8 @@ import {
   TranslationService,
 } from '@kindergarten-warehouse/data-access';
 
+import { UnreadNotificationsStore } from '../notifications/unread-notifications.store';
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -36,6 +38,7 @@ export class HeaderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly favorites = inject(FavoritesService);
+  private readonly notifications = inject(UnreadNotificationsStore);
   private readonly eRef = inject(ElementRef<HTMLElement>);
   private readonly destroyRef = inject(DestroyRef);
   readonly translationService = inject(TranslationService);
@@ -46,6 +49,7 @@ export class HeaderComponent implements OnInit {
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
   readonly isTeacher = this.authService.isTeacher;
   readonly favoriteCount = this.favorites.count;
+  readonly unreadCount = this.notifications.unread;
 
   readonly userName = computed(() => this.currentUser()?.fullName ?? '');
   readonly userAvatar = computed(() =>

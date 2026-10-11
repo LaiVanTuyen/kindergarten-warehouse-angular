@@ -24,6 +24,10 @@ export interface Resource {
   slug: string;
   highlights?: string[]; // JSON mapped to string array
   ageGroups?: AgeGroup[]; // New field from spec
+  tags?: string[];
+  /** Uploader id/name — links to the public author page (/authors/:id). */
+  authorId?: number;
+  authorName?: string;
 
   // Enums or Union types
   // Enums or Union types
@@ -35,6 +39,7 @@ export interface Resource {
   // Mapped from backend fileType (or type)
   fileType?:
     | 'VIDEO'
+    | 'AUDIO'
     | 'DOCUMENT'
     | 'EXCEL'
     | 'PDF'
@@ -78,7 +83,7 @@ export interface UpdateResourceRequest {
   description?: string;
   topicId?: string;
   ageGroupIds?: string | string[]; // List<Long> but sent as query params usually string or multi-value
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
   file?: File; // If re-uploading (not in update spec but good to keep if needed)
   youtubeLink?: string;
   fileType?: string;
@@ -121,6 +126,9 @@ export interface ResourceFilterParams {
   categorySlugs?: string[];
   ageSlugs?: string[];
   types?: string[];
+  tags?: string[];
+  /** Author filter (uploader user id), used by the author page. */
+  createdBy?: number;
 }
 
 export interface Category {

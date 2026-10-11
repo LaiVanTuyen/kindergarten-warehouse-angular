@@ -84,15 +84,22 @@
         <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
           <div class="min-w-0 bg-surface-2">
             <div *ngIf="resource.resourceType === 'YOUTUBE'; else documentReader" class="p-4">
-              <iframe [src]="getSafeVideoUrl(resource.fileUrl)" [title]="resource.title"
+              <iframe *ngIf="isYouTube(resource.fileUrl)" [src]="getSafeVideoUrl(resource.fileUrl)" [title]="resource.title"
                 class="w-full aspect-video rounded-2xl" allowfullscreen
-                allow="encrypted-media; picture-in-picture"></iframe>
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+              <p class="text-sm text-ink-soft mt-3">Nếu video bị giới hạn nhúng, bạn có thể mở trực tiếp trên YouTube.</p>
+              <a [href]="youtubeWatchUrl(resource.fileUrl)" target="_blank" rel="noopener" class="text-primary underline">Xem trên YouTube</a>
             </div>
             <ng-template #documentReader>
-              <div *ngIf="resource.fileType === 'VIDEO' && authService.isLoggedIn(); else rasterReader" class="p-4">
-                <video [src]="resource.fileUrl" controls preload="none" [attr.aria-label]="resource.title"
+              <div *ngIf="resource.fileType === 'VIDEO' || resource.fileType === 'AUDIO'; else rasterReader" class="p-4">
+                <ng-container *ngIf="authService.isLoggedIn(); else mediaLogin">
+                <video *ngIf="resource.fileType === 'VIDEO'" [src]="resource.fileUrl" controls preload="metadata" [attr.aria-label]="resource.title"
                   class="w-full max-h-[660px] rounded-xl bg-black"></video>
-                <p class="text-xs text-ink-muted mt-3">Video sử dụng tệp gốc và yêu cầu tài khoản có quyền truy cập.</p>
+                <audio *ngIf="resource.fileType === 'AUDIO'" [src]="resource.fileUrl" controls preload="metadata" [attr.aria-label]="resource.title" class="w-full"></audio>
+                <p class="text-xs text-ink-muted mt-3">Phát âm thanh/video sử dụng tệp gốc và yêu cầu tài khoản có quyền truy cập.</p>
+                </ng-container>
+                <ng-template #mediaLogin><p>Đăng nhập để phát âm thanh hoặc video. <a routerLink="/login" class="text-primary underline">Đăng nhập</a></p></ng-template>
               </div>
               <ng-template #rasterReader><app-document-reader [resource]="resource"></app-document-reader></ng-template>
             </ng-template>
@@ -163,8 +170,12 @@
               </div>
               <div class="flex-1">
                 <p class="text-xs text-ink-muted font-bold mb-0.5 uppercase tracking-wide">Đăng bởi</p>
-                <h4 class="font-bold text-ink text-lg hover:text-primary cursor-pointer transition-colors">{{
-                  resource.createdBy || resource.uploader || 'Admin' }}</h4>
+                <a *ngIf="resource.authorId; else plainAuthor" [routerLink]="['/authors', resource.authorId]"
+                  class="font-bold text-ink text-lg hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded">{{
+                  resource.authorName || resource.createdBy || resource.uploader || 'Admin' }}</a>
+                <ng-template #plainAuthor>
+                  <h4 class="font-bold text-ink text-lg">{{ resource.createdBy || resource.uploader || 'Admin' }}</h4>
+                </ng-template>
               </div>
               <span class="text-xs text-ink-muted mt-1 block">{{ resource.createdAt | date:'dd/MM/yyyy' }}</span>
             </div>
@@ -173,6 +184,7 @@
               <div *ngIf="resource.topic?.name"><dt class="text-xs text-ink-muted mb-1">Chủ đề</dt><dd class="font-semibold">{{ resource.topic?.name }}</dd></div>
               <div *ngIf="resource.fileSize"><dt class="text-xs text-ink-muted mb-1">Tệp gốc</dt><dd>{{ resource.fileExtension?.toUpperCase() }} · {{ formatBytes(resource.fileSize) }}</dd></div>
               <div *ngIf="resource.ageGroups?.length"><dt class="text-xs text-ink-muted mb-2">Độ tuổi phù hợp</dt><dd class="flex flex-wrap gap-2"><span *ngFor="let age of resource.ageGroups" class="badge-primary">{{ age.name }}</span></dd></div>
+              <div *ngIf="resource.tags?.length"><dt class="text-xs text-ink-muted mb-2">Từ khoá</dt><dd class="flex flex-wrap gap-2"><a *ngFor="let tag of resource.tags" [routerLink]="['/resources']" [queryParams]="{ tags: tag }" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-muted text-ink-soft border border-line hover:text-primary hover:border-primary transition-colors">#{{ tag }}</a></dd></div>
             </dl>
 
 
@@ -200,7 +212,7 @@
             <!-- Action Area -->
             <div class="flex items-center gap-3 mb-6">
               <!-- Download Button (Primary) -->
-              <button (click)="downloadResource(resource)"
+              <button *ngIf="resource.resourceType !== 'YOUTUBE'" (click)="downloadResource(resource)"
                 class="flex-1 min-h-12 px-4 py-3 rounded-xl bg-primary text-ink-onbrand font-bold shadow-sm hover:opacity-90 transition flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60 disabled:cursor-not-allowed"
                 [disabled]="isDownloading()">
                 <svg *ngIf="isDownloading(); else dlIcon" class="animate-spin size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -237,6 +249,58 @@
                   Chia sẻ
                 </span>
               </button>
+
+              <!-- Add to collection (teachers) -->
+              <button *ngIf="canCollect()" type="button" (click)="collectionDialogOpen.set(true)" aria-label="Thêm vào bộ học liệu"
+                class="w-12 h-12 rounded-full bg-surface border border-line text-ink-soft shadow-sm hover:shadow-md hover:text-primary hover:border-primary hover:bg-primary-50 dark:hover:bg-primary-500/15 transition-all flex items-center justify-center group relative">
+                <i class="ph-bold ph-stack text-2xl group-hover:scale-110 transition-transform"></i>
+                <span
+                  class="absolute -top-10 left-1/2 -translate-x-1/2 bg-ink text-surface text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Thêm vào bộ
+                </span>
+              </button>
+
+              <!-- Report Button -->
+              <button type="button" (click)="openReport()" aria-label="Báo cáo vi phạm"
+                class="w-12 h-12 rounded-full bg-surface border border-line text-ink-soft shadow-sm hover:shadow-md hover:text-danger hover:border-danger hover:bg-danger-soft transition-all flex items-center justify-center group relative">
+                <i class="ph-bold ph-flag text-2xl group-hover:scale-110 transition-transform"></i>
+                <span
+                  class="absolute -top-10 left-1/2 -translate-x-1/2 bg-ink text-surface text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Báo cáo vi phạm
+                </span>
+              </button>
+            </div>
+
+            <app-add-to-collection-dialog *ngIf="collectionDialogOpen()" [resourceId]="resource.id"
+              [resourceTitle]="resource.title" (closed)="collectionDialogOpen.set(false)"></app-add-to-collection-dialog>
+
+            <!-- Report Dialog -->
+            <div *ngIf="reportOpen()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+              role="dialog" aria-modal="true" aria-labelledby="report-title" (click)="closeReport()">
+              <form class="w-full max-w-md bg-surface rounded-2xl shadow-xl p-6 space-y-4" (click)="$event.stopPropagation()"
+                (ngSubmit)="submitReport(resource)">
+                <h2 id="report-title" class="text-lg font-bold text-ink">Báo cáo vi phạm</h2>
+                <p class="text-sm text-ink-soft">Quản trị viên sẽ xem xét và thông báo kết quả cho bạn.</p>
+                <fieldset class="space-y-2">
+                  <legend class="text-sm font-semibold text-ink mb-1">Lý do</legend>
+                  <label *ngFor="let option of reportReasons" class="flex items-center gap-2 text-sm text-ink-soft cursor-pointer">
+                    <input type="radio" name="reportReason" [value]="option.value" [(ngModel)]="reportReason" required>
+                    {{ option.label }}
+                  </label>
+                </fieldset>
+                <label class="block text-sm font-semibold text-ink">
+                  Mô tả thêm <span class="font-normal text-ink-muted">(không bắt buộc)</span>
+                  <textarea name="reportDetails" [(ngModel)]="reportDetails" maxlength="1000" rows="3"
+                    class="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-sm font-normal text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"></textarea>
+                </label>
+                <div class="flex justify-end gap-2">
+                  <button type="button" (click)="closeReport()" class="px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold">Huỷ</button>
+                  <button type="submit" [disabled]="!reportReason || isReporting()"
+                    class="px-4 py-2 rounded-xl bg-danger text-ink-onbrand font-semibold disabled:opacity-60">
+                    {{ isReporting() ? 'Đang gửi…' : 'Gửi báo cáo' }}
+                  </button>
+                </div>
+              </form>
             </div>
 
           </div> <!-- Close Right Grid Column -->
@@ -259,8 +323,9 @@
             <h4 class="font-bold text-ink mb-4">{{ 'detail.leaveComment' | translate }}</h4>
 
             <div class="flex gap-4">
-              <img [src]="user.avatarUrl || 'assets/images/default-avatar.png'" [alt]="user.fullName"
+              <img *ngIf="user.avatarUrl; else commentAvatarInitial" [src]="user.avatarUrl" [alt]="user.fullName"
                 class="w-10 h-10 rounded-full object-cover ring-2 ring-line">
+              <ng-template #commentAvatarInitial><span class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-100 text-primary-700" aria-hidden="true">{{ (user.fullName || user.username || 'G').charAt(0) }}</span></ng-template>
 
               <div class="flex-1">
                 <div class="mb-4">

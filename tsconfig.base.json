@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@kindergarten-warehouse/data-access": ["libs/data-access/src/index.ts"]
+      "@kindergarten-warehouse/data-access": ["libs/data-access/src/index.ts"],
+      "@kindergarten-warehouse/ui": ["libs/ui/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

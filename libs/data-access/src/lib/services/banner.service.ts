@@ -87,11 +87,11 @@ export class BannerService {
 
   /**
    * Toggle banner visibility (PUBLIC ⇄ PRIVATE).
-   * PATCH /banners/:id/toggle  (Contract v1 §2.4)
+   * PUT /banners/:id/toggle (BannerController)
    */
   toggleBanner(id: number): Observable<ApiResponse<Banner>> {
     return this.http
-      .patch<ApiResponse<Banner>>(`${this.API_URL}/${id}/toggle`, {})
+      .put<ApiResponse<Banner>>(`${this.API_URL}/${id}/toggle`, {})
       .pipe(
         map((response) => {
           if (response.result) {

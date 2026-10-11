@@ -1,0 +1,179 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-28">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+    <app-error-state *ngIf="error()" [message]="error()!" (retry)="load()"></app-error-state>
+    <app-spinner *ngIf="!draft() && !error()" size="lg" label="Đang tải kế hoạch…" [showLabel]="true"></app-spinner>
+
+    <form *ngIf="draft() as d" (ngSubmit)="save()" class="space-y-6">
+      <h1 class="text-2xl font-extrabold text-ink">Soạn kế hoạch hoạt động</h1>
+
+      <!-- Thông tin -->
+      <section class="bg-surface rounded-2xl border border-line p-5 space-y-4" aria-labelledby="sec-info">
+        <h2 id="sec-info" class="font-bold text-ink">Thông tin</h2>
+        <label class="block text-sm font-semibold text-ink">Tên kế hoạch <span class="text-danger" aria-hidden="true">*</span>
+          <input name="title" [(ngModel)]="d.plan.title" (ngModelChange)="touch()" maxlength="200" required
+            class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <label class="block text-sm font-semibold text-ink">Độ tuổi
+            <select name="ageGroup" [ngModel]="d.plan.ageGroup?.id ?? null"
+              (ngModelChange)="d.plan.ageGroup = $event ? { id: $event, name: '' } : null; touch()"
+              class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink">
+              <option [ngValue]="null">Không chọn</option>
+              <option *ngFor="let a of ageGroups()" [ngValue]="+a.id">{{ a.name }}</option>
+            </select>
+          </label>
+          <label class="block text-sm font-semibold text-ink">Thời lượng (phút)
+            <input name="duration" type="number" min="1" max="240" [(ngModel)]="d.plan.durationMinutes" (ngModelChange)="touch()"
+              class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink" />
+          </label>
+          <label class="block text-sm font-semibold text-ink">Sĩ số (trẻ)
+            <input name="classSize" type="number" min="1" max="100" [(ngModel)]="d.classSize" (ngModelChange)="touch()"
+              class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Mục tiêu & Chuẩn bị -->
+      <section class="bg-surface rounded-2xl border border-line p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="block text-sm font-bold text-ink">Mục tiêu
+          <span class="block text-xs font-normal text-ink-muted">Mỗi dòng một mục tiêu.</span>
+          <textarea name="objectives" [(ngModel)]="d.plan.objectives" (ngModelChange)="touch()" rows="5" maxlength="4000"
+            placeholder="Trẻ nhận biết một số con vật&#10;Trẻ tập diễn đạt bằng câu ngắn"
+            class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink"></textarea>
+        </label>
+        <label class="block text-sm font-bold text-ink">Chuẩn bị
+          <span class="block text-xs font-normal text-ink-muted">Đồ dùng, thiết bị — mỗi dòng một thứ.</span>
+          <textarea name="preparation" [(ngModel)]="d.preparation" (ngModelChange)="touch()" rows="5" maxlength="4000"
+            placeholder="Tranh con vật&#10;Loa&#10;Thẻ hình"
+            class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink"></textarea>
+        </label>
+      </section>
+
+      <!-- Tiến trình -->
+      <section class="bg-surface rounded-2xl border border-line p-5" aria-labelledby="sec-steps">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+          <h2 id="sec-steps" class="font-bold text-ink">Tiến trình</h2>
+          <p class="text-sm" [ngClass]="d.plan.durationMinutes && stepTotal() > d.plan.durationMinutes ? 'text-danger font-semibold' : 'text-ink-muted'">
+            Tổng {{ stepTotal() }} phút<span *ngIf="d.plan.durationMinutes"> / {{ d.plan.durationMinutes }} phút</span>
+          </p>
+        </div>
+
+        <ol class="space-y-4">
+          <li *ngFor="let s of d.steps; let i = index; let last = last; trackBy: trackByIndex"
+            class="rounded-2xl border p-4" [ngClass]="s.source === 'AI_SUGGESTED' ? 'border-accent bg-accent-100/40 dark:bg-accent-500/10' : 'border-line'">
+            <div class="flex flex-wrap items-start gap-3">
+              <span class="w-8 h-8 shrink-0 rounded-full bg-primary-50 dark:bg-primary-500/15 text-primary font-bold flex items-center justify-center" aria-hidden="true">{{ i + 1 }}</span>
+              <div class="flex-1 min-w-[200px] grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-3">
+                <label class="block text-sm font-semibold text-ink">Tên bước
+                  <input [name]="'step-title-' + i" [(ngModel)]="s.title" (ngModelChange)="touch()" maxlength="200" required
+                    class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal text-ink" />
+                </label>
+                <label class="block text-sm font-semibold text-ink">Số phút
+                  <input [name]="'step-min-' + i" type="number" min="0" max="240" [(ngModel)]="s.durationMinutes" (ngModelChange)="touch()"
+                    class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal text-ink" />
+                </label>
+              </div>
+              <div class="flex gap-1">
+                <button type="button" (click)="moveStep(i, -1)" [disabled]="i === 0" [attr.aria-label]="'Đưa bước ' + (i + 1) + ' lên'"
+                  class="w-9 h-9 rounded-lg border border-line text-ink-soft disabled:opacity-30"><i class="ph ph-caret-up" aria-hidden="true"></i></button>
+                <button type="button" (click)="moveStep(i, 1)" [disabled]="last" [attr.aria-label]="'Đưa bước ' + (i + 1) + ' xuống'"
+                  class="w-9 h-9 rounded-lg border border-line text-ink-soft disabled:opacity-30"><i class="ph ph-caret-down" aria-hidden="true"></i></button>
+                <button type="button" (click)="removeStep(i)" [attr.aria-label]="'Xoá bước ' + (i + 1)"
+                  class="w-9 h-9 rounded-lg border border-line text-danger"><i class="ph ph-trash" aria-hidden="true"></i></button>
+              </div>
+            </div>
+
+            <p *ngIf="s.source === 'AI_SUGGESTED'" class="mt-3 text-sm text-ink flex flex-wrap items-center gap-2">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-100 text-accent">AI đề xuất</span>
+              Hãy đọc lại nội dung trước khi dùng.
+              <button type="button" (click)="confirmStep(s)" class="underline font-semibold">Tôi đã xem lại</button>
+            </p>
+
+            <label class="block text-sm font-semibold text-ink mt-3">Cách tổ chức
+              <textarea [name]="'step-desc-' + i" [(ngModel)]="s.description" (ngModelChange)="touch()" rows="3" maxlength="4000"
+                placeholder="Cô làm gì, trẻ làm gì, câu hỏi gợi mở…"
+                class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal text-ink"></textarea>
+            </label>
+
+            <div class="mt-3">
+              <p class="text-sm font-semibold text-ink">Học liệu (từ kho)</p>
+              <ul class="mt-1 flex flex-wrap gap-2">
+                <li *ngFor="let r of s.resources"
+                  class="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1 text-sm max-w-full">
+                  <span class="truncate" [ngClass]="r.available ? 'text-ink' : 'text-ink-muted italic'">
+                    {{ r.available && r.resource ? r.resource.title : 'Tài liệu không còn khả dụng' }}
+                  </span>
+                  <button type="button" (click)="detach(s, r.resourceId)" class="text-ink-muted hover:text-danger"
+                    [attr.aria-label]="'Gỡ học liệu khỏi bước ' + (i + 1)"><i class="ph ph-x" aria-hidden="true"></i></button>
+                </li>
+              </ul>
+              <button type="button" (click)="pickerStep.set(i)" [disabled]="s.resources.length >= maxResources"
+                class="mt-2 text-sm font-semibold text-primary disabled:opacity-50">
+                <i class="ph ph-plus" aria-hidden="true"></i> Gắn học liệu
+              </button>
+            </div>
+          </li>
+        </ol>
+
+        <button type="button" (click)="addStep()" [disabled]="d.steps.length >= maxSteps"
+          class="mt-4 min-h-11 px-4 py-2 rounded-xl border border-dashed border-line text-ink-soft font-semibold hover:text-primary hover:border-primary w-full disabled:opacity-50">
+          <i class="ph ph-plus" aria-hidden="true"></i> Thêm bước
+        </button>
+      </section>
+
+      <!-- Điều chỉnh & Ghi nhận -->
+      <section class="bg-surface rounded-2xl border border-line p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="block text-sm font-bold text-ink">Điều chỉnh / hỗ trợ trẻ
+          <span class="block text-xs font-normal text-ink-muted">Trẻ cần thêm hướng dẫn, phương án khi thiếu thiết bị…</span>
+          <textarea name="adaptations" [(ngModel)]="d.adaptations" (ngModelChange)="touch()" rows="5" maxlength="4000"
+            class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink"></textarea>
+        </label>
+        <div class="space-y-3">
+          <label class="block text-sm font-bold text-ink">Ghi nhận sau buổi học
+            <span class="block text-xs font-normal text-ink-muted">Hoạt động phù hợp, phần cần thay đổi.</span>
+            <textarea name="reflection" [(ngModel)]="d.reflection" (ngModelChange)="touch()" rows="3" maxlength="4000"
+              class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 font-normal text-ink"></textarea>
+          </label>
+          <label class="block text-sm font-semibold text-ink">Ngày dạy
+            <input name="taughtOn" type="date" [(ngModel)]="d.plan.taughtOn" (ngModelChange)="touch()"
+              class="mt-1 rounded-xl border border-line bg-surface px-3 py-2 font-normal text-ink" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Chia sẻ -->
+      <section class="bg-surface rounded-2xl border border-line p-5 text-sm space-y-2">
+        <h2 class="font-bold text-ink">Chia sẻ</h2>
+        <label class="flex items-start gap-2 text-ink-soft cursor-pointer">
+          <input type="radio" name="status" value="DRAFT" [(ngModel)]="d.plan.status" (ngModelChange)="touch()" class="mt-1">
+          <span><strong class="text-ink">Bản nháp</strong> — chỉ mình bạn xem.</span>
+        </label>
+        <label class="flex items-start gap-2 text-ink-soft cursor-pointer">
+          <input type="radio" name="status" value="SHARED" [(ngModel)]="d.plan.status" (ngModelChange)="touch()" class="mt-1">
+          <span><strong class="text-ink">Chia sẻ với đồng nghiệp</strong> — giáo viên khác xem và sao chép được; họ chỉ thấy học liệu họ có quyền xem.</span>
+        </label>
+        <label *ngIf="isAdmin()" class="flex items-start gap-2 text-ink-soft cursor-pointer pt-2 border-t border-line">
+          <input type="checkbox" name="template" [(ngModel)]="d.plan.template" (ngModelChange)="touch()" class="mt-1">
+          <span><strong class="text-ink">Dùng làm mẫu</strong> — xuất hiện ở mục “Mẫu” cho mọi giáo viên.</span>
+        </label>
+      </section>
+
+      <!-- Sticky save bar -->
+      <div class="fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur border-t border-line">
+        <div class="container mx-auto max-w-4xl px-4 py-3 flex flex-wrap items-center justify-end gap-2">
+          <span *ngIf="dirty()" class="mr-auto text-sm text-ink-muted" role="status">Có thay đổi chưa lưu</span>
+          <button type="button" (click)="cancel()" class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold">Huỷ</button>
+          <button type="button" (click)="save(true)" [disabled]="saving()"
+            class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold disabled:opacity-60">Lưu và xem</button>
+          <button type="submit" [disabled]="saving()"
+            class="min-h-11 px-5 py-2 rounded-xl bg-primary text-ink-onbrand font-bold disabled:opacity-60">
+            {{ saving() ? 'Đang lưu…' : 'Lưu' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-resource-picker-dialog *ngIf="pickerStep() !== null && draft()" [stepTitle]="draft()!.steps[pickerStep()!].title"
+  [selectedIds]="selectedIds(pickerStep()!)" (picked)="attach($event)" (closed)="pickerStep.set(null)"></app-resource-picker-dialog>

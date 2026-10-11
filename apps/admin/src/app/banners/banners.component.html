@@ -136,6 +136,7 @@
             <app-icon-button
               [icon]="banner.visibility === 'PUBLIC' ? 'eyeOff' : 'eye'"
               [ariaLabel]="banner.visibility === 'PUBLIC' ? 'Ẩn banner' : 'Hiện banner'"
+              [disabled]="togglingIds().has(banner.id)"
               (click)="toggleActive(banner)"
             />
             <app-icon-button

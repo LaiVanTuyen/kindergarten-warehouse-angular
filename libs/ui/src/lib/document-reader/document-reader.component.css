@@ -108,6 +108,9 @@ input:focus-visible {
   background: rgb(var(--c-surface-2));
   position: relative;
 }
+.reader.presentation-mode:not(:fullscreen) .reader-canvas {
+  height: clamp(280px, calc(100dvh - 650px), 620px);
+}
 .document-page {
   display: block;
   max-width: none;

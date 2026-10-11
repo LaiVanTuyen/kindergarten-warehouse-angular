@@ -9,6 +9,7 @@ import {
 import { NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import {
   Banner,
   BannerService,
@@ -54,6 +55,7 @@ export class BannersComponent {
 
   readonly isLoading = signal(true);
   readonly banners = signal<Banner[]>([]);
+  readonly togglingIds = signal<ReadonlySet<number>>(new Set());
   readonly platformFilter = signal<PlatformFilter>('ALL');
   readonly statusFilter = signal<StatusFilter>('ALL');
 
@@ -209,7 +211,8 @@ export class BannersComponent {
   }
 
   toggleActive(banner: Banner) {
-    // Contract v1 §2.4 — PATCH /banners/:id/toggle flips PUBLIC ⇄ PRIVATE.
+    if (this.togglingIds().has(banner.id)) return;
+    this.togglingIds.update(ids => new Set([...ids, banner.id]));
     const willBe = banner.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
     const prev = this.banners();
     this.banners.set(
@@ -219,7 +222,9 @@ export class BannersComponent {
     );
     this.bannerService
       .toggleBanner(banner.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => {
+        this.togglingIds.update(ids => { const next = new Set(ids); next.delete(banner.id); return next; });
+      }))
       .subscribe({
         next: (res) => {
           const updated = res.result;
@@ -237,7 +242,7 @@ export class BannersComponent {
         },
         error: (err) => {
           // Roll back optimistic update on failure.
-          this.banners.set(prev);
+          this.banners.update(list => list.map(b => b.id === banner.id ? banner : b));
           this.toast.show(
             extractErrorMessage(err, 'Không đổi được trạng thái.'),
             'error'

@@ -19,7 +19,6 @@ export interface CategoryFormDialogResult {
   description: string;
   icon: string;
   visibility: 'PUBLIC' | 'PRIVATE';
-  platform: 'WEB' | 'MOBILE' | 'BOTH';
 }
 
 const EMOJI_OPTIONS = ['📚', '🎨', '🎵', '🧩', '🔢', '🌱', '🧸', '🏃', '🧪', '📖', '🎭', '🌈'];
@@ -73,13 +72,6 @@ function slugify(text: string): string {
         </app-form-field>
 
         <div class="grid grid-cols-2 gap-3">
-          <app-form-field label="Nền tảng">
-            <select formControlName="platform" class="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-              <option value="BOTH">Cả hai</option>
-              <option value="WEB">Web</option>
-              <option value="MOBILE">Mobile</option>
-            </select>
-          </app-form-field>
 
           <label class="flex items-end gap-2 pb-2.5">
             <input type="checkbox" formControlName="isPublic" class="w-4 h-4 rounded text-kindy-sidebar focus:ring-focus" />
@@ -119,7 +111,6 @@ export class CategoryFormDialogComponent {
     description: [this.data.category?.description ?? '', [Validators.maxLength(300)]],
     icon: [this.data.category?.icon ?? EMOJI_OPTIONS[0]],
     isPublic: [this.data.category ? this.data.category.visibility !== 'PRIVATE' : true],
-    platform: [(this.data.category?.platform as 'WEB' | 'MOBILE' | 'BOTH') ?? 'BOTH'],
   });
 
   selectIcon(icon: string) {
@@ -138,7 +129,6 @@ export class CategoryFormDialogComponent {
       description: v.description,
       icon: v.icon,
       visibility: v.isPublic ? 'PUBLIC' : 'PRIVATE',
-      platform: v.platform,
     });
   }
 }

@@ -91,6 +91,17 @@
           </span>
         </a>
 
+        <!-- Notifications -->
+        <a *ngIf="isLoggedIn()" routerLink="/notifications"
+          class="inline-flex relative items-center justify-center w-10 h-10 rounded-full bg-surface-2 text-ink-soft hover:bg-primary-50 dark:hover:bg-primary-500/15 hover:text-primary transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          [attr.aria-label]="'Thông báo (' + unreadCount() + ' chưa đọc)'">
+          <i class="ph" [ngClass]="unreadCount() > 0 ? 'ph-bell-ringing text-primary' : 'ph-bell'" aria-hidden="true"></i>
+          <span *ngIf="unreadCount() > 0"
+            class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-danger text-ink-onbrand text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-surface">
+            {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+          </span>
+        </a>
+
         <!-- Language -->
         <div class="hidden sm:flex items-center gap-1 bg-surface-2 rounded-pill p-1"
           *ngIf="translationService.currentLang$ | async as currentLang" role="group" aria-label="Ngôn ngữ">
@@ -145,6 +156,21 @@
                 Yêu thích
                 <span *ngIf="favoriteCount() > 0"
                   class="ml-auto text-xs font-bold text-accent">{{ favoriteCount() }}</span>
+              </a>
+              <a routerLink="/downloads" (click)="closeUserMenu()" role="menuitem"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-2 hover:text-primary transition-colors focus:outline-none focus-visible:bg-surface-2">
+                <i class="ph ph-clock-counter-clockwise text-lg" aria-hidden="true"></i>
+                Lịch sử tải về
+              </a>
+              <a *ngIf="isTeacher()" routerLink="/plans" (click)="closeUserMenu()" role="menuitem"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-2 hover:text-primary transition-colors focus:outline-none focus-visible:bg-surface-2">
+                <i class="ph ph-clipboard-text text-lg" aria-hidden="true"></i>
+                Kế hoạch hoạt động
+              </a>
+              <a *ngIf="isTeacher()" routerLink="/collections" (click)="closeUserMenu()" role="menuitem"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-2 hover:text-primary transition-colors focus:outline-none focus-visible:bg-surface-2">
+                <i class="ph ph-stack text-lg" aria-hidden="true"></i>
+                Bộ học liệu
               </a>
               <a *ngIf="isTeacher()" routerLink="/teacher/my-resources" (click)="closeUserMenu()"
                 role="menuitem"
@@ -223,6 +249,21 @@
           <span *ngIf="favoriteCount() > 0" class="ml-auto text-xs font-bold text-accent">
             {{ favoriteCount() }}
           </span>
+        </a>
+        <a *ngIf="isLoggedIn()" routerLink="/downloads" (click)="closeMobileMenu()"
+          routerLinkActive="bg-primary-50 text-primary dark:bg-primary-500/15"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-ink-soft font-bold hover:bg-surface-2 transition-colors">
+          <i class="ph ph-clock-counter-clockwise text-xl" aria-hidden="true"></i> Lịch sử tải về
+        </a>
+        <a *ngIf="isTeacher()" routerLink="/plans" (click)="closeMobileMenu()"
+          routerLinkActive="bg-primary-50 text-primary dark:bg-primary-500/15"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-ink-soft font-bold hover:bg-surface-2 transition-colors">
+          <i class="ph ph-clipboard-text text-xl" aria-hidden="true"></i> Kế hoạch hoạt động
+        </a>
+        <a *ngIf="isTeacher()" routerLink="/collections" (click)="closeMobileMenu()"
+          routerLinkActive="bg-primary-50 text-primary dark:bg-primary-500/15"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-ink-soft font-bold hover:bg-surface-2 transition-colors">
+          <i class="ph ph-stack text-xl" aria-hidden="true"></i> Bộ học liệu
         </a>
         <a *ngIf="isTeacher()" routerLink="/teacher/my-resources" (click)="closeMobileMenu()"
           routerLinkActive="bg-primary-50 text-primary dark:bg-primary-500/15"

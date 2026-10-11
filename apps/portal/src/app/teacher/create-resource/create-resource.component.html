@@ -23,9 +23,19 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-8" novalidate>
       <!-- File upload -->
       <section class="bg-surface rounded-3xl shadow-sm border border-line p-6 sm:p-8">
-        <h2 class="text-lg font-bold text-ink mb-1">Tệp tài liệu</h2>
+        <h2 class="text-lg font-bold text-ink mb-1">Nguồn học liệu</h2>
+        <div class="flex gap-3 my-4" role="group" aria-label="Nguồn học liệu">
+          <button type="button" (click)="sourceType.set('FILE')" [attr.aria-pressed]="sourceType() === 'FILE'" class="border rounded-xl px-4 py-2">Tải tệp</button>
+          <button type="button" (click)="sourceType.set('YOUTUBE')" [attr.aria-pressed]="sourceType() === 'YOUTUBE'" class="border rounded-xl px-4 py-2">Link YouTube</button>
+        </div>
+        <div *ngIf="sourceType() === 'YOUTUBE'">
+          <label for="res-youtube" class="block mb-2">Link video YouTube</label>
+          <input id="res-youtube" type="url" formControlName="youtubeLink" placeholder="https://www.youtube.com/watch?v=..." class="w-full border rounded-xl p-3" />
+          <p class="text-sm text-ink-soft mt-2">Hỗ trợ link thường, youtu.be, Shorts và link nhúng. Video cần cho phép người xem truy cập.</p>
+        </div>
+        <ng-container *ngIf="sourceType() === 'FILE'">
         <p class="text-sm text-ink-soft mb-5">
-          {{ isEditMode() ? 'Tải lên tệp mới nếu bạn muốn thay đổi tài liệu. Nếu không, tệp hiện tại sẽ được giữ nguyên.' : 'Hỗ trợ PDF, Word, PowerPoint, Excel, hình ảnh, âm thanh hoặc video — tối đa 100MB.' }}
+          {{ isEditMode() ? 'Tải lên tệp mới nếu bạn muốn thay đổi tài liệu. Nếu không, tệp hiện tại sẽ được giữ nguyên.' : 'Hỗ trợ PDF, Word, PowerPoint, Excel, hình ảnh, âm thanh hoặc video — tối đa 50MB.' }}
         </p>
         <div *ngIf="isEditMode() && existingFileName()" class="mb-4 p-4 rounded-2xl bg-pink-50/50 border border-pink-100/50 flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -39,11 +49,12 @@
         </div>
         <app-file-drop-zone
           [accept]="ACCEPTED_TYPES"
-          [maxSizeMb]="100"
+          [maxSizeMb]="50"
           [title]="isEditMode() ? 'Kéo & thả tệp mới để thay thế' : 'Kéo & thả tệp vào đây'"
           hint="hoặc bấm để chọn từ máy"
           (fileChange)="onFileSelected($event)">
         </app-file-drop-zone>
+        </ng-container>
       </section>
 
       <!-- Meta -->
@@ -147,6 +158,17 @@
             placeholder="VD: 05:30 hoặc 1:12:00"
             class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-base font-medium bg-surface text-ink focus:outline-none focus:border-primary focus:ring-4 focus:ring-focus transition" />
           <p class="text-xs text-ink-muted mt-1">Phù hợp cho video/âm thanh — định dạng MM:SS hoặc HH:MM:SS.</p>
+        </div>
+
+        <div>
+          <label for="res-tags" class="block text-sm font-bold text-ink-soft mb-1.5">
+            Từ khoá <span class="text-ink-muted font-medium">(tuỳ chọn)</span>
+          </label>
+          <input id="res-tags" type="text" formControlName="tags" maxlength="600"
+            placeholder="VD: âm nhạc, tết trung thu, kỹ năng sống"
+            aria-describedby="res-tags-hint"
+            class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-base font-medium bg-surface text-ink focus:outline-none focus:border-primary focus:ring-4 focus:ring-focus transition" />
+          <p id="res-tags-hint" class="text-xs text-ink-muted mt-1">Phân cách bằng dấu phẩy, tối đa 10 từ khoá. Giúp phụ huynh và giáo viên tìm thấy tài liệu dễ hơn.</p>
         </div>
       </section>
 

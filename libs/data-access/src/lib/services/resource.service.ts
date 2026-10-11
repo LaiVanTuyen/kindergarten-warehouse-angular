@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { API_URL } from '../tokens';
-import { Observable, catchError, throwError, map } from 'rxjs';
+import { Observable, catchError, throwError, map, of } from 'rxjs';
 import {
   Resource,
   RestResponse,
@@ -120,6 +120,9 @@ export class ResourceService {
     appendParam('categorySlugs', params.categorySlugs);
     appendParam('ageSlugs', params.ageSlugs);
     appendParam('types', params.types);
+    appendParam('tags', params.tags);
+    if (params.createdBy !== undefined)
+      httpParams = httpParams.set('createdBy', params.createdBy);
 
     if (!params.topicSlugs && params.topic)
       appendParam('topic', params.topic as any);
@@ -190,6 +193,20 @@ export class ResourceService {
    * Get Resource by Slug
    * GET /resources/:slug
    */
+  /**
+   * Tài liệu liên quan: `GET /resources/{slug}/related?size=` — backend ưu
+   * tiên cùng chủ đề rồi cùng danh mục, loại chính nó trước khi phân trang và
+   * áp đúng visibility của Portal.
+   */
+  getRelatedResources(slug: string, size = 6): Observable<Resource[]> {
+    return this.http
+      .get<RestResponse<Resource[]>>(
+        `${this.apiUrl}/resources/${encodeURIComponent(slug)}/related`,
+        { params: new HttpParams().set('size', size) }
+      )
+      .pipe(map((res) => res.result ?? res.data ?? []));
+  }
+
   getResource(slug: string): Observable<RestResponse<Resource>> {
     return this.http
       .get<RestResponse<Resource>>(`${this.apiUrl}/resources/${slug}`)
@@ -247,11 +264,7 @@ export class ResourceService {
     let params = new HttpParams();
     if (hard) params = params.set('hard', 'true');
     return this.http
-      .post<RestResponse<void>>(
-        `${this.apiUrl}/resources/bulk-delete`,
-        { ids },
-        { params }
-      )
+      .delete<RestResponse<void>>(`${this.apiUrl}/resources/bulk`, { body: ids, params })
       .pipe(catchError(this.handleError));
   }
 
@@ -262,7 +275,7 @@ export class ResourceService {
   incrementViewCount(id: string): Observable<void> {
     return this.http
       .post<void>(`${this.apiUrl}/resources/${id}/view`, {})
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(error => error.status === 429 ? of(undefined) : this.handleError(error)));
   }
 
   // `incrementDownloadCount` đã bị bỏ. Backend không còn
@@ -384,7 +397,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-approve`, {
-        ids,
+        resourceIds: ids,
       })
       .pipe(catchError(this.handleError));
   }
@@ -407,7 +420,7 @@ export class ResourceService {
           message: string;
         }>
       >(`${this.apiUrl}/admin/resources/bulk-reject`, {
-        ids,
+        resourceIds: ids,
         reason,
       })
       .pipe(catchError(this.handleError));
@@ -533,11 +546,11 @@ export class ResourceService {
 
   /**
    * Restore Resource
-   * PATCH /resources/:id/restore  (Contract v1 §2.4 — state change → PATCH)
+   * PUT /resources/:id/restore (ResourceController's current endpoint)
    */
   restoreResource(id: string): Observable<RestResponse<void>> {
     return this.http
-      .patch<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
+      .put<RestResponse<void>>(`${this.apiUrl}/resources/${id}/restore`, {})
       .pipe(catchError(this.handleError));
   }
 
@@ -548,9 +561,7 @@ export class ResourceService {
    */
   bulkRestoreResources(ids: string[]): Observable<RestResponse<void>> {
     return this.http
-      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, {
-        ids,
-      })
+      .patch<RestResponse<void>>(`${this.apiUrl}/resources/bulk-restore`, ids)
       .pipe(catchError(this.handleError));
   }
 }

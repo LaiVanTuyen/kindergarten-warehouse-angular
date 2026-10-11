@@ -12,7 +12,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class RelativeTimePipe implements PipeTransform {
   transform(value: string | Date | null | undefined): string {
     if (!value) return '';
-    const date = typeof value === 'string' ? new Date(value) : value;
+    // The deployed backend emits UTC LocalDateTime values without an offset.
+    const normalized = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value) && !/(Z|[+-]\d{2}:?\d{2})$/i.test(value)
+      ? value + 'Z' : value;
+    const date = typeof normalized === 'string' ? new Date(normalized) : normalized;
     if (isNaN(date.getTime())) return '';
 
     const diffMs = Date.now() - date.getTime();

@@ -242,14 +242,15 @@ export class AuthService {
     );
   }
 
-  /** Complete a password reset using the token sent to the user by email. */
+  /** Complete a password reset using the email and OTP required by AuthController. */
   resetPassword(
-    token: string,
+    email: string,
+    otp: string,
     newPassword: string
   ): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(
       `${this.apiUrl}/auth/reset-password`,
-      { token, newPassword }
+      { email, otp, newPassword }
     );
   }
 

@@ -129,8 +129,8 @@ export class SettingsComponent implements OnInit {
       .pipe(finalize(() => this.isSavingPassword.set(false)))
       .subscribe({
         next: () => {
-          this.toast.show('Đổi mật khẩu thành công!', 'success');
           this.passwordForm.reset();
+            this.authService.logout('Đã đổi mật khẩu. Vui lòng đăng nhập lại.');
         },
         error: (err: HttpErrorResponse) => {
           this.toast.show(

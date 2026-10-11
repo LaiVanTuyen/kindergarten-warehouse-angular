@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
+import { EMPTY } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
@@ -111,10 +111,12 @@ export class DashboardComponent {
   }
 
   // --- Filter state -------------------------------------------------------
+  readonly refreshTick = signal(0);
   readonly period = signal<DashboardPeriod>('this_year');
   readonly startDate = signal<string>('');
   readonly endDate = signal<string>('');
   readonly filterParams = computed(() => {
+    this.refreshTick();
     const period = this.period();
     const range =
       period === 'custom'
@@ -164,7 +166,7 @@ export class DashboardComponent {
         linkTo: '/resources',
       },
       {
-        label: 'Tổng lượt xem',
+        label: 'Lượt xem tích lũy',
         value: s.totalViews,
         iconPath:
           'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
@@ -203,10 +205,6 @@ export class DashboardComponent {
       {
         title: 'Tài nguyên mới',
         option: buildLineChart(t.xAxis, t.resources, '#FB7185', '251, 113, 133', p),
-      },
-      {
-        title: 'Lượt xem',
-        option: buildLineChart(t.xAxis, t.views, '#60A5FA', '96, 165, 250', p),
       },
       {
         title: 'Người dùng mới',
@@ -291,55 +289,17 @@ export class DashboardComponent {
           this.isLoadingTrend.set(true);
           this.isLoadingPending.set(true);
 
-          return forkJoin({
-            stats: this.dashService.getStats(period, range).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được số liệu tổng quan.', 'error');
-                return of(null);
-              }),
-              finalize(() => this.isLoadingStats.set(false))
-            ),
-            trend: this.dashService.getTrend(period, range).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được biểu đồ xu hướng.', 'error');
-                return of(null);
-              }),
-              finalize(() => this.isLoadingTrend.set(false))
-            ),
-            pending: this.dashService.getPending(5).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được tài nguyên chờ duyệt.', 'error');
-                return of([] as PendingResource[]);
-              }),
-              finalize(() => this.isLoadingPending.set(false))
-            ),
-            topResources: this.dashService.getTopResources(period, 5).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được top tài nguyên.', 'error');
-                return of([] as TopResource[]);
-              })
-            ),
-            topTeachers: this.dashService.getTopTeachers(period, 5).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được top giáo viên.', 'error');
-                return of([] as TopTeacher[]);
-              })
-            ),
-            topicDistribution: this.dashService
-              .getTopicDistribution(period)
-              .pipe(
-                catchError(() => {
-                  this.toast.show('Không tải được phân bố chủ đề.', 'error');
-                  return of([] as TopicDistribution[]);
-                })
-              ),
-            activity: this.dashService.getRecentActivity(8).pipe(
-              catchError(() => {
-                this.toast.show('Không tải được hoạt động gần đây.', 'error');
-                return of([] as ActivityItem[]);
-              })
-            ),
-          });
+          return this.dashService.getDashboard(period, range).pipe(
+            catchError(() => {
+              this.stats.set(null); this.trend.set(null); this.pending.set([]);
+              this.topResources.set([]); this.topTeachers.set([]); this.topicDistribution.set([]); this.activity.set([]);
+              this.toast.show('Không tải được bảng điều khiển. Vui lòng thử lại.', 'error');
+              return EMPTY;
+            }),
+            finalize(() => {
+              this.isLoadingStats.set(false); this.isLoadingTrend.set(false); this.isLoadingPending.set(false);
+            })
+          );
         }),
         takeUntilDestroyed(this.destroyRef)
       )
@@ -365,6 +325,7 @@ export class DashboardComponent {
   }
 
   // --- Public event handlers ---------------------------------------------
+  reload() { this.refreshTick.update(v => v + 1); }
 
   onPeriodChange(p: DashboardPeriod) {
     this.period.set(p);
@@ -391,6 +352,7 @@ export class DashboardComponent {
              ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
              : s
         );
+        this.refreshTick.update(v => v + 1);
         this.toast.show(`Đã phê duyệt "${item.title}".`, 'success');
       });
   }
@@ -408,6 +370,7 @@ export class DashboardComponent {
             ? { ...s, pendingApprovals: Math.max(0, s.pendingApprovals - 1) }
             : s
         );
+        this.refreshTick.update(v => v + 1);
         this.toast.show(`Đã từ chối "${item.title}".`, 'info');
       });
   }

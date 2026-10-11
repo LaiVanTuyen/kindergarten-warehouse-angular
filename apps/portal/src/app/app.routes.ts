@@ -24,6 +24,12 @@ export const appRoutes: Route[] = [
     title: 'Kho học liệu',
   },
   {
+    path: 'authors/:id',
+    loadComponent: () =>
+      import('./author/author.component').then((m) => m.AuthorComponent),
+    title: 'Tác giả',
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./login/login.component').then((m) => m.LoginComponent),
@@ -49,6 +55,7 @@ export const appRoutes: Route[] = [
       import('./verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
     title: 'Xác thực Email',
   },
+  { path: 'reset-password', loadComponent: () => import('./reset-password/reset-password.component').then(m => m.ResetPasswordComponent), title: 'Đặt lại mật khẩu' },
   {
     path: 'about',
     loadComponent: () =>
@@ -80,8 +87,72 @@ export const appRoutes: Route[] = [
       ),
     title: 'Tài liệu yêu thích',
   },
+  {
+    path: 'downloads',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./downloads/downloads.component').then((m) => m.DownloadsComponent),
+    title: 'Lịch sử tải về',
+  },
+  {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./notifications/notifications.component').then(
+        (m) => m.NotificationsComponent
+      ),
+    title: 'Thông báo',
+  },
 
   // --- Teacher-only -----------------------------------------------------
+  {
+    path: 'plans',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () => import('./plans/plans.component').then((m) => m.PlansComponent),
+    title: 'Kế hoạch hoạt động',
+  },
+  {
+    path: 'plans/:id',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () => import('./plans/plan-view.component').then((m) => m.PlanViewComponent),
+    title: 'Kế hoạch hoạt động',
+  },
+  {
+    path: 'plans/:id/edit',
+    canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () => import('./plans/plan-editor.component').then((m) => m.PlanEditorComponent),
+    title: 'Soạn kế hoạch',
+  },
+  {
+    path: 'plans/:id/present',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () => import('./plans/plan-presenter.component').then((m) => m.PlanPresenterComponent),
+    title: 'Bắt đầu hoạt động',
+  },
+  {
+    path: 'plans/:id/print',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    data: { print: true },
+    loadComponent: () => import('./plans/plan-view.component').then((m) => m.PlanViewComponent),
+    title: 'In kế hoạch',
+  },
+  {
+    path: 'collections',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () =>
+      import('./collections/collections.component').then((m) => m.CollectionsComponent),
+    title: 'Bộ học liệu',
+  },
+  {
+    path: 'collections/:id',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () =>
+      import('./collections/collection-detail.component').then(
+        (m) => m.CollectionDetailComponent
+      ),
+    title: 'Bộ học liệu',
+  },
   {
     path: 'teacher/upload',
     canActivate: [roleGuard('TEACHER', 'ADMIN')],

@@ -65,6 +65,12 @@ export const appRoutes: Route[] = [
         data: { breadcrumb: 'Tài nguyên' },
       },
       {
+        path: 'reports',
+        loadComponent: () =>
+          import('./reports/reports.component').then((m) => m.ReportsComponent),
+        data: { breadcrumb: 'Báo cáo vi phạm' },
+      },
+      {
         path: 'audit-logs',
         loadComponent: () =>
           import('./audit-logs/audit-logs.component').then(

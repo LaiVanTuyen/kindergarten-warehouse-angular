@@ -107,11 +107,7 @@ export class CategoryService {
   ): Observable<ApiResponse<any>> {
     const params = new HttpParams().set('hard', hard);
     return this.http
-      .post<ApiResponse<any>>(
-        `${this.apiUrl}/categories/bulk-delete`,
-        { ids },
-        { params }
-      )
+      .delete<ApiResponse<any>>(`${this.apiUrl}/categories/bulk`, { body: ids, params })
       .pipe(catchError(this.handleError));
   }
 
@@ -122,9 +118,7 @@ export class CategoryService {
    */
   restoreCategories(ids: (string | number)[]): Observable<ApiResponse<any>> {
     return this.http
-      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, {
-        ids,
-      })
+      .patch<ApiResponse<any>>(`${this.apiUrl}/categories/bulk-restore`, ids)
       .pipe(catchError(this.handleError));
   }
 

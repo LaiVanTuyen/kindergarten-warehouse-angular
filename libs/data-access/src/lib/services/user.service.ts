@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
   User,
   UpdateProfileRequest,
@@ -59,13 +59,17 @@ export class UserService {
       .set('keyword', query)
       .set('sort', `${sort},${dir}`); // Contract v1 §1.2 — sort=field,dir
 
-    if (role && role !== 'ALL') params = params.set('role', role);
-    if (status && status !== 'ALL') params = params.set('status', status);
+    if (role && role !== 'ALL') params = params.set('roles', role);
+    if (status && status !== 'ALL') params = params.set('statuses', status);
 
     return this.http.get<ApiResponse<Page<User>>>(`${this.apiUrl}/users`, {
       params,
       withCredentials: true,
-    });
+    }).pipe(map(response => {
+      if (response.result) response.result.content = response.result.content.map(user =>
+        user.isDeleted ? { ...user, status: 'DELETED' } : user);
+      return response;
+    }));
   }
 
   // Admin: Create User
@@ -122,8 +126,8 @@ export class UserService {
   }
 
   blockUser(id: string): Observable<ApiResponse<any>> {
-    // Contract v1 §2.4 — state change → PATCH (BE standardised PUT→PATCH)
-    return this.http.patch<ApiResponse<any>>(
+    // Match UserController's current PUT endpoint.
+    return this.http.put<ApiResponse<any>>(
       `${this.apiUrl}/users/${id}/block`,
       {},
       { withCredentials: true }
@@ -137,8 +141,8 @@ export class UserService {
   }
 
   restoreUser(id: string): Observable<ApiResponse<any>> {
-    // Contract v1 §2.4 — state change → PATCH
-    return this.http.patch<ApiResponse<any>>(
+    // Match UserController's current PUT endpoint.
+    return this.http.put<ApiResponse<any>>(
       `${this.apiUrl}/users/${id}/restore`,
       {},
       { withCredentials: true }

@@ -1,0 +1,79 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-end justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2">
+          Kế hoạch hoạt động <i class="ph-fill ph-clipboard-text text-primary" aria-hidden="true"></i>
+        </h1>
+        <p class="mt-2 text-ink-soft">Soạn kế hoạch theo mẫu, gắn học liệu cho từng bước, in hoặc lưu PDF.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" (click)="setScope('templates')" [disabled]="busy()"
+          class="min-h-11 px-4 py-2.5 rounded-xl border border-line bg-surface text-ink-soft font-bold hover:text-primary hover:border-primary">
+          <i class="ph ph-files" aria-hidden="true"></i> Dùng mẫu
+        </button>
+        <button type="button" (click)="createBlank()" [disabled]="busy()"
+          class="min-h-11 px-5 py-2.5 rounded-xl bg-primary text-ink-onbrand font-bold shadow-sm hover:opacity-90 flex items-center gap-2 disabled:opacity-60">
+          <i class="ph-bold ph-plus" aria-hidden="true"></i> Viết kế hoạch mới
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="flex gap-1 bg-surface border border-line rounded-xl p-1" role="tablist" aria-label="Loại kế hoạch">
+        <button *ngFor="let t of [{k: 'me', l: 'Của tôi'}, {k: 'shared', l: 'Đồng nghiệp chia sẻ'}, {k: 'templates', l: 'Mẫu'}]"
+          type="button" role="tab" [attr.aria-selected]="scope() === t.k" (click)="setScope($any(t.k))"
+          class="px-4 py-2 rounded-lg text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          [ngClass]="scope() === t.k ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">{{ t.l }}</button>
+      </div>
+      <form (ngSubmit)="search()" class="flex gap-2 flex-1 min-w-[220px] max-w-md" role="search">
+        <label for="plan-search" class="sr-only">Tìm kế hoạch</label>
+        <input id="plan-search" name="keyword" [(ngModel)]="keyword" placeholder="Tìm theo tên hoặc mục tiêu…"
+          class="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
+        <button type="submit" class="px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary">Tìm</button>
+      </form>
+    </div>
+
+    <app-spinner *ngIf="loading() && items().length === 0" size="lg" label="Đang tải…" [showLabel]="true"></app-spinner>
+    <app-error-state *ngIf="error() && !loading()" [message]="error()!" (retry)="goToPage(page())"></app-error-state>
+
+    <div *ngIf="!loading() && !error() && items().length === 0" class="bg-surface rounded-3xl shadow-sm border border-line">
+      <app-empty-state icon="ph ph-clipboard-text" tone="sky"
+        [title]="scope() === 'me' ? 'Chưa có kế hoạch nào' : scope() === 'templates' ? 'Chưa có mẫu kế hoạch' : 'Chưa có kế hoạch được chia sẻ'"
+        [message]="scope() === 'me' ? 'Bấm “Viết kế hoạch mới”, dùng mẫu, hoặc tạo từ một bộ học liệu.' : 'Hãy quay lại sau.'"></app-empty-state>
+    </div>
+
+    <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" [class.opacity-60]="loading()">
+      <li *ngFor="let p of items(); trackBy: trackById"
+        class="bg-surface rounded-2xl border border-line shadow-sm p-5 flex flex-col hover:border-primary hover:shadow-md transition">
+        <div class="flex items-start justify-between gap-3">
+          <a [routerLink]="['/plans', p.id]" class="font-bold text-ink text-lg break-words hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded">{{ p.title }}</a>
+          <span class="shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
+            [ngClass]="p.template ? 'bg-accent-100 text-accent dark:bg-accent-500/15' : p.status === 'SHARED' ? 'bg-primary-50 text-primary dark:bg-primary-500/15' : 'bg-surface-2 text-ink-muted'">
+            {{ p.template ? 'Mẫu' : p.status === 'SHARED' ? 'Chia sẻ' : 'Bản nháp' }}
+          </span>
+        </div>
+        <p *ngIf="p.objectives" class="mt-2 text-sm text-ink-soft line-clamp-2">{{ p.objectives }}</p>
+        <p class="mt-3 text-sm text-ink-muted flex flex-wrap gap-x-3 gap-y-1">
+          <span *ngIf="p.ageGroup">{{ p.ageGroup.name }}</span>
+          <span *ngIf="p.durationMinutes">{{ p.durationMinutes }} phút</span>
+          <span>{{ p.stepCount }} bước</span>
+          <span *ngIf="!p.isOwner">{{ p.ownerName }}</span>
+          <span *ngIf="p.taughtOn">Đã dạy {{ p.taughtOn | date:'dd/MM/yyyy' }}</span>
+        </p>
+        <div class="mt-auto pt-4 flex gap-2">
+          <a [routerLink]="['/plans', p.id]" class="px-3 py-1.5 rounded-lg border border-line text-sm font-semibold text-ink-soft hover:text-primary">Xem</a>
+          <a *ngIf="p.isOwner" [routerLink]="['/plans', p.id, 'edit']" class="px-3 py-1.5 rounded-lg border border-line text-sm font-semibold text-ink-soft hover:text-primary">Sửa</a>
+          <button *ngIf="!p.isOwner || p.template" type="button" (click)="copy(p)" [disabled]="busy()"
+            class="px-3 py-1.5 rounded-lg bg-primary text-ink-onbrand text-sm font-semibold disabled:opacity-60">
+            {{ p.template ? 'Dùng mẫu này' : 'Sao chép' }}
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <div *ngIf="totalPages() > 1" class="mt-10 flex justify-center">
+      <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)"></app-paginator>
+    </div>
+  </div>
+</div>

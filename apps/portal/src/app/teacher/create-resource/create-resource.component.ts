@@ -23,10 +23,12 @@ import {
   AuthService,
   Category,
   CategoryService,
+  CollectionService,
   ResourceService,
   ToastService,
   Topic,
   TopicService,
+  youtubeVideoId,
 } from '@kindergarten-warehouse/data-access';
 import { FileDropZoneComponent } from '../../shared/file-drop-zone/file-drop-zone.component';
 
@@ -37,12 +39,15 @@ interface CreateResourceForm {
   topicId: FormControl<string>;
   ageGroupIds: FormControl<string[]>;
   duration: FormControl<string>;
+  youtubeLink: FormControl<string>;
+  /** Comma-separated free-text tags; backend normalizes (max 10, 50 chars each). */
+  tags: FormControl<string>;
 }
 
 /**
  * Teacher-facing "upload a new resource" page. Wiring:
  *   1. Category → Topic lazily loads on parent change (no size:1000 hack).
- *   2. File picked via the shared drop-zone (100MB cap, typed allowlist).
+ *   2. File picked via the shared drop-zone (50MB cap, typed allowlist).
  *   3. Submit posts multipart/form-data to /resources; backend moderates it.
  *   4. On success, navigate to /teacher/my-resources so the teacher can watch
  *      the pending → approved flow.
@@ -66,6 +71,7 @@ export class CreateResourceComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly resourceService = inject(ResourceService);
+  private readonly collectionService = inject(CollectionService);
   private readonly categoryService = inject(CategoryService);
   private readonly topicService = inject(TopicService);
 
@@ -78,6 +84,7 @@ export class CreateResourceComponent implements OnInit {
   readonly topics = signal<Topic[]>([]);
   readonly ageGroups = signal<AgeGroup[]>([]);
   readonly selectedFile = signal<File | null>(null);
+  readonly sourceType = signal<'FILE' | 'YOUTUBE'>('FILE');
   readonly isSubmitting = signal(false);
   readonly isLoadingTopics = signal(false);
 
@@ -94,10 +101,12 @@ export class CreateResourceComponent implements OnInit {
     topicId: ['', Validators.required],
     ageGroupIds: this.fb.nonNullable.control<string[]>([], Validators.required),
     duration: [''],
+    youtubeLink: [''],
+    tags: ['', Validators.maxLength(600)],
   }) as FormGroup<CreateResourceForm>;
 
   readonly canSubmit = computed(
-    () => (this.isEditMode() || !!this.selectedFile()) && !this.isSubmitting()
+    () => (this.sourceType() === 'YOUTUBE' || this.isEditMode() || !!this.selectedFile()) && !this.isSubmitting()
   );
 
   ngOnInit(): void {
@@ -139,7 +148,12 @@ export class CreateResourceComponent implements OnInit {
       return;
     }
     const file = this.selectedFile();
-    if (!file && !this.isEditMode()) {
+    const youtubeLink = this.form.controls.youtubeLink.value.trim();
+    if (this.sourceType() === 'YOUTUBE' && !youtubeVideoId(youtubeLink)) {
+      this.toast.show('Vui lòng nhập link YouTube hợp lệ (watch, youtu.be, Shorts hoặc embed).', 'error');
+      return;
+    }
+    if (this.sourceType() === 'FILE' && !file && !this.isEditMode()) {
       this.toast.show('Vui lòng chọn tệp tài liệu để tải lên.', 'error');
       return;
     }
@@ -150,7 +164,7 @@ export class CreateResourceComponent implements OnInit {
       return;
     }
 
-    const { title, description, topicId, ageGroupIds, duration } =
+    const { title, description, topicId, ageGroupIds, duration, tags } =
       this.form.getRawValue();
 
     const isEdit = this.isEditMode();
@@ -158,7 +172,8 @@ export class CreateResourceComponent implements OnInit {
     this.isSubmitting.set(true);
 
     const payload = new FormData();
-    if (file) {
+    if (this.sourceType() === 'YOUTUBE') payload.append('youtubeLink', youtubeLink);
+    else if (file) {
       payload.append('file', file);
     }
     payload.append('title', title.trim());
@@ -169,6 +184,9 @@ export class CreateResourceComponent implements OnInit {
     }
     ageGroupIds.forEach((id) => payload.append('ageGroupIds', id));
     if (duration?.trim()) payload.append('duration', duration.trim());
+    // Edit always sends the field so clearing the input clears the tags;
+    // an absent field means "keep current tags" on the backend.
+    if (tags.trim() || isEdit) payload.append('tags', tags.trim());
 
     if (isEdit && resourceId) {
       this.resourceService
@@ -187,7 +205,7 @@ export class CreateResourceComponent implements OnInit {
           error: (err: HttpErrorResponse | Error) => {
             const msg =
               err instanceof HttpErrorResponse && err.status === 413
-                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 100MB.'
+                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 50MB.'
                 : err.message || 'Không thể cập nhật tài liệu. Vui lòng thử lại.';
             this.toast.show(msg, 'error');
           },
@@ -197,7 +215,24 @@ export class CreateResourceComponent implements OnInit {
         .uploadResource(payload)
         .pipe(finalize(() => this.isSubmitting.set(false)))
         .subscribe({
-          next: () => {
+          next: (res) => {
+            const collectionId = Number(this.route.snapshot.queryParamMap.get('collectionId'));
+            const created = res?.result ?? res?.data;
+            if (collectionId > 0 && created?.id) {
+              // Opened from a collection: put the new upload straight into it. The owner
+              // sees it there while it waits for approval; colleagues only after approval.
+              this.collectionService.addItem(collectionId, created.id).subscribe({
+                next: () => {
+                  this.toast.show('Đã tải lên và thêm vào bộ. Tài liệu đang chờ duyệt.', 'success');
+                  this.router.navigate(['/collections', collectionId]);
+                },
+                error: () => {
+                  this.toast.show('Đã tải lên, nhưng chưa thêm được vào bộ. Hãy thêm lại từ trang tài liệu.', 'info');
+                  this.router.navigate(['/collections', collectionId]);
+                },
+              });
+              return;
+            }
             this.toast.show(
               'Đã gửi tài liệu để chờ duyệt. Chúng tôi sẽ sớm phản hồi!',
               'success'
@@ -209,7 +244,7 @@ export class CreateResourceComponent implements OnInit {
           error: (err: HttpErrorResponse | Error) => {
             const msg =
               err instanceof HttpErrorResponse && err.status === 413
-                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 100MB.'
+                ? 'Tệp quá lớn. Vui lòng chọn tệp dưới 50MB.'
                 : err.message || 'Không thể đăng tài liệu. Vui lòng thử lại.';
             this.toast.show(msg, 'error');
           },
@@ -229,6 +264,10 @@ export class CreateResourceComponent implements OnInit {
         }
 
         this.resourceId.set(resource.id);
+        if (resource.resourceType === 'YOUTUBE') {
+          this.sourceType.set('YOUTUBE');
+          this.form.controls.youtubeLink.setValue(resource.fileUrl);
+        }
         this.existingFileUrl.set(this.auth.formatAssetUrl(resource.fileUrl));
         
         // Extract filename from URL path
@@ -248,8 +287,9 @@ export class CreateResourceComponent implements OnInit {
               description: resource.description,
               categoryId: catId,
               topicId: topicId,
-              ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
+              ageGroupIds: resource.ageGroups?.map((ag) => String(ag.id)) || [],
               duration: resource.duration || '',
+              tags: (resource.tags ?? []).join(', '),
             });
             this.isInitializing = false;
           });
@@ -257,8 +297,9 @@ export class CreateResourceComponent implements OnInit {
           this.form.patchValue({
             title: resource.title,
             description: resource.description,
-            ageGroupIds: resource.ageGroups?.map((ag) => ag.id) || [],
+            ageGroupIds: resource.ageGroups?.map((ag) => String(ag.id)) || [],
             duration: resource.duration || '',
+            tags: (resource.tags ?? []).join(', '),
           });
           this.isInitializing = false;
         }

@@ -21,8 +21,10 @@ import {
   Topic,
   TopicService,
   handleHttpError,
+  youtubeVideoId,
 } from '@kindergarten-warehouse/data-access';
 import { PageHeaderComponent } from '../shared/components/page-header/page-header.component';
+import { DocumentReaderComponent } from '@kindergarten-warehouse/ui';
 import { StatusPillComponent, StatusPillTone } from '../shared/components/status-pill/status-pill.component';
 import { SearchInputComponent } from '../shared/components/search-input/search-input.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
@@ -35,7 +37,7 @@ import { ConfirmDialogData } from '../shared/components/confirm-dialog/confirm-d
 import { DialogService } from '../shared/services/dialog.service';
 import { setupUrlSync } from '../shared/utils/url-sync';
 
-type ResourceStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'DELETED';
+type ResourceStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED' | 'DELETED';
 type PreviewKind = 'youtube' | 'image' | 'video' | 'audio' | 'pdf' | 'office' | 'link' | 'empty';
 
 const IMAGE_EXTENSIONS = new Set(['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'SVG']);
@@ -47,14 +49,14 @@ const STATUS_TONES: Record<string, StatusPillTone> = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
-  HIDDEN: 'inactive',
+  ARCHIVED: 'inactive',
   DELETED: 'inactive',
 };
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Chờ duyệt',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
-  HIDDEN: 'Đã ẩn',
+  ARCHIVED: 'Đã gỡ khỏi Portal',
   DELETED: 'Đã xoá',
 };
 
@@ -62,6 +64,7 @@ const STATUS_LABELS: Record<string, string> = {
   selector: 'app-resources',
   standalone: true,
   imports: [
+    DocumentReaderComponent,
     DatePipe,
     DecimalPipe,
     FormsModule,
@@ -135,7 +138,7 @@ export class ResourcesComponent {
     { value: 'PENDING', label: 'Chờ duyệt' },
     { value: 'APPROVED', label: 'Đã duyệt' },
     { value: 'REJECTED', label: 'Từ chối' },
-    { value: 'HIDDEN', label: 'Đã ẩn' },
+    { value: 'ARCHIVED', label: 'Đã gỡ khỏi Portal' },
     { value: 'DELETED', label: 'Thùng rác' },
   ];
 
@@ -316,9 +319,8 @@ export class ResourcesComponent {
   safeYoutubeUrl(resource: Resource): SafeResourceUrl | null {
     if (!resource.fileUrl) return null;
     const videoId = this.extractYoutubeId(resource.fileUrl);
-    const embedUrl = videoId
-      ? `https://www.youtube.com/embed/${videoId}`
-      : this.toAbsoluteResourceUrl(resource.fileUrl);
+    if (!videoId) return null;
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
 
@@ -355,19 +357,7 @@ export class ResourcesComponent {
     return candidate.length <= 5 ? candidate : '';
   }
 
-  private extractYoutubeId(url: string): string {
-    try {
-      const parsed = new URL(url, window.location.origin);
-      const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
-      if (host === 'youtu.be') return parsed.pathname.split('/').filter(Boolean)[0] || '';
-      if (!host.endsWith('youtube.com')) return '';
-      if (parsed.pathname.startsWith('/embed/')) return parsed.pathname.split('/')[2] || '';
-      if (parsed.pathname.startsWith('/shorts/')) return parsed.pathname.split('/')[2] || '';
-      return parsed.searchParams.get('v') || '';
-    } catch {
-      return '';
-    }
-  }
+  private extractYoutubeId(url: string): string { return youtubeVideoId(url) ?? ''; }
 
   private toAbsoluteResourceUrl(url: string | undefined): string {
     if (!url) return '';

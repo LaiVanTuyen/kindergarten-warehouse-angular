@@ -66,6 +66,10 @@
   </section>
 
   <!-- Trend charts -->
+  <p class="text-sm text-kindy-ink-soft">Các thẻ tổng phản ánh dữ liệu hiện có. Bộ lọc thời gian áp dụng cho tài nguyên mới, người dùng mới, bài đăng giáo viên và phân bố chủ đề. Lượt xem là số tích lũy; chưa có lịch sử lượt xem theo ngày.</p>
+  @if (!isLoadingStats() && !stats()) {
+    <p role="alert" class="text-danger">Chưa tải được dữ liệu. <button type="button" class="underline" (click)="reload()">Thử lại</button></p>
+  }
   <section aria-labelledby="trend-heading">
     <h2 id="trend-heading" class="sr-only">Biểu đồ xu hướng</h2>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -133,7 +137,7 @@
     <h2 id="insights-heading" class="sr-only">Thống kê nội dung</h2>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <app-dashboard-card
-        title="Top tài nguyên được xem nhiều"
+        title="Học liệu có lượt xem tích lũy cao"
         linkTo="/resources"
       >
         <app-top-list

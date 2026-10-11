@@ -1,0 +1,72 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-end justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2">
+          Bộ học liệu <i class="ph-fill ph-stack text-primary" aria-hidden="true"></i>
+        </h1>
+        <p class="mt-2 text-ink-soft">Gom bài hát, tranh, truyện, trò chơi cho từng buổi học và sắp xếp theo thứ tự sử dụng.</p>
+      </div>
+      <button type="button" (click)="creating.set(true)"
+        class="min-h-11 px-5 py-2.5 rounded-xl bg-primary text-ink-onbrand font-bold shadow-sm hover:opacity-90 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+        <i class="ph-bold ph-plus" aria-hidden="true"></i> Tạo bộ mới
+      </button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="flex gap-1 bg-surface border border-line rounded-xl p-1" role="tablist" aria-label="Loại bộ học liệu">
+        <button type="button" role="tab" [attr.aria-selected]="tab() === 'mine'" (click)="setTab('mine')"
+          class="px-4 py-2 rounded-lg text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          [ngClass]="tab() === 'mine' ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">Của tôi</button>
+        <button type="button" role="tab" [attr.aria-selected]="tab() === 'shared'" (click)="setTab('shared')"
+          class="px-4 py-2 rounded-lg text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          [ngClass]="tab() === 'shared' ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">Đồng nghiệp chia sẻ</button>
+      </div>
+      <form *ngIf="tab() === 'shared'" (ngSubmit)="search()" class="flex gap-2 flex-1 min-w-[220px] max-w-md" role="search">
+        <label for="collection-search" class="sr-only">Tìm bộ học liệu</label>
+        <input id="collection-search" name="keyword" [(ngModel)]="keyword" placeholder="Tìm theo tên hoặc mô tả…"
+          class="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" />
+        <button type="submit" class="px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary">Tìm</button>
+      </form>
+    </div>
+
+    <app-spinner *ngIf="loading() && items().length === 0" size="lg" label="Đang tải…" [showLabel]="true"></app-spinner>
+    <app-error-state *ngIf="error() && !loading()" [message]="error()!" (retry)="goToPage(page())"></app-error-state>
+
+    <div *ngIf="!loading() && !error() && items().length === 0" class="bg-surface rounded-3xl shadow-sm border border-line">
+      <app-empty-state *ngIf="tab() === 'mine'" icon="ph ph-stack" tone="sky" title="Chưa có bộ học liệu nào"
+        message="Tạo bộ đầu tiên, rồi bấm “Thêm vào bộ” ở trang tài liệu để gom học liệu cho buổi học."></app-empty-state>
+      <app-empty-state *ngIf="tab() === 'shared'" icon="ph ph-users-three" tone="neutral" title="Chưa có bộ được chia sẻ"
+        message="Khi đồng nghiệp chia sẻ bộ học liệu, bạn có thể xem và sao chép về để điều chỉnh."></app-empty-state>
+    </div>
+
+    <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" [class.opacity-60]="loading()">
+      <li *ngFor="let c of items(); trackBy: trackById">
+        <a [routerLink]="['/collections', c.id]"
+          class="block h-full bg-surface rounded-2xl border border-line shadow-sm p-5 hover:border-primary hover:shadow-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          <div class="flex items-start justify-between gap-3">
+            <h2 class="font-bold text-ink text-lg break-words">{{ c.title }}</h2>
+            <span class="shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
+              [ngClass]="c.visibility === 'SHARED' ? 'bg-primary-50 text-primary dark:bg-primary-500/15' : 'bg-surface-2 text-ink-muted'">
+              {{ c.visibility === 'SHARED' ? 'Chia sẻ' : 'Riêng tư' }}
+            </span>
+          </div>
+          <p *ngIf="c.description" class="mt-2 text-sm text-ink-soft line-clamp-2">{{ c.description }}</p>
+          <p class="mt-4 text-sm text-ink-muted flex flex-wrap gap-x-3 gap-y-1">
+            <span><i class="ph ph-files" aria-hidden="true"></i> {{ c.itemCount }} tài liệu</span>
+            <span *ngIf="c.ageGroup"><i class="ph ph-baby" aria-hidden="true"></i> {{ c.ageGroup.name }}</span>
+            <span *ngIf="!c.isOwner"><i class="ph ph-user" aria-hidden="true"></i> {{ c.ownerName }}</span>
+            <span>Cập nhật {{ c.updatedAt | date:'dd/MM/yyyy' }}</span>
+          </p>
+        </a>
+      </li>
+    </ul>
+
+    <div *ngIf="totalPages() > 1" class="mt-10 flex justify-center">
+      <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)"></app-paginator>
+    </div>
+  </div>
+</div>
+
+<app-collection-form-dialog *ngIf="creating()" [busy]="saving()" (save)="create($event)"
+  (cancel)="creating.set(false)"></app-collection-form-dialog>

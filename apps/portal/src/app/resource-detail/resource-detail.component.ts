@@ -23,12 +23,16 @@ import {
   CreateCommentRequest,
   FavoritesService,
   Resource,
+  REPORT_REASON_LABELS,
+  ReportReason,
+  ReportService,
   ResourceDownloadService,
   ResourceService,
   ToastService,
   TopicService,
   TranslationService,
   environment,
+  youtubeVideoId,
 } from '@kindergarten-warehouse/data-access';
 import { FileHelper } from '../shared/utils/file-helper';
 import { ResourceCardComponent } from '../resource-card/resource-card.component';
@@ -37,6 +41,7 @@ import { RatingStarsComponent } from '../shared/rating-stars/rating-stars.compon
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { DocumentReaderComponent } from './document-reader.component';
+import { AddToCollectionDialogComponent } from '../collections/add-to-collection-dialog.component';
 
 registerLocaleData(localeVi);
 
@@ -44,7 +49,6 @@ registerLocaleData(localeVi);
  * Xin dư một bản ghi rồi cắt: tài liệu đang xem có thể nằm trong kết quả cùng
  * chủ đề. Lọc bỏ nó mà chỉ xin đúng 6 thì có lúc chỉ hiển thị được 5.
  */
-const RELATED_FETCH_SIZE = 7;
 const RELATED_DISPLAY_SIZE = 6;
 
 interface BreadcrumbInfo {
@@ -65,6 +69,7 @@ interface BreadcrumbInfo {
     RatingStarsComponent,
     SpinnerComponent,
     DocumentReaderComponent,
+    AddToCollectionDialogComponent,
   ],
   templateUrl: './resource-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,6 +84,7 @@ export class ResourceDetailComponent implements OnInit {
   private readonly downloadService = inject(ResourceDownloadService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly toast = inject(ToastService);
+  private readonly reportService = inject(ReportService);
   readonly authService = inject(AuthService);
   readonly translationService = inject(TranslationService);
 
@@ -189,48 +195,25 @@ export class ResourceDetailComponent implements OnInit {
   );
 
   /**
-   * Tài liệu liên quan.
+   * Tài liệu liên quan: `GET /resources/{slug}/related`.
    *
-   * Trước đây gọi `getResources()`, mà method đó hit `/api/v1/admin/resources`
-   * — endpoint chỉ dành cho ADMIN. Khách và người dùng thường nhận 401, lỗi bị
-   * `catchError` nuốt, nên khối này **luôn trống với mọi người trừ admin** mà
-   * không ai phát hiện.
-   *
-   * Nay dùng `getPortalResources()` → `/api/v1/resources`, đi qua đúng
-   * visibility policy của Portal: khách chỉ thấy PUBLIC đã duyệt, người đăng
-   * nhập thấy thêm INTERNAL. Cookie phiên được gửi kèm nên USER nhận đúng phần
-   * của mình.
-   *
-   * Xin `size: RELATED_FETCH_SIZE` (7) rồi cắt còn 6: tài liệu đang xem có thể
-   * nằm trong kết quả, lọc bỏ nó mà chỉ xin 6 thì có lúc chỉ còn 5.
-   * Về lâu dài nên có `GET /resources/{id}/related?size=6` để backend loại
-   * chính nó TRƯỚC khi phân trang.
+   * Backend ưu tiên cùng chủ đề rồi cùng danh mục, loại tài liệu đang xem
+   * TRƯỚC khi phân trang và áp đúng visibility của Portal — FE không còn phải
+   * xin dư 1 bản ghi rồi tự lọc.
    */
   readonly relatedResources$ = this.resource$.pipe(
     switchMap((current) => {
-      if (!current?.id || !current.topicId) return of<Resource[]>([]);
-      return this.resourceService
-        .getPortalResources({
-          page: 1,
-          size: RELATED_FETCH_SIZE,
-          topicId: current?.topicId,
+      if (!current?.slug) return of<Resource[]>([]);
+      return this.resourceService.getRelatedResources(current.slug, RELATED_DISPLAY_SIZE).pipe(
+        catchError((err) => {
+          // Khối bị ẩn nhưng lỗi vẫn phải thấy được khi phát triển, nếu không
+          // một endpoint hỏng sẽ lại đi qua mà không ai biết.
+          if (!environment.production) {
+            console.error('[resource-detail] Không tải được tài liệu liên quan', err);
+          }
+          return of<Resource[]>([]);
         })
-        .pipe(
-          map((res) =>
-            (res.result?.content ?? res.data?.content ?? [])
-              .filter((r) => r.id !== current?.id)
-              .slice(0, RELATED_DISPLAY_SIZE)
-          ),
-          catchError((err) => {
-            // Không im lặng hoàn toàn: khối bị ẩn nhưng lỗi phải thấy được
-            // khi phát triển, nếu không một endpoint hỏng sẽ lại đi qua mà
-            // không ai biết — đúng cách bug này đã tồn tại.
-            if (!environment.production) {
-              console.error('[resource-detail] Không tải được tài liệu liên quan', err);
-            }
-            return of<Resource[]>([]);
-          })
-        );
+      );
     })
   );
 
@@ -246,24 +229,20 @@ export class ResourceDetailComponent implements OnInit {
   // Media / preview helpers (kept for template compatibility)
   // -----------------------------------------------------------------------
   isYouTube(url: string | undefined): boolean {
-    if (!url) return false;
-    return url.includes('youtube.com') || url.includes('youtu.be');
+    return youtubeVideoId(url) !== null;
   }
 
   getSafeVideoUrl(url: string | undefined): SafeResourceUrl {
-    if (!url) return '';
-    if (this.isYouTube(url)) {
-      let videoId = '';
-      if (url.includes('v=')) {
-        videoId = url.split('v=')[1].split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
-      }
-      return this.sanitizer.bypassSecurityTrustResourceUrl(
-        `https://www.youtube.com/embed/${videoId}`
-      );
-    }
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    const id = youtubeVideoId(url);
+    if (!id) return '';
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube.com/embed/${id}?rel=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`
+    );
+  }
+
+  youtubeWatchUrl(url: string | undefined): string {
+    const id = youtubeVideoId(url);
+    return id ? `https://www.youtube.com/watch?v=${id}` : '';
   }
 
   getFileIcon(type: string | undefined): string {
@@ -318,6 +297,60 @@ export class ResourceDetailComponent implements OnInit {
     } catch {
       this.toast.show('Không thể sao chép tự động. Bạn có thể sao chép địa chỉ trên trình duyệt.', 'info');
     }
+  }
+
+  // -----------------------------------------------------------------------
+  // Báo cáo vi phạm
+  // -----------------------------------------------------------------------
+  readonly reportReasons = (Object.keys(REPORT_REASON_LABELS) as ReportReason[]).map((value) => ({
+    value,
+    label: REPORT_REASON_LABELS[value],
+  }));
+  readonly reportOpen = signal(false);
+  /** "Thêm vào bộ" dialog — teachers/admins only (collections are a teacher tool). */
+  readonly collectionDialogOpen = signal(false);
+  readonly canCollect = computed(() => {
+    const roles = this.authService.currentUser()?.roles ?? [];
+    return roles.includes('TEACHER') || roles.includes('ADMIN');
+  });
+  readonly isReporting = signal(false);
+  reportReason: ReportReason | null = null;
+  reportDetails = '';
+
+  openReport(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toast.show('Vui lòng đăng nhập để báo cáo vi phạm.', 'info');
+      return;
+    }
+    this.reportReason = null;
+    this.reportDetails = '';
+    this.reportOpen.set(true);
+  }
+
+  closeReport(): void {
+    if (!this.isReporting()) this.reportOpen.set(false);
+  }
+
+  submitReport(resource: Resource): void {
+    if (!this.reportReason || this.isReporting()) return;
+    this.isReporting.set(true);
+    this.reportService
+      .create(resource.id, this.reportReason, this.reportDetails.trim() || undefined)
+      .pipe(finalize(() => this.isReporting.set(false)))
+      .subscribe({
+        next: () => {
+          this.reportOpen.set(false);
+          this.toast.show('Đã gửi báo cáo. Cảm ơn bạn đã giúp kho học liệu an toàn hơn.', 'success');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.show(
+            err.error?.code === 6602
+              ? 'Bạn đã báo cáo tài liệu này, báo cáo đang được xem xét.'
+              : 'Không gửi được báo cáo. Vui lòng thử lại.',
+            'error'
+          );
+        },
+      });
   }
 
   followAuthor(authorName: string): void {

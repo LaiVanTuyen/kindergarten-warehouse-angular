@@ -1,0 +1,40 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+    <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2 mb-2">
+      Lịch sử tải về <i class="ph-fill ph-download-simple text-primary" aria-hidden="true"></i>
+    </h1>
+    <p class="text-ink-soft mb-8">Các tài liệu bạn đã tải, mới nhất ở trên. Tài liệu đã bị gỡ hoặc ẩn sẽ không hiển thị.</p>
+
+    <app-spinner *ngIf="loading() && items().length === 0" size="lg" label="Đang tải lịch sử…" [showLabel]="true"></app-spinner>
+    <app-error-state *ngIf="error() && !loading()" [message]="error()!" (retry)="goToPage(page())"></app-error-state>
+
+    <div *ngIf="!loading() && !error() && items().length === 0" class="bg-surface rounded-3xl shadow-sm border border-line">
+      <app-empty-state icon="ph ph-download-simple" tone="sky" title="Chưa tải tài liệu nào"
+        message="Tài liệu bạn tải về sẽ xuất hiện ở đây để tìm lại nhanh."
+        actionLabel="Khám phá kho học liệu" actionIcon="ph ph-compass" [actionRoute]="'/resources'"></app-empty-state>
+    </div>
+
+    <ul *ngIf="items().length" class="space-y-3" [class.opacity-60]="loading()">
+      <li *ngFor="let item of items(); trackBy: trackById"
+        class="bg-surface rounded-2xl border border-line shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <a [routerLink]="['/resources', item.resource.slug]" class="font-bold text-ink hover:text-primary break-words">{{ item.resource.title }}</a>
+          <p class="text-sm text-ink-muted mt-1">
+            {{ item.resource.topic?.name }}
+            <span *ngIf="item.resource.topic?.name"> · </span>
+            Tải lần cuối {{ item.lastDownloadedAt | date:'HH:mm dd/MM/yyyy' }}
+            <span *ngIf="item.downloadCount > 1"> · {{ item.downloadCount }} lần</span>
+          </p>
+        </div>
+        <button type="button" (click)="downloadAgain(item)"
+          class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary flex items-center justify-center gap-2">
+          <i class="ph-bold ph-download-simple" aria-hidden="true"></i> Tải lại
+        </button>
+      </li>
+    </ul>
+
+    <div *ngIf="totalPages() > 1" class="mt-10 flex justify-center">
+      <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)"></app-paginator>
+    </div>
+  </div>
+</div>

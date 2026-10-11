@@ -46,8 +46,10 @@ export class AppComponent {
 
   readonly isChromeless = computed(() => {
     const url = this.currentUrl();
-    return ['/login', '/register', '/forgot-password', '/reset-password'].some(
-      (p) => url.startsWith(p)
+    // The lesson-plan print page is a sheet of paper: no site header/footer.
+    return (
+      ['/login', '/register', '/forgot-password', '/reset-password'].some((p) => url.startsWith(p)) ||
+      /^\/plans\/\d+\/(print|present)(?:[?#]|$)/.test(url)
     );
   });
 }

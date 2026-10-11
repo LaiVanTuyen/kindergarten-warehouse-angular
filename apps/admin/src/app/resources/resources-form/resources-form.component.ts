@@ -1,3 +1,4 @@
+import { youtubeVideoId } from '@kindergarten-warehouse/data-access';
 import {
   Component,
   Input,
@@ -427,24 +428,7 @@ export class ResourcesFormComponent implements OnInit, OnChanges {
   }
 
   // Helpers
-  getYoutubeVideoId(url: string): string | null {
-    if (!url) return null;
-    try {
-      const urlToParse = url.startsWith('http') ? url : `https://${url}`;
-      const parsed = new URL(urlToParse);
-      if (parsed.hostname.includes('youtube.com')) {
-        return parsed.searchParams.get('v');
-      }
-      if (parsed.hostname === 'youtu.be') {
-        return parsed.pathname.slice(1).split('?')[0] || null;
-      }
-      const embedMatch = parsed.pathname.match(/\/embed\/([^/?]+)/);
-      if (embedMatch) return embedMatch[1];
-    } catch {
-      return null;
-    }
-    return null;
-  }
+  getYoutubeVideoId(url: string): string | null { return youtubeVideoId(url); }
 
   detectFileType(filename: string): string {
     const ext = filename.split('.').pop()?.toLowerCase() || '';

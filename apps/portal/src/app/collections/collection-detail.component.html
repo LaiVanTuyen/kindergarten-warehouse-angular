@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+    <a routerLink="/collections" class="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary mb-4">
+      <i class="ph ph-arrow-left" aria-hidden="true"></i> Bộ học liệu
+    </a>
+
+    <app-error-state *ngIf="error()" [message]="error()!" (retry)="load()"></app-error-state>
+    <app-spinner *ngIf="!detail() && !error()" size="lg" label="Đang tải bộ học liệu…" [showLabel]="true"></app-spinner>
+
+    <ng-container *ngIf="detail() as d">
+      <section class="bg-surface rounded-3xl border border-line shadow-sm p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <h1 class="text-2xl md:text-3xl font-extrabold text-ink font-display break-words">{{ d.collection.title }}</h1>
+            <p *ngIf="d.collection.description" class="mt-2 text-ink-soft whitespace-pre-line">{{ d.collection.description }}</p>
+            <p class="mt-3 text-sm text-ink-muted flex flex-wrap gap-x-4 gap-y-1">
+              <span>{{ d.collection.itemCount }} tài liệu</span>
+              <span *ngIf="d.collection.ageGroup">{{ d.collection.ageGroup.name }}</span>
+              <span>{{ d.collection.visibility === 'SHARED' ? 'Chia sẻ với đồng nghiệp' : 'Riêng tư' }}</span>
+              <span *ngIf="!d.collection.isOwner">Tạo bởi
+                <a [routerLink]="['/authors', d.collection.ownerId]" class="font-semibold hover:text-primary">{{ d.collection.ownerName }}</a>
+              </span>
+              <span *ngIf="d.collection.sourceCollectionId">Sao chép từ
+                <a [routerLink]="['/collections', d.collection.sourceCollectionId]" class="underline hover:text-primary">bộ gốc</a>
+              </span>
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <ng-container *ngIf="isOwner(); else viewerActions">
+              <button type="button" (click)="editing.set(true)" [disabled]="busy()"
+                class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary">
+                <i class="ph ph-pencil-simple" aria-hidden="true"></i> Sửa
+              </button>
+              <button type="button" (click)="toggleShare()" [disabled]="busy()"
+                class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary">
+                <i class="ph" [ngClass]="d.collection.visibility === 'SHARED' ? 'ph-lock-simple' : 'ph-share-network'" aria-hidden="true"></i>
+                {{ d.collection.visibility === 'SHARED' ? 'Ngừng chia sẻ' : 'Chia sẻ' }}
+              </button>
+              <button type="button" (click)="remove()" [disabled]="busy()"
+                class="min-h-11 px-4 py-2 rounded-xl border border-line text-danger font-semibold hover:bg-danger-soft">
+                <i class="ph ph-trash" aria-hidden="true"></i> Xoá
+              </button>
+            </ng-container>
+            <ng-template #viewerActions>
+              <button type="button" (click)="copy()" [disabled]="busy()"
+                class="min-h-11 px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-bold disabled:opacity-60">
+                <i class="ph-bold ph-copy" aria-hidden="true"></i> Sao chép về bộ của tôi
+              </button>
+            </ng-template>
+          </div>
+        </div>
+      </section>
+
+      <div *ngIf="isOwner()" class="flex flex-wrap gap-2 mb-4">
+        <a routerLink="/resources"
+          class="min-h-11 px-4 py-2 rounded-xl bg-surface border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary inline-flex items-center gap-2">
+          <i class="ph ph-magnifying-glass" aria-hidden="true"></i> Thêm tài liệu từ kho
+        </a>
+        <button type="button" (click)="planFromCollection()" [disabled]="busy() || d.items.length === 0"
+          class="min-h-11 px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-semibold inline-flex items-center gap-2 disabled:opacity-50">
+          <i class="ph ph-clipboard-text" aria-hidden="true"></i> Soạn kế hoạch từ bộ này
+        </button>
+        <a [routerLink]="['/teacher/upload']" [queryParams]="{ collectionId: d.collection.id }"
+          class="min-h-11 px-4 py-2 rounded-xl bg-surface border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary inline-flex items-center gap-2">
+          <i class="ph ph-upload-simple" aria-hidden="true"></i> Tải lên tài liệu mới
+        </a>
+      </div>
+      <p *ngIf="isOwner()" class="text-sm text-ink-muted mb-6">
+        Mẹo: ở trang tài liệu, bấm <strong>“Thêm vào bộ”</strong> để đưa tài liệu vào bộ này.
+      </p>
+
+      <p *ngIf="unavailableCount() > 0" class="mb-4 text-sm rounded-xl bg-warning-soft text-ink px-4 py-3" role="status">
+        {{ unavailableCount() }} tài liệu không còn khả dụng với bạn (đã bị gỡ, ẩn hoặc chưa được duyệt).
+      </p>
+
+      <div *ngIf="d.items.length === 0" class="bg-surface rounded-2xl border border-dashed border-line p-8 text-center text-ink-soft">
+        Bộ chưa có tài liệu nào.
+      </div>
+
+      <ol class="space-y-3">
+        <li *ngFor="let item of d.items; let i = index; let last = last; trackBy: trackById"
+          class="bg-surface rounded-2xl border border-line shadow-sm p-4 flex gap-4">
+          <span class="w-8 h-8 shrink-0 rounded-full bg-primary-50 dark:bg-primary-500/15 text-primary font-bold flex items-center justify-center" aria-hidden="true">{{ i + 1 }}</span>
+
+          <div class="flex-1 min-w-0">
+            <ng-container *ngIf="item.available && item.resource as r; else unavailable">
+              <a [routerLink]="['/resources', r.slug]" class="font-bold text-ink hover:text-primary break-words inline-flex items-center gap-2">
+                <img [src]="fileIcon(item)" alt="" class="w-5 h-5 shrink-0" />{{ r.title }}
+              </a>
+              <span *ngIf="r.status && r.status !== 'APPROVED'" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-ink">
+                {{ r.status === 'PENDING' ? 'Chờ duyệt' : r.status === 'REJECTED' ? 'Bị từ chối' : r.status }}
+              </span>
+              <p class="text-sm text-ink-muted mt-0.5">{{ r.topic?.name }}<span *ngIf="r.duration"> · {{ r.duration }}</span></p>
+            </ng-container>
+            <ng-template #unavailable>
+              <p class="font-semibold text-ink-muted"><i class="ph ph-eye-slash" aria-hidden="true"></i> Tài liệu không còn khả dụng</p>
+            </ng-template>
+
+            <ng-container *ngIf="editingNoteId() === item.id; else noteView">
+              <label class="sr-only" [attr.for]="'note-' + item.id">Ghi chú</label>
+              <textarea [id]="'note-' + item.id" [(ngModel)]="noteDraft" maxlength="1000" rows="2"
+                class="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                placeholder="VD: dùng ở phần khởi động, 3 phút"></textarea>
+              <div class="flex gap-2 mt-1">
+                <button type="button" (click)="saveNote(item)" class="px-3 py-1 rounded-lg bg-primary text-ink-onbrand text-sm font-semibold">Lưu</button>
+                <button type="button" (click)="editingNoteId.set(null)" class="px-3 py-1 rounded-lg border border-line text-sm">Huỷ</button>
+              </div>
+            </ng-container>
+            <ng-template #noteView>
+              <p *ngIf="item.note" class="mt-2 text-sm text-ink-soft bg-surface-2 rounded-lg px-3 py-2 whitespace-pre-line">{{ item.note }}</p>
+              <button *ngIf="isOwner()" type="button" (click)="startNote(item)" class="mt-1 text-sm text-ink-muted hover:text-primary">
+                <i class="ph ph-note-pencil" aria-hidden="true"></i> {{ item.note ? 'Sửa ghi chú' : 'Thêm ghi chú' }}
+              </button>
+            </ng-template>
+          </div>
+
+          <div *ngIf="isOwner()" class="flex flex-col gap-1 shrink-0">
+            <button type="button" (click)="move(i, -1)" [disabled]="i === 0"
+              class="w-9 h-9 rounded-lg border border-line text-ink-soft hover:text-primary disabled:opacity-30"
+              [attr.aria-label]="'Đưa mục ' + (i + 1) + ' lên trên'"><i class="ph ph-caret-up" aria-hidden="true"></i></button>
+            <button type="button" (click)="move(i, 1)" [disabled]="last"
+              class="w-9 h-9 rounded-lg border border-line text-ink-soft hover:text-primary disabled:opacity-30"
+              [attr.aria-label]="'Đưa mục ' + (i + 1) + ' xuống dưới'"><i class="ph ph-caret-down" aria-hidden="true"></i></button>
+            <button type="button" (click)="removeItem(item)"
+              class="w-9 h-9 rounded-lg border border-line text-danger hover:bg-danger-soft"
+              [attr.aria-label]="'Gỡ mục ' + (i + 1) + ' khỏi bộ'"><i class="ph ph-x" aria-hidden="true"></i></button>
+          </div>
+        </li>
+      </ol>
+    </ng-container>
+  </div>
+</div>
+
+<app-collection-form-dialog *ngIf="editing() && detail()" [initial]="detail()!.collection" [busy]="busy()"
+  (save)="saveMeta($event)" (cancel)="editing.set(false)"></app-collection-form-dialog>

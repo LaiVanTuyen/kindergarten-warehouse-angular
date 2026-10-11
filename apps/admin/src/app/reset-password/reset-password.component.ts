@@ -54,9 +54,11 @@ export class ResetPasswordComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group(
     {
+      email: ['', [Validators.required, Validators.email]],
+      otp: ['', [Validators.required, Validators.pattern(/^\d{6,8}$/)]],
       newPassword: [
         '',
-        [Validators.required, passwordValidator(), Validators.maxLength(128)],
+        [Validators.required, passwordValidator(), Validators.maxLength(100)],
       ],
       confirmPassword: ['', [Validators.required]],
     },
@@ -65,12 +67,7 @@ export class ResetPasswordComponent implements OnInit {
 
   ngOnInit(): void {
     this.title.setTitle('Đặt lại mật khẩu | Mầm Non Admin');
-    const token = this.route.snapshot.queryParamMap.get('token');
-    if (!token) {
-      this.tokenMissing.set(true);
-    } else {
-      this.token.set(token);
-    }
+    this.form.controls.email.setValue(this.route.snapshot.queryParamMap.get('email') ?? '');
   }
 
   toggleNewPassword(): void {
@@ -82,15 +79,15 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid || this.isLoading() || !this.token()) {
+    if (this.form.invalid || this.isLoading()) {
       this.form.markAllAsTouched();
       return;
     }
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const { newPassword } = this.form.getRawValue();
-    this.authService.resetPassword(this.token(), newPassword).subscribe({
+    const { email, otp, newPassword } = this.form.getRawValue();
+    this.authService.resetPassword(email, otp, newPassword).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.toast.show(

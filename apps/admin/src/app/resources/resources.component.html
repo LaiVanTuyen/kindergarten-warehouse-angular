@@ -334,6 +334,7 @@
                 [title]="'Xem trước ' + res.title"
                 class="block w-full aspect-video bg-black"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
                 allowfullscreen
               ></iframe>
             }
@@ -366,36 +367,8 @@
               />
             </div>
           }
-          @case ('pdf') {
-            @if (safeInlineUrl(res.fileUrl); as pdfUrl) {
-              <iframe
-                [src]="pdfUrl"
-                [title]="'Xem trước PDF ' + res.title"
-                class="block h-[70vh] min-h-[520px] w-full bg-white"
-              ></iframe>
-            }
-          }
-          @case ('office') {
-            @if (safeOfficeViewerUrl(res); as officeUrl) {
-              <iframe
-                [src]="officeUrl"
-                [title]="'Xem trước tài liệu ' + res.title"
-                class="block h-[70vh] min-h-[520px] w-full bg-white"
-              ></iframe>
-            } @else {
-              <div data-testid="resource-preview-fallback" class="min-h-[360px] bg-white p-8 text-center flex flex-col items-center justify-center">
-                @if (res.thumbnailUrl) {
-                  <img [src]="res.thumbnailUrl" [alt]="res.title" loading="lazy" class="mb-5 max-h-56 rounded-lg object-contain shadow-sm" />
-                } @else {
-                  <div aria-hidden="true" class="mb-5 flex h-20 w-20 items-center justify-center rounded-xl bg-kindy-sun-soft text-4xl text-kindy-sun">📄</div>
-                }
-                <p class="text-base font-semibold text-kindy-ink">Không thể xem trực tiếp tài liệu Office trong môi trường nội bộ.</p>
-                <p class="mt-2 max-w-md text-sm text-kindy-ink-soft">
-                  Trình xem Office cần một URL công khai. Admin vẫn có thể mở tệp gốc để kiểm tra nội dung.
-                </p>
-              </div>
-            }
-          }
+          @case ('pdf') { <app-document-reader [resource]="res" /> }
+          @case ('office') { <app-document-reader [resource]="res" /> }
           @case ('empty') {
             <div data-testid="resource-preview-fallback" class="min-h-[300px] bg-white p-8 text-center flex flex-col items-center justify-center">
               <div aria-hidden="true" class="mb-5 flex h-20 w-20 items-center justify-center rounded-xl bg-kindy-sun-soft text-4xl text-kindy-sun">📄</div>

@@ -203,12 +203,22 @@
             <span class="hidden sm:inline-block w-2 h-2 rounded-full bg-accent mb-1"></span>
           </h2>
           <p class="text-ink-muted font-medium mt-1 ml-1 text-sm">Khám phá các tài liệu tốt nhất cho bé</p>
+          <p *ngIf="(tagFilter$ | async) as tag" class="mt-3 ml-1">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-500/15 text-primary text-sm font-semibold">
+              #{{ tag }}
+              <button type="button" (click)="clearTag()" class="hover:text-danger" [attr.aria-label]="'Bỏ lọc từ khoá ' + tag">
+                <i class="ph-bold ph-x" aria-hidden="true"></i>
+              </button>
+            </span>
+          </p>
         </div>
 
         <div class="relative min-w-[220px]">
           <select (change)="onSortChange($event)"
             class="w-full appearance-none bg-surface border border-line text-ink py-3 pl-5 pr-12 rounded-2xl shadow-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-focus cursor-pointer font-bold transition-all hover:bg-surface-2 text-sm">
             <option value="newest">Mới nhất</option>
+            <option value="views-desc">Xem nhiều nhất</option>
+            <option value="downloads-desc">Tải nhiều nhất</option>
             <option value="name-asc">Tên (A-Z)</option>
             <option value="name-desc">Tên (Z-A)</option>
             <option value="rating-desc">Đánh giá cao nhất</option>

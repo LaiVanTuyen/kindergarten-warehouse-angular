@@ -146,7 +146,7 @@ export class CategoriesComponent {
         data,
         this.destroyRef
       )
-      .subscribe((result) => {
+      .subscribe(async (result) => {
         if (!result) return;
         // BE /categories expects multipart/form-data (supports icon upload),
         // so send FormData rather than a JSON body (JSON → 500 on the server).
@@ -154,9 +154,19 @@ export class CategoriesComponent {
         fd.append('name', result.name);
         fd.append('slug', result.slug);
         fd.append('description', result.description ?? '');
-        fd.append('icon', result.icon ?? '');
+        // The backend's icon part is a file, while the picker returns an emoji.
+        // Render selected emoji as PNG; existing image URLs need no replacement.
+        if (result.icon && Array.from(result.icon).length <= 4 && !result.icon.includes('/')) {
+          const canvas = document.createElement('canvas'); canvas.width = canvas.height = 96;
+          const context = canvas.getContext('2d');
+          if (context) {
+            context.font = '64px "Segoe UI Emoji", sans-serif'; context.textAlign = 'center'; context.textBaseline = 'middle';
+            context.fillText(result.icon, 48, 48);
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (blob) fd.append('icon', blob, 'category-icon.png');
+          }
+        }
         fd.append('visibility', result.visibility);
-        fd.append('platform', result.platform);
         const req$ = category
           ? this.categoryService.updateCategory(category.id, fd)
           : this.categoryService.createCategory(fd);

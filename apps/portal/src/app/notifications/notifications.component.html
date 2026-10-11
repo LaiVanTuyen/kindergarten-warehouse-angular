@@ -1,0 +1,43 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
+    <div class="mb-8 flex items-end justify-between flex-wrap gap-4">
+      <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2">
+        Thông báo <i class="ph-fill ph-bell text-primary" aria-hidden="true"></i>
+      </h1>
+      <button *ngIf="hasUnread()" type="button" (click)="markAllRead()"
+        class="min-h-11 px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold hover:text-primary hover:border-primary">
+        Đánh dấu tất cả đã đọc
+      </button>
+    </div>
+
+    <app-spinner *ngIf="loading() && items().length === 0" size="lg" label="Đang tải thông báo…" [showLabel]="true"></app-spinner>
+    <app-error-state *ngIf="error() && !loading()" [message]="error()!" (retry)="goToPage(page())"></app-error-state>
+
+    <div *ngIf="!loading() && !error() && items().length === 0" class="bg-surface rounded-3xl shadow-sm border border-line">
+      <app-empty-state icon="ph ph-bell-slash" tone="neutral" title="Chưa có thông báo"
+        message="Kết quả duyệt tài liệu và xử lý báo cáo vi phạm sẽ xuất hiện ở đây."></app-empty-state>
+    </div>
+
+    <ul *ngIf="items().length" class="space-y-2" [class.opacity-60]="loading()">
+      <li *ngFor="let item of items(); trackBy: trackById">
+        <button type="button" (click)="open(item)"
+          class="w-full text-left bg-surface rounded-2xl border shadow-sm p-4 flex gap-3 hover:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          [ngClass]="item.isRead ? 'border-line' : 'border-primary/40 bg-primary-50 dark:bg-primary-500/10'">
+          <i class="text-2xl mt-0.5 shrink-0" [ngClass]="icon(item.type)" aria-hidden="true"></i>
+          <span class="flex-1 min-w-0">
+            <span class="block font-bold text-ink">{{ item.title }}
+              <span *ngIf="!item.isRead" class="sr-only">(chưa đọc)</span>
+            </span>
+            <span *ngIf="item.message" class="block text-sm text-ink-soft mt-1 break-words">{{ item.message }}</span>
+            <span class="block text-xs text-ink-muted mt-2">{{ item.createdAt | date:'HH:mm dd/MM/yyyy' }}</span>
+          </span>
+          <span *ngIf="!item.isRead" class="w-2.5 h-2.5 rounded-full bg-primary mt-2 shrink-0" aria-hidden="true"></span>
+        </button>
+      </li>
+    </ul>
+
+    <div *ngIf="totalPages() > 1" class="mt-10 flex justify-center">
+      <app-paginator [page]="page()" [totalPages]="totalPages()" (pageChange)="goToPage($event)"></app-paginator>
+    </div>
+  </div>
+</div>

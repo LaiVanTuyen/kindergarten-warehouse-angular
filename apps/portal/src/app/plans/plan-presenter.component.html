@@ -1,0 +1,74 @@
+<div #stage class="activity-stage" [class.presenting]="active()">
+  <header class="activity-toolbar">
+    <a [routerLink]="detail() ? ['/plans', detail()!.plan.id] : ['/plans']" class="stage-button">← Kế hoạch</a>
+    <span class="plan-name">{{ detail()?.plan?.title || 'Chuẩn bị hoạt động' }}</span>
+    <button *ngIf="active()" class="stage-button" (click)="notes.set(!notes())" [attr.aria-pressed]="notes()">{{ notes() ? 'Ẩn ghi chú' : 'Hiện ghi chú' }}</button>
+    <button class="stage-button" (click)="toggleFullscreen()">{{ fullscreen() ? 'Thoát toàn màn hình' : 'Toàn màn hình' }}</button>
+  </header>
+  <div *ngIf="error()" class="stage-error" role="alert">{{ error() }} <button (click)="load()" class="stage-button">Thử lại</button></div>
+  <p *ngIf="busy()" class="stage-message" role="status">Đang kiểm tra kế hoạch và quyền xem học liệu…</p>
+
+  <section *ngIf="detail() as d" [hidden]="active()" class="preflight">
+    <p class="eyebrow">TRƯỚC BUỔI HỌC</p>
+    <h1>{{ d.plan.title }}</h1>
+    <p>{{ d.steps.length }} bước · {{ d.stepMinutesTotal }} phút theo tiến trình<span *ngIf="d.plan.ageGroup"> · {{ d.plan.ageGroup?.name }}</span></p>
+    <h2>Kiểm tra học liệu</h2>
+    <p>Video YouTube cần internet và có thể bị giới hạn nhúng. Hãy phát thử; nếu không mở được, chọn học liệu khác hoặc mở trên YouTube.</p>
+    <ul class="check-list">
+      <li *ngFor="let c of checks()">
+        <div><strong>{{ c.title }}</strong><p>{{ c.message }} <span *ngIf="c.video && videoChecked()[c.id]" class="checked">Đã phát thử.</span></p></div>
+        <button *ngIf="c.available" (click)="preview(c.id)" class="stage-button">{{ c.video ? 'Phát thử' : 'Mở thử' }}</button>
+      </li>
+    </ul>
+    <p *ngIf="!checks().length">Kế hoạch chưa gắn học liệu. Bạn vẫn có thể sử dụng tiến trình và đồng hồ.</p>
+    <p *ngIf="unchecked()" class="stage-warning">Còn {{ unchecked() }} video YouTube chưa được bạn xác nhận phát thử.</p>
+    <p *ngIf="!d.steps.length" class="stage-warning">Kế hoạch chưa có bước hoạt động. Hãy thêm bước trong trình soạn.</p>
+    <button (click)="start()" class="stage-primary" [disabled]="busy() || !d.steps.length">Bắt đầu hoạt động</button>
+    <p class="hint">Quyền truy cập được kiểm tra lại khi bắt đầu. Học liệu không còn khả dụng sẽ không được mở.</p>
+  </section>
+
+  <section *ngIf="active() && step() as s" class="lesson">
+    <nav class="step-tabs" aria-label="Các bước hoạt động">
+      <button *ngFor="let item of detail()!.steps; let i = index" (click)="selectStep(i)" [class.selected]="i === stepIndex()" [attr.aria-current]="i === stepIndex() ? 'step' : null">{{ i + 1 }}. {{ item.title }}</button>
+    </nav>
+    <div class="step-heading"><div><p class="eyebrow">BƯỚC {{ stepIndex() + 1 }} / {{ detail()!.steps.length }}</p><h1>{{ s.title }}</h1></div>
+      <div class="timer-block">
+        <span class="timer" [class.expired]="remaining() === 0 && !!s.durationMinutes" role="timer" aria-label="Thời gian còn lại">{{ timeLabel() }}</span>
+        <div class="timer-controls"><button (click)="toggleTimer()" [disabled]="!remaining()" class="stage-button">{{ running() ? 'Tạm dừng' : 'Chạy đồng hồ' }}</button><button (click)="resetTimer()" class="stage-button">Đặt lại</button></div>
+        <small *ngIf="!s.durationMinutes">Bước này chưa đặt số phút.</small>
+        <small *ngIf="s.durationMinutes && !remaining()" role="status">Hết thời gian. Giáo viên chủ động chuyển bước.</small>
+      </div>
+    </div>
+    <aside *ngIf="notes()" class="teacher-notes"><h2>Ghi chú cho giáo viên</h2><p>{{ s.description || 'Chưa có hướng dẫn cho bước này.' }}</p></aside>
+    <nav *ngIf="s.resources.length" class="resource-tabs" aria-label="Học liệu của bước">
+      <button *ngFor="let ref of s.resources; let i = index" (click)="selectResource(i)" [disabled]="!ref.available" [class.selected]="i === resourceIndex()">{{ ref.available ? ref.resource?.title : 'Không còn khả dụng' }}</button>
+    </nav>
+    <div class="resource-stage">
+      <ng-container *ngIf="resource() as r; else noResource">
+        <ng-container [ngSwitch]="r.resourceType === 'YOUTUBE' ? 'YOUTUBE' : r.fileType">
+          <div *ngSwitchCase="'YOUTUBE'" class="youtube-stage">
+            <iframe *ngIf="youtubeUrl(); else invalidVideo" [src]="youtubeUrl()" [title]="r.title" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+            <ng-template #invalidVideo><p>Link YouTube không hợp lệ.</p></ng-template>
+            <a *ngIf="watchUrl(r)" [href]="watchUrl(r)" target="_blank" rel="noopener noreferrer">Mở trên YouTube ↗</a>
+          </div>
+          <video *ngSwitchCase="'VIDEO'" [src]="fileUrl(r)" controls preload="metadata" [attr.aria-label]="r.title" (error)="mediaError.set('Không phát được video. Hãy kiểm tra kết nối hoặc chọn học liệu khác.')"></video>
+          <audio *ngSwitchCase="'AUDIO'" [src]="fileUrl(r)" controls preload="metadata" [attr.aria-label]="r.title" (error)="mediaError.set('Không phát được âm thanh. Hãy kiểm tra kết nối hoặc chọn học liệu khác.')"></audio>
+          <img *ngSwitchCase="'IMAGE'" [src]="fileUrl(r)" [alt]="r.title" (error)="mediaError.set('Không mở được hình ảnh. Hãy kiểm tra kết nối hoặc chọn học liệu khác.')" />
+          <app-document-reader *ngSwitchDefault [resource]="r" [presentation]="true"></app-document-reader>
+        </ng-container>
+        <p *ngIf="mediaError()" class="stage-warning" role="alert">{{ mediaError() }}</p>
+      </ng-container>
+      <ng-template #noResource><div class="no-resource"><span aria-hidden="true">✦</span><h2>{{ s.title }}</h2><p>{{ s.resources.length ? 'Học liệu này không còn khả dụng. Chọn học liệu khác hoặc tiếp tục hoạt động.' : 'Hoạt động không cần học liệu trên màn hình.' }}</p></div></ng-template>
+    </div>
+    <footer class="step-controls"><button class="stage-button" (click)="next(-1)" [disabled]="stepIndex() === 0">← Bước trước</button><span class="hint">← → chuyển bước · Space đồng hồ · N ghi chú</span><button class="stage-primary" (click)="next(1)" [disabled]="stepIndex() === detail()!.steps.length - 1">Bước tiếp →</button></footer>
+  </section>
+
+  <div *ngIf="trial() as r" class="trial-overlay" role="dialog" aria-modal="true" aria-labelledby="trial-title">
+    <section class="trial-dialog"><header><h2 id="trial-title">Kiểm tra: {{ r.title }}</h2><button class="stage-button" (click)="trial.set(null)">Đóng</button></header>
+      <iframe *ngIf="r.resourceType === 'YOUTUBE' && trialUrl(); else trialFile" [src]="trialUrl()" [title]="r.title" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+      <ng-template #trialFile><ng-container [ngSwitch]="r.fileType"><video *ngSwitchCase="'VIDEO'" [src]="fileUrl(r)" controls></video><audio *ngSwitchCase="'AUDIO'" [src]="fileUrl(r)" controls></audio><img *ngSwitchCase="'IMAGE'" [src]="fileUrl(r)" [alt]="r.title" /><app-document-reader *ngSwitchDefault [resource]="r"></app-document-reader></ng-container></ng-template>
+      <p *ngIf="r.resourceType === 'YOUTUBE'">Bấm Phát để kiểm tra hình ảnh và âm thanh. <a [href]="watchUrl(r)" target="_blank" rel="noopener noreferrer">Mở trên YouTube ↗</a></p>
+      <button *ngIf="r.resourceType === 'YOUTUBE'" class="stage-primary" (click)="confirmTrial()">Tôi đã phát thử video</button>
+    </section>
+  </div>
+</div>

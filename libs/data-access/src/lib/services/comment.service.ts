@@ -25,9 +25,9 @@ interface BackendCommentResponse {
 /**
  * Comment CRUD for resource threads.
  *
- * Backend contract (API Contract v1 §2.1 — flat endpoint, JSON body):
+ * Current CommentController contract:
  *   GET    /comments?resourceId={id}&page&size&sort=createdAt,desc → Page<Comment>
- *   POST   /comments   body { resourceId, content, rating }        → Comment (auth)
+ *   POST   /comments?resourceId&content&rating                     → Comment (auth)
  *   DELETE /comments/:id                                           → void (author/admin)
  */
 @Injectable({ providedIn: 'root' })
@@ -83,11 +83,10 @@ export class CommentService {
       .set('rating', payload.rating ?? 5);
 
     return this.http
-      .post<RestResponse<Comment>>(`${this.apiUrl}/comments`, {
-        resourceId,
-        ...payload,
-      })
-      .pipe(map((res) => res.result as Comment));
+      .post<RestResponse<Comment | BackendCommentResponse>>(
+        `${this.apiUrl}/comments`, {}, { params }
+      )
+      .pipe(map((res) => this.normalizeComment(res.result as Comment | BackendCommentResponse)));
   }
 
   delete(commentId: string): Observable<void> {
