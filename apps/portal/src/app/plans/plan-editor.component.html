@@ -6,6 +6,30 @@
     <form *ngIf="draft() as d" (ngSubmit)="save()" class="space-y-6">
       <h1 class="text-2xl font-extrabold text-ink">Soạn kế hoạch hoạt động</h1>
 
+      <!-- Trợ lý AI điều chỉnh (chỉ hiện khi máy chủ bật AI) -->
+      <section *ngIf="aiEnabled()" class="rounded-2xl border border-accent bg-accent-100/30 dark:bg-accent-500/10 p-4 space-y-3" aria-labelledby="sec-ai">
+        <h2 id="sec-ai" class="font-bold text-ink flex items-center gap-2"><i class="ph-fill ph-sparkle text-accent" aria-hidden="true"></i> Nhờ trợ lý điều chỉnh</h2>
+        <div class="flex flex-wrap gap-2">
+          <button *ngFor="let q of aiQuickInstructions" type="button" (click)="adjustWithAi(q)" [disabled]="aiBusy()"
+            class="text-sm px-3 py-1.5 rounded-full border border-line bg-surface text-ink-soft hover:text-primary hover:border-primary disabled:opacity-50">{{ q }}</button>
+        </div>
+        <div class="flex gap-2">
+          <label for="ai-instruction" class="sr-only">Yêu cầu điều chỉnh</label>
+          <input id="ai-instruction" name="aiInstruction" [(ngModel)]="aiInstruction" maxlength="500"
+            placeholder="Hoặc nhập yêu cầu khác…" (keydown.enter)="$event.preventDefault(); adjustWithAi()"
+            class="flex-1 min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink" />
+          <button type="button" (click)="adjustWithAi()" [disabled]="aiBusy() || !aiInstruction.trim()"
+            class="px-4 py-2 rounded-xl bg-primary text-ink-onbrand text-sm font-semibold disabled:opacity-60">
+            {{ aiBusy() ? 'Đang xử lý…' : 'Gửi' }}
+          </button>
+        </div>
+        <p class="text-xs text-ink-muted">Trợ lý chỉ sửa trên màn hình, không tự lưu. Bước bị thay đổi sẽ có nhãn “AI đề xuất”. Ghi nhận sau buổi học không được gửi cho trợ lý.</p>
+        <div *ngIf="aiNotes() || canUndoAi()" class="flex flex-wrap items-center gap-3 text-sm" role="status">
+          <span *ngIf="aiNotes()" class="text-ink"><strong>Trợ lý:</strong> {{ aiNotes() }}</span>
+          <button *ngIf="canUndoAi()" type="button" (click)="undoAi()" class="underline font-semibold text-ink-soft">Hoàn tác thay đổi của trợ lý</button>
+        </div>
+      </section>
+
       <!-- Thông tin -->
       <section class="bg-surface rounded-2xl border border-line p-5 space-y-4" aria-labelledby="sec-info">
         <h2 id="sec-info" class="font-bold text-ink">Thông tin</h2>

@@ -19,6 +19,7 @@ export * from './lib/services/resource-download.service';
 export * from './lib/services/discovery.service';
 export * from './lib/services/collection.service';
 export * from './lib/services/lesson-plan.service';
+export * from './lib/services/ai-assistant.service';
 export * from './lib/guards/auth.guard';
 export * from './lib/guards/role.guard';
 export * from './lib/interceptors/auth.interceptor';

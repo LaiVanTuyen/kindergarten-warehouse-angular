@@ -1,0 +1,135 @@
+<div class="min-h-screen bg-surface-2 pt-24 pb-16">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+    <div class="mb-6">
+      <h1 class="text-3xl font-extrabold text-ink flex items-center gap-2">
+        Trợ lý AI <i class="ph-fill ph-sparkle text-accent" aria-hidden="true"></i>
+      </h1>
+      <p class="mt-2 text-ink-soft">
+        Tìm học liệu bằng câu hỏi tự nhiên và soạn bản nháp kế hoạch. Trợ lý chỉ gợi ý — bạn luôn đọc lại và quyết định trước khi lưu.
+      </p>
+      <p *ngIf="status() as s" class="mt-2 text-sm text-ink-muted" role="status">
+        <ng-container *ngIf="s.enabled; else off">Còn {{ s.remainingToday }}/{{ s.dailyLimit }} lượt hôm nay.</ng-container>
+        <ng-template #off><span class="font-semibold text-danger">Trợ lý AI chưa được bật trên hệ thống.</span> Liên hệ quản trị viên.</ng-template>
+      </p>
+      <p *ngIf="statusError()" class="mt-2 text-sm text-danger" role="alert">Không kiểm tra được trạng thái trợ lý AI.</p>
+    </div>
+
+    <div class="flex gap-1 bg-surface border border-line rounded-xl p-1 mb-6 w-fit" role="tablist" aria-label="Chức năng trợ lý">
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'search'" (click)="setTab('search')"
+        class="px-4 py-2 rounded-lg text-sm font-bold" [ngClass]="tab() === 'search' ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">Tìm học liệu</button>
+      <button type="button" role="tab" [attr.aria-selected]="tab() === 'draft'" (click)="setTab('draft')"
+        class="px-4 py-2 rounded-lg text-sm font-bold" [ngClass]="tab() === 'draft' ? 'bg-primary text-ink-onbrand' : 'text-ink-soft hover:bg-surface-2'">Soạn kế hoạch</button>
+    </div>
+
+    <p *ngIf="error()" class="mb-4 rounded-xl bg-danger-soft text-danger px-4 py-3 text-sm font-semibold" role="alert">{{ error() }}</p>
+
+    <!-- ===================== Search ===================== -->
+    <section *ngIf="tab() === 'search'">
+      <form (ngSubmit)="search()" class="bg-surface rounded-2xl border border-line p-5 space-y-3">
+        <label for="ai-query" class="block text-sm font-bold text-ink">Bạn cần tìm gì?</label>
+        <textarea id="ai-query" name="query" [(ngModel)]="query" rows="2" maxlength="500"
+          placeholder="VD: Tìm bài hát về gia đình cho trẻ 3–4 tuổi, có video"
+          class="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button *ngFor="let ex of searchExamples" type="button" (click)="query = ex"
+            class="text-xs px-3 py-1 rounded-full border border-line text-ink-soft hover:text-primary hover:border-primary">{{ ex }}</button>
+        </div>
+        <button type="submit" [disabled]="busy() || !query.trim() || status()?.enabled === false"
+          class="min-h-11 px-5 py-2 rounded-xl bg-primary text-ink-onbrand font-bold disabled:opacity-60">
+          {{ busy() ? 'Đang tìm…' : 'Tìm với trợ lý' }}
+        </button>
+      </form>
+
+      <div *ngIf="results() as items" class="mt-6" aria-live="polite">
+        <p *ngIf="!items.length" class="text-ink-soft">Không tìm thấy học liệu phù hợp trong kho. Thử diễn đạt khác hoặc bớt điều kiện.</p>
+        <p *ngIf="items.length" class="text-sm text-ink-muted mb-3">
+          <i class="ph ph-database" aria-hidden="true"></i> Tất cả đều là <strong>tài liệu thật trong kho</strong> mà bạn có quyền xem. Phần “Vì sao phù hợp” do AI viết.
+        </p>
+        <ul class="space-y-3">
+          <li *ngFor="let item of items" class="bg-surface rounded-2xl border border-line p-4 flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 min-w-0">
+              <a [routerLink]="['/resources', item.resource.slug]" class="font-bold text-ink hover:text-primary break-words">{{ item.resource.title }}</a>
+              <p class="text-sm text-ink-muted">{{ item.resource.topic?.name }} · {{ item.resource.fileType || item.resource.resourceType }}</p>
+              <p class="mt-2 text-sm text-ink-soft">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-100 text-accent mr-1">AI</span>
+                Vì sao phù hợp: {{ item.reason }}
+              </p>
+            </div>
+            <div class="flex sm:flex-col gap-2 shrink-0">
+              <a [routerLink]="['/resources', item.resource.slug]" class="px-3 py-1.5 rounded-lg border border-line text-sm font-semibold text-ink-soft hover:text-primary">Mở</a>
+              <button type="button" (click)="collectFor.set(item)" class="px-3 py-1.5 rounded-lg border border-line text-sm font-semibold text-ink-soft hover:text-primary">Thêm vào bộ</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Draft ===================== -->
+    <section *ngIf="tab() === 'draft'">
+      <form (ngSubmit)="makeDraft()" class="bg-surface rounded-2xl border border-line p-5 space-y-3">
+        <label for="ai-draft" class="block text-sm font-bold text-ink">Mô tả hoạt động bạn muốn soạn</label>
+        <textarea id="ai-draft" name="draftRequest" [(ngModel)]="draftRequest" rows="3" maxlength="1000"
+          placeholder="VD: Soạn hoạt động 20 phút về màu sắc, lớp có 25 trẻ, chỉ có giấy và bút màu"
+          class="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button *ngFor="let ex of draftExamples" type="button" (click)="draftRequest = ex"
+            class="text-xs px-3 py-1 rounded-full border border-line text-ink-soft hover:text-primary hover:border-primary">{{ ex }}</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <label class="text-sm font-semibold text-ink">Độ tuổi
+            <select name="age" [(ngModel)]="draftAgeGroupId" class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal">
+              <option [ngValue]="null">Không chọn</option>
+              <option *ngFor="let a of ageGroups()" [ngValue]="+a.id">{{ a.name }}</option>
+            </select>
+          </label>
+          <label class="text-sm font-semibold text-ink">Thời lượng (phút)
+            <input name="duration" type="number" min="1" max="240" [(ngModel)]="draftDuration" class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal" />
+          </label>
+          <label class="text-sm font-semibold text-ink">Sĩ số (trẻ)
+            <input name="classSize" type="number" min="1" max="100" [(ngModel)]="draftClassSize" class="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 font-normal" />
+          </label>
+        </div>
+        <button type="submit" [disabled]="busy() || !draftRequest.trim() || status()?.enabled === false"
+          class="min-h-11 px-5 py-2 rounded-xl bg-primary text-ink-onbrand font-bold disabled:opacity-60">
+          {{ busy() ? 'Đang soạn… (có thể mất ~30 giây)' : 'Soạn bản nháp' }}
+        </button>
+      </form>
+
+      <article *ngIf="draft() as d" class="mt-6 bg-surface rounded-2xl border-2 border-accent p-5 space-y-4" aria-live="polite">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-accent">Bản nháp do AI đề xuất · chưa lưu</p>
+            <h2 class="text-xl font-extrabold text-ink break-words">{{ d.title }}</h2>
+            <p class="text-sm text-ink-muted">{{ d.durationMinutes ? d.durationMinutes + ' phút' : '' }} · tổng các bước {{ totalMinutes(d) }} phút</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" (click)="makeDraft()" [disabled]="busy()" class="px-4 py-2 rounded-xl border border-line text-ink-soft font-semibold">Soạn lại</button>
+            <button type="button" (click)="createPlanFromDraft()" [disabled]="busy()" class="px-4 py-2 rounded-xl bg-primary text-ink-onbrand font-bold">Dùng bản nháp này</button>
+          </div>
+        </div>
+        <p *ngIf="d.notes" class="text-sm rounded-xl bg-warning-soft text-ink px-3 py-2"><strong>Trợ lý lưu ý:</strong> {{ d.notes }}</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div><h3 class="font-bold text-ink mb-1">Mục tiêu</h3><ul class="list-disc pl-5 text-ink-soft"><li *ngFor="let l of lines(d.objectives)">{{ l }}</li></ul></div>
+          <div><h3 class="font-bold text-ink mb-1">Chuẩn bị</h3><ul class="list-disc pl-5 text-ink-soft"><li *ngFor="let l of lines(d.preparation)">{{ l }}</li></ul></div>
+        </div>
+        <ol class="space-y-3">
+          <li *ngFor="let s of d.steps; let i = index" class="rounded-xl border border-line p-3">
+            <h3 class="font-bold text-ink">{{ i + 1 }}. {{ s.title }} <span *ngIf="s.durationMinutes" class="font-normal text-ink-muted">· {{ s.durationMinutes }} phút</span></h3>
+            <p *ngIf="s.description" class="mt-1 whitespace-pre-line text-sm text-ink-soft">{{ s.description }}</p>
+            <p *ngIf="s.resources.length" class="mt-2 text-sm">
+              <span class="font-semibold text-ink-muted"><i class="ph ph-database" aria-hidden="true"></i> Từ kho:</span>
+              <ng-container *ngFor="let r of s.resources; let last = last">
+                <a [routerLink]="['/resources', r.slug]" target="_blank" class="text-primary hover:underline">{{ r.title }}</a><span *ngIf="!last">, </span>
+              </ng-container>
+            </p>
+          </li>
+        </ol>
+        <div *ngIf="d.adaptations" class="text-sm"><h3 class="font-bold text-ink mb-1">Điều chỉnh / hỗ trợ trẻ</h3><p class="whitespace-pre-line text-ink-soft">{{ d.adaptations }}</p></div>
+      </article>
+    </section>
+  </div>
+</div>
+
+<app-add-to-collection-dialog *ngIf="collectFor() as item" [resourceId]="item.resource.id" [resourceTitle]="item.resource.title"
+  (closed)="collectFor.set(null)"></app-add-to-collection-dialog>

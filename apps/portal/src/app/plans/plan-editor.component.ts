@@ -8,6 +8,7 @@ import { finalize, map } from 'rxjs/operators';
 
 import {
   AgeGroup,
+  AiAssistantService,
   AuthService,
   LESSON_PLAN_ERRORS,
   LessonPlanDetail,
@@ -16,6 +17,8 @@ import {
   Resource,
   ResourceService,
   ToastService,
+  aiErrorMessage,
+  applyAiAdjustment,
   toLessonPlanRequest,
 } from '@kindergarten-warehouse/data-access';
 import { ErrorStateComponent } from '../shared/error-state/error-state.component';
@@ -43,6 +46,21 @@ export class PlanEditorComponent {
   private readonly resourceService = inject(ResourceService);
   private readonly toast = inject(ToastService);
   readonly auth = inject(AuthService);
+  private readonly ai = inject(AiAssistantService);
+
+  // --- AI adjustment (phase 2) ---------------------------------------------
+  readonly aiEnabled = signal(false);
+  readonly aiBusy = signal(false);
+  readonly aiNotes = signal<string | null>(null);
+  /** Plan before the last AI change, for "Hoàn tác". */
+  private aiUndo: LessonPlanDetail | null = null;
+  readonly canUndoAi = signal(false);
+  aiInstruction = '';
+  readonly aiQuickInstructions = [
+    'Rút xuống 15 phút',
+    'Đổi sang hoạt động trong lớp vì trời mưa',
+    'Thêm phương án khi không có máy chiếu',
+  ];
 
   readonly maxSteps = MAX_STEPS;
   readonly maxResources = MAX_RESOURCES_PER_STEP;
@@ -58,6 +76,7 @@ export class PlanEditorComponent {
   readonly isAdmin = computed(() => (this.auth.currentUser()?.roles ?? []).includes('ADMIN'));
 
   constructor() {
+    this.ai.status().subscribe({ next: (s) => this.aiEnabled.set(s.enabled), error: () => this.aiEnabled.set(false) });
     this.resourceService
       .getAgeGroups()
       .pipe(map((res) => res.result ?? []))
@@ -153,6 +172,48 @@ export class PlanEditorComponent {
 
   selectedIds(index: number): string[] {
     return this.draft()?.steps[index]?.resources.map((r) => r.resourceId) ?? [];
+  }
+
+  /**
+   * Sends the plan as it is on screen (unsaved edits included) and applies the revised
+   * draft locally. Nothing is saved: changed steps become "AI đề xuất" and the teacher
+   * reviews, undoes or saves as usual.
+   */
+  adjustWithAi(instruction = this.aiInstruction): void {
+    const d = this.draft();
+    const text = instruction.trim();
+    if (!d || !text || this.aiBusy() || this.saving()) return;
+    this.aiBusy.set(true);
+    this.aiNotes.set(null);
+    const before = JSON.parse(JSON.stringify(d)) as LessonPlanDetail;
+    this.ai
+      .adjustPlan(text, toLessonPlanRequest(d))
+      .pipe(finalize(() => this.aiBusy.set(false)))
+      .subscribe({
+        next: (result) => {
+          // Ignore the result if the teacher kept typing meanwhile: applying it would
+          // overwrite their newer edits.
+          if (JSON.stringify(this.draft()) !== JSON.stringify(before)) {
+            this.toast.show('Bạn đã sửa kế hoạch trong lúc trợ lý xử lý. Hãy gửi lại yêu cầu.', 'info');
+            return;
+          }
+          this.aiUndo = before;
+          this.canUndoAi.set(true);
+          this.commit(applyAiAdjustment(before, result));
+          this.aiNotes.set(result.notes ?? null);
+          this.aiInstruction = '';
+          this.toast.show('Trợ lý đã điều chỉnh. Hãy đọc lại các bước “AI đề xuất” rồi lưu.', 'success');
+        },
+        error: (err: HttpErrorResponse) => this.toast.show(aiErrorMessage(err.error?.code), 'error'),
+      });
+  }
+
+  undoAi(): void {
+    if (!this.aiUndo) return;
+    this.commit(this.aiUndo);
+    this.aiUndo = null;
+    this.canUndoAi.set(false);
+    this.aiNotes.set(null);
   }
 
   // --- save -------------------------------------------------------------------

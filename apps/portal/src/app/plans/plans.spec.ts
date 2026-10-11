@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 
 import {
+  AiAssistantService,
   AuthService,
   LessonPlanDetail,
   LessonPlanService,
@@ -49,6 +50,7 @@ describe('Kế hoạch hoạt động (FE)', () => {
         { provide: ToastService, useValue: toast },
         { provide: Router, useValue: router },
         { provide: ResourceService, useValue: { getAgeGroups: () => of({ result: [] }) } },
+        { provide: AiAssistantService, useValue: { status: () => of({ enabled: false, dailyLimit: 0, remainingToday: 0 }) } },
         { provide: AuthService, useValue: { currentUser: () => ({ roles: ['TEACHER'] }) } },
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: '5' })) } },
       ],

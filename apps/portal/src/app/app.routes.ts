@@ -106,6 +106,12 @@ export const appRoutes: Route[] = [
 
   // --- Teacher-only -----------------------------------------------------
   {
+    path: 'assistant',
+    canActivate: [roleGuard('TEACHER', 'ADMIN')],
+    loadComponent: () => import('./assistant/assistant.component').then((m) => m.AssistantComponent),
+    title: 'Trợ lý AI',
+  },
+  {
     path: 'plans',
     canActivate: [roleGuard('TEACHER', 'ADMIN')],
     loadComponent: () => import('./plans/plans.component').then((m) => m.PlansComponent),
