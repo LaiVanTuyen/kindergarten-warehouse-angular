@@ -364,6 +364,11 @@ export class ResourceDetailComponent implements OnInit {
     );
   }
 
+  /** Inline, range-capable media URL so the player can seek (the /file endpoint is a download). */
+  mediaUrl(resource: Resource): string {
+    return `${environment.apiUrl}/resources/${encodeURIComponent(resource.id)}/stream`;
+  }
+
   downloadResource(resource: Resource | null | undefined): void {
     if (!resource?.id || this.isDownloading()) return;
     this.isDownloading.set(true);

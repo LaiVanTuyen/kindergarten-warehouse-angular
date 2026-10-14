@@ -94,10 +94,10 @@
             <ng-template #documentReader>
               <div *ngIf="resource.fileType === 'VIDEO' || resource.fileType === 'AUDIO'; else rasterReader" class="p-4">
                 <ng-container *ngIf="authService.isLoggedIn(); else mediaLogin">
-                <video *ngIf="resource.fileType === 'VIDEO'" [src]="resource.fileUrl" controls preload="metadata" [attr.aria-label]="resource.title"
+                <video *ngIf="resource.fileType === 'VIDEO'" [src]="mediaUrl(resource)" controls preload="metadata" [attr.aria-label]="resource.title"
                   class="w-full max-h-[660px] rounded-xl bg-black"></video>
-                <audio *ngIf="resource.fileType === 'AUDIO'" [src]="resource.fileUrl" controls preload="metadata" [attr.aria-label]="resource.title" class="w-full"></audio>
-                <p class="text-xs text-ink-muted mt-3">Phát âm thanh/video sử dụng tệp gốc và yêu cầu tài khoản có quyền truy cập.</p>
+                <audio *ngIf="resource.fileType === 'AUDIO'" [src]="mediaUrl(resource)" controls preload="metadata" [attr.aria-label]="resource.title" class="w-full"></audio>
+                <p class="text-xs text-ink-muted mt-3">Phát âm thanh/video yêu cầu tài khoản có quyền truy cập.</p>
                 </ng-container>
                 <ng-template #mediaLogin><p>Đăng nhập để phát âm thanh hoặc video. <a routerLink="/login" class="text-primary underline">Đăng nhập</a></p></ng-template>
               </div>
