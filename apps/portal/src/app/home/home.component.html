@@ -92,7 +92,7 @@
       <a routerLink="/resources" class="inline-block mt-4 font-semibold text-primary">Khám phá kho tài liệu →</a>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
       <app-resource-card *ngFor="let resource of latestResources$ | async; trackBy: trackByResourceId"
         [resource]="resource"
         (download)="downloadResource(resource)">

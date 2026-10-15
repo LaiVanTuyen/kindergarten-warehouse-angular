@@ -1,3 +1,7 @@
+<!-- Giữ chỗ bằng đúng chiều cao banner khi đang tải, tránh đẩy nội dung bên dưới (CLS). -->
+<section *ngIf="!loaded()" class="container mx-auto px-4 py-8 lg:py-12" aria-hidden="true">
+  <div class="rounded-3xl bg-surface-2 animate-pulse h-[622px] md:h-[406px] lg:h-[410px]"></div>
+</section>
 <section *ngIf="hasSlides()"
   class="container mx-auto px-4 py-8 lg:py-12 relative cursor-grab active:cursor-grabbing select-none"
   role="region" aria-roledescription="carousel" aria-label="Khuyến nghị và thông báo"

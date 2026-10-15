@@ -70,8 +70,14 @@
         </div>
 
         <!-- Part 2: Category List (Scrollable) -->
+        <!-- Giữ chỗ khi danh mục đang tải để khối "Độ tuổi" bên dưới không bị đẩy (CLS). -->
+        <ng-template #categorySkeleton>
+          <div class="flex-1 space-y-3" aria-hidden="true">
+            <div *ngFor="let _ of [1, 2, 3, 4, 5, 6]" class="h-[58px] rounded-2xl bg-surface-2 animate-pulse"></div>
+          </div>
+        </ng-template>
         <div class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 min-h-0"
-          *ngIf="categories$ | async as categoriesRes">
+          *ngIf="categories$ | async as categoriesRes; else categorySkeleton">
           <!-- Dynamic Categories -->
           <div *ngFor="let cat of categoriesRes.data; trackBy: trackByCategoryId" class="flex flex-col">
             <button (click)="toggleCategory(cat)"
@@ -154,7 +160,7 @@
     <div class="md:col-span-8 lg:col-span-9">
 
       <!-- Breadcrumbs -->
-      <nav class="flex text-sm text-ink-muted mb-4" aria-label="Breadcrumb">
+      <nav class="flex text-sm text-ink-muted mb-4 min-h-5" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
           <li *ngFor="let item of breadcrumb$ | async; let last = last" class="inline-flex items-center">
             <span *ngIf="!last" class="inline-flex items-center hover:text-ink cursor-pointer">
@@ -191,7 +197,7 @@
       </div>
 
       <!-- Section Title & Sort -->
-      <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-8 gap-4 px-2">
+      <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-8 gap-4 px-2">
         <div>
           <h2 class="text-3xl font-black text-ink tracking-tight flex items-center gap-3 font-display">
             <ng-container *ngIf="(activeTitle$ | async) as title; else defaultTitle">
@@ -213,8 +219,8 @@
           </p>
         </div>
 
-        <div class="relative min-w-[220px]">
-          <select (change)="onSortChange($event)"
+        <div class="relative w-full sm:w-auto sm:min-w-[220px]">
+          <select (change)="onSortChange($event)" aria-label="Sắp xếp tài liệu"
             class="w-full appearance-none bg-surface border border-line text-ink py-3 pl-5 pr-12 rounded-2xl shadow-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-focus cursor-pointer font-bold transition-all hover:bg-surface-2 text-sm">
             <option value="newest">Mới nhất</option>
             <option value="views-desc">Xem nhiều nhất</option>
@@ -235,7 +241,7 @@
 
         <!-- Loading Skeleton -->
         <ng-container *ngIf="state.isLoading">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             <app-loading-skeleton type="card" [count]="6" class="contents"></app-loading-skeleton>
           </div>
         </ng-container>
@@ -243,7 +249,7 @@
         <!-- Content -->
         <ng-container *ngIf="!state.isLoading">
           <div *ngIf="state.resources && state.resources.length > 0; else empty"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             <app-resource-card *ngFor="let resource of state.resources; trackBy: trackByResourceId"
               [resource]="resource"
               (view)="openPreview(resource)"

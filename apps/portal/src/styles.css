@@ -5,7 +5,7 @@
 @import '../../../libs/theme/fonts.css';
 
 /* Phosphor icons — self-hosted (regular / bold / fill), no unpkg CDN. */
-@import '../../../libs/theme/phosphor.css';
+@import '../../../libs/theme/phosphor.portal.css'; /* subset: tools/subset-phosphor.py */
 
 @tailwind base;
 @tailwind components;
@@ -117,3 +117,8 @@
   .print-avoid-break { break-inside: avoid; }
   @page { size: A4; margin: 15mm; }
 }
+
+/* WCAG AA: text-accent (coral-500, 2.9:1) trên nền
+   trắng không đủ 4.5:1 cho chữ nhỏ (Lighthouse color-contrast). Chỉ làm đậm màu CHỮ
+   ở chế độ sáng; nền/viền dùng bg-primary, bg-accent giữ nguyên màu thương hiệu. */
+html:not(.dark) .text-accent { color: rgb(var(--c-accent-700)); }

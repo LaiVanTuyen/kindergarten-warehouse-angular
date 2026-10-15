@@ -129,7 +129,7 @@ export class ResourceListComponent implements OnInit {
 
   // Pagination State
   currentPage$ = new BehaviorSubject<number>(1);
-  itemsPerPage = 8;
+  itemsPerPage = 9;
   totalItems$ = new BehaviorSubject<number>(0);
 
   totalPages$ = this.totalItems$.pipe(
@@ -350,17 +350,8 @@ export class ResourceListComponent implements OnInit {
     debounceTime(100), // Prevent rapid double-firing
     tap(() => this.isLoading$.next(true)),
     switchMap(({ category, topicId, ageGroups, search, tag, sort, page }) => {
-      let targetTopicIds: string[] | undefined = undefined;
-
-      if (topicId) {
-        targetTopicIds = [topicId];
-      } else if (category) {
-        // Fallback to Category Topics if no specific topics selected
-        const cachedTopics = this.topicsCache[category];
-        if (cachedTopics) {
-          targetTopicIds = cachedTopics.map((t) => t.id);
-        }
-      }
+      // Chọn cả danh mục ⇒ lọc theo categoryId (trước đây chỉ lấy topic đầu tiên
+      // của danh mục nên thiếu tài liệu của các chủ đề còn lại).
 
       // Note: We don't need to manually filter by slug here because the
       // subscriptions to URL updates above will set the IDs (category, topicId)
@@ -370,7 +361,8 @@ export class ResourceListComponent implements OnInit {
 
       return this.resourceService
         .getPortalResources({
-          topicId: targetTopicIds ? targetTopicIds[0] : undefined, // Assuming single topic filter for now or update service to support array
+          topicId: topicId || undefined,
+          categoryId: !topicId && category ? category : undefined,
           ageGroupId:
             ageGroupIds.length > 0 ? ageGroupIds.join(',') : undefined,
           keyword: search,
@@ -379,7 +371,7 @@ export class ResourceListComponent implements OnInit {
           // nên dropdown "Sắp xếp" không có tác dụng.
           sort: SORT_PARAMS[sort] ?? SORT_PARAMS['newest'],
           page,
-          size: 9,
+          size: this.itemsPerPage,
         })
         .pipe(
           map((res) => {
@@ -530,8 +522,9 @@ export class ResourceListComponent implements OnInit {
   }
 
   openPreview(resource: Resource) {
-    this.resourceService.incrementViewCount(resource.id).subscribe();
-    this.router.navigate(['/resources', resource.id]);
+    // Backend tra cứu chi tiết theo slug (GET /resources/{slug}); trang chi tiết
+    // tự tăng lượt xem nên không gọi incrementViewCount ở đây nữa.
+    this.router.navigate(['/resources', resource.slug || resource.id]);
   }
 
   downloadResource(resource: Resource): void {

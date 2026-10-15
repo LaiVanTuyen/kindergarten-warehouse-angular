@@ -104,6 +104,8 @@
       <img
         *ngIf="!imageFailed()"
         class="document-page"
+        fetchpriority="high"
+        decoding="async"
         [style.width.%]="zoom()"
         [src]="imageUrl"
         [alt]="title + ' — trang ' + page()"

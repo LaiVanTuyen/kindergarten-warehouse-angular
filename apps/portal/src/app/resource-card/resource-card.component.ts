@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 import {
   AuthService,
@@ -31,6 +31,7 @@ export class ResourceCardComponent {
   private readonly favorites = inject(FavoritesService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   private readonly resourceSignal = signal<Resource | null>(null);
 
@@ -115,7 +116,13 @@ export class ResourceCardComponent {
   });
 
   protected onView(): void {
-    this.view.emit();
+    // Trang chủ và "Tài liệu liên quan" không gắn (view) ⇒ tự mở trang chi tiết.
+    if (this.view.observed) {
+      this.view.emit();
+      return;
+    }
+    const r = this.resourceSignal();
+    if (r) this.router.navigate(['/resources', r.slug || r.id]);
   }
 
   protected onDownload(event: Event): void {

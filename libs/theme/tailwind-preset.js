@@ -24,7 +24,8 @@ const ramp = (prefix, withDefault = '500') => {
   return out;
 };
 
-const primary = ramp('primary', '600');
+// DEFAULT = 700: chữ trắng trên bg-primary đạt WCAG AA (600 chỉ 3.7:1).
+const primary = ramp('primary', '700');
 const accent = ramp('accent', '500');
 const sun = {
   50: v('sun-50'),

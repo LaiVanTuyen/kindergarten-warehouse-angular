@@ -110,10 +110,10 @@
             <div class="flex items-center gap-3 mb-4 flex-wrap">
               <span class="px-3 py-1 rounded-full text-xs font-bold" [ngClass]="{
               'bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300': resource.type === 'VIDEO',
-              'bg-orange-500/15 text-orange-600': ['PDF','WORD','EXCEL','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || ''),
-              'bg-purple-500/15 text-purple-600': resource.type === 'AUDIO',
-              'bg-rose-500/15 text-rose-500': resource.type === 'IMAGE',
-              'bg-info-soft text-info': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || '')
+              'bg-orange-500/15 text-orange-800 dark:text-orange-300': ['PDF','WORD','EXCEL','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || ''),
+              'bg-purple-500/15 text-purple-800 dark:text-purple-300': resource.type === 'AUDIO',
+              'bg-rose-500/15 text-rose-700 dark:text-rose-300': resource.type === 'IMAGE',
+              'bg-info-soft text-blue-800 dark:text-blue-300': !['VIDEO','PDF','WORD','EXCEL','AUDIO','IMAGE','PPT','PPTX','POWERPOINT', 'DOCUMENT'].includes(resource.type || '')
             }">
                 <i *ngIf="resource.type === 'VIDEO'" class="ph-fill ph-video mr-1"></i>
                 <i *ngIf="['PDF','WORD','EXCEL','DOCUMENT'].includes(resource.type || '')"
@@ -132,10 +132,10 @@
               </span>
               <!-- Download Count Highlight -->
               <div
-                class="flex items-center gap-1.5 px-3 py-1 bg-info-soft border border-line rounded-full text-info shadow-sm ml-2">
+                class="flex items-center gap-1.5 px-3 py-1 bg-info-soft border border-line rounded-full text-blue-800 dark:text-blue-300 shadow-sm ml-2">
                 <i class="ph-fill ph-download-simple text-sm"></i>
                 <span class="font-bold text-sm">{{ resource.downloadCount || 0 }}</span>
-                <span class="text-xs font-medium text-info">Lượt tải</span>
+                <span class="text-xs font-medium">Lượt tải</span>
               </div>
               <!-- Rating Stars -->
               <div class="flex items-center" *ngIf="resource.averageRating || resource.rating">
@@ -431,7 +431,7 @@
   <div class="container mx-auto px-4">
     <h2 class="text-2xl font-bold text-ink mb-8 font-display">Tài liệu liên quan</h2>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
       <app-resource-card *ngFor="let related of relatedResources; trackBy: trackByResourceId"
         [resource]="related"
         (download)="downloadResource(related)">

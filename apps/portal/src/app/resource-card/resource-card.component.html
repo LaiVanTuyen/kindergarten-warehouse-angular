@@ -8,10 +8,11 @@
     [attr.aria-label]="'Xem chi tiết: ' + resource.title"></a>
 
   <!-- Thumbnail -->
-  <div class="relative overflow-hidden h-48 bg-surface-2 pointer-events-none">
+  <div class="relative overflow-hidden h-32 sm:h-48 bg-surface-2 pointer-events-none">
     <ng-container *ngIf="autoThumbnail() && !imageError(); else placeholder">
       <img [src]="autoThumbnail()" (error)="onImageError()" loading="lazy" decoding="async"
         [alt]="resource.title"
+        [class.object-top]="rType() === 'DOCUMENT' || rType() === 'PDF' || rType() === 'POWERPOINT' || rType() === 'EXCEL'"
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       <div *ngIf="rType() === 'VIDEO'"
         class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors duration-300"
@@ -35,14 +36,14 @@
           'bg-violet-500/10':  rType() === 'AUDIO',
           'bg-surface-2':      rType() === 'OTHER'
         }">
-        <i *ngIf="rType() === 'VIDEO'"      class="ph-fill ph-play-circle text-7xl text-purple-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'PDF'"        class="ph-fill ph-file-pdf text-7xl text-rose-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'DOCUMENT'"   class="ph-fill ph-file-doc text-7xl text-blue-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'EXCEL'"      class="ph-fill ph-file-xls text-7xl text-emerald-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'POWERPOINT'" class="ph-fill ph-presentation text-7xl text-orange-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'IMAGE'"      class="ph-fill ph-image text-7xl text-indigo-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'AUDIO'"      class="ph-fill ph-music-notes text-7xl text-violet-400 drop-shadow-md"></i>
-        <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-7xl text-ink-muted drop-shadow-md"></i>
+        <i *ngIf="rType() === 'VIDEO'"      class="ph-fill ph-play-circle text-5xl sm:text-7xl text-purple-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'PDF'"        class="ph-fill ph-file-pdf text-5xl sm:text-7xl text-rose-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'DOCUMENT'"   class="ph-fill ph-file-doc text-5xl sm:text-7xl text-blue-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'EXCEL'"      class="ph-fill ph-file-xls text-5xl sm:text-7xl text-emerald-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'POWERPOINT'" class="ph-fill ph-presentation text-5xl sm:text-7xl text-orange-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'IMAGE'"      class="ph-fill ph-image text-5xl sm:text-7xl text-indigo-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'AUDIO'"      class="ph-fill ph-music-notes text-5xl sm:text-7xl text-violet-400 drop-shadow-md"></i>
+        <i *ngIf="rType() === 'OTHER'"      class="ph-fill ph-file text-5xl sm:text-7xl text-ink-muted drop-shadow-md"></i>
       </div>
     </ng-template>
 
@@ -71,11 +72,11 @@
   </div>
 
   <!-- Content -->
-  <div class="p-4 flex-1 flex flex-col pointer-events-none">
-    <h3 class="font-extrabold text-ink text-[1.05rem] mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+  <div class="p-3 sm:p-4 flex-1 flex flex-col pointer-events-none">
+    <h3 class="font-extrabold text-ink text-sm sm:text-[1.05rem] mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
       {{ resource.title }}
     </h3>
-    <p class="text-sm text-ink-muted mb-4 line-clamp-2 flex-1">
+    <p class="max-sm:hidden text-sm text-ink-muted mb-4 line-clamp-2 flex-1">
       {{ resource.description || 'Chưa có mô tả.' }}
     </p>
 
@@ -93,7 +94,7 @@
           <i class="ph ph-eye text-base" aria-hidden="true"></i>
           <span>{{ resource.viewsCount }}</span>
         </span>
-        <span class="flex items-center gap-1 pl-3 border-l border-line">
+        <span class="hidden sm:flex items-center gap-1 pl-3 border-l border-line">
           <ng-container *ngIf="resource.resourceType === 'YOUTUBE'">
             <i class="ph-fill ph-youtube-logo text-lg text-[#FF0000]" aria-hidden="true"></i>
             <span class="text-xs font-semibold text-ink-soft">{{ displayType() }}</span>
@@ -115,7 +116,7 @@
 
       <div class="flex gap-2 items-center">
         <button type="button" (click)="onView(); $event.stopPropagation(); $event.preventDefault()"
-          class="px-4 py-1.5 rounded-pill border border-primary text-primary text-xs font-bold hover:bg-primary hover:text-ink-onbrand transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          class="hidden sm:flex px-4 py-1.5 rounded-pill border border-primary text-primary text-xs font-bold hover:bg-primary hover:text-ink-onbrand transition-all items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <i *ngIf="rType() === 'VIDEO' || rType() === 'AUDIO'" class="ph-fill ph-play text-xs" aria-hidden="true"></i>
           Xem
         </button>

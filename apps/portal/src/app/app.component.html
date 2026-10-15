@@ -2,7 +2,8 @@
   <app-toast></app-toast>
   <app-route-progress></app-route-progress>
   <app-header *ngIf="!isChromeless()"></app-header>
-  <main>
+  <!-- min-h: giữ footer dưới màn hình khi nội dung còn đang tải (tránh CLS). -->
+  <main class="min-h-screen">
     <router-outlet></router-outlet>
   </main>
   <app-footer *ngIf="!isChromeless()"></app-footer>

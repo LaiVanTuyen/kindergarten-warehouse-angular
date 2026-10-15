@@ -35,6 +35,8 @@ export class BannerSliderComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly slides = signal<Banner[]>([]);
+  /** false until the first banner request settles — template reserves space meanwhile (CLS). */
+  readonly loaded = signal(false);
   readonly activeIndex = signal(0);
   readonly error = signal(false);
   readonly autoplayPaused = signal(false);
@@ -76,12 +78,13 @@ export class BannerSliderComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.slides.set(response.result ?? []);
+          this.loaded.set(true);
           // Reset to the first slide if the previous index is now out-of-bounds.
           if (this.activeIndex() >= this.slides().length) {
             this.activeIndex.set(0);
           }
         },
-        error: () => this.error.set(true),
+        error: () => { this.error.set(true); this.loaded.set(true); },
       });
   }
 
